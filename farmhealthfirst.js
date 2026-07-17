@@ -1,4 +1,5 @@
 // DOSING LINKS
+console.log("TEST")
 $('.dosing_link-num').each(function () {
   const $num = $(this);
   const slug = $num.attr('link-slug');
@@ -77,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(() => {
     });
 
     [...main.children]
-    .filter(item => !item.hasAttribute('data-pinned'))
+      .filter(item => !item.hasAttribute('data-pinned'))
       .forEach((item, i) => {
         item.style.display = i < visible ? '' : 'none';
       });
