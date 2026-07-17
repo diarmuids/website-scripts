@@ -1,5 +1,5 @@
 // DOSING LINKS
-// gits
+// gitss
 sssddd
 $(function () {
   $('.dosing_link-num').each(function () {
