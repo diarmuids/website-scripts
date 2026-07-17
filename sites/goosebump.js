@@ -1,3 +1,5 @@
+// Last updated: 2026-07-17 17:45:37 +01:00
+
 // HOME SHOWREEL LINK
 $('.home_showreel-link').on('click', function () {
   $('.video_overlay').trigger('click');

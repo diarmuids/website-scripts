@@ -1,3 +1,5 @@
+// Last updated: 2026-07-17 17:45:37 +01:00
+
 // // INSERT TABLE SCROLL WRAPPER
 // $('.table_component').each(function () {
 //   const scrollElement = $('.global_table-scroll').first().clone();

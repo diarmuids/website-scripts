@@ -1,3 +1,5 @@
+// Last updated: 2026-07-17 17:45:37 +01:00
+
 $('#original-svg').on('input', function () { let a = $(this),
     b = a.val().replace(/<!--[\s\S]*?-->/g, ''),
     c = $($.parseHTML(b));

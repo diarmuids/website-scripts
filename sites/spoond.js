@@ -1,3 +1,5 @@
+// Last updated: 2026-07-17 17:45:37 +01:00
+
 // console.log("TEST")
 
 $(document).on('click', '[data-node-type="commerce-add-to-cart-option-select"]', function () {

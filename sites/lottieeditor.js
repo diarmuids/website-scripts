@@ -1,3 +1,5 @@
+// Last updated: 2026-07-17 17:45:37 +01:00
+
 // Lottie player instance
 let animation = null;
 let lottieJson = null;

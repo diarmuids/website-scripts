@@ -1,3 +1,5 @@
+// Last updated: 2026-07-17 17:45:37 +01:00
+
 // // ADD BREADCRUMB CATEGORY LINK TO BREADCRUMB WRAPPER
 // $('.bread-cat_link').each(function () {
 //   $('.breadcrumb_wrapper').append($(this));
