@@ -1,4 +1,4 @@
-// Last updated: 2026-07-17 17:45:37 +01:00
+// Last updated: 2026-07-17 17:45:37
 
 $(document).ready(function () {
   $('[data-field="duration"]').hide().find('input, select, textarea').prop('required', false);

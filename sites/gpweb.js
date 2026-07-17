@@ -1,4 +1,4 @@
-// Last updated: 2026-07-17 17:45:37 +01:00
+// Last updated: 2026-07-17 17:45:37
 
 $(document).on("click",
   ".client_button, .client_nav_link:not(.is-dd-outer):not(.is-link), .client_nav_dd-link, .client_nav_top-link, .client_contact_item, .client_footer_link, .client_fixed-button",
