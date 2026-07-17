@@ -11,6 +11,12 @@ GitHub/jsDelivr and should be published quickly after local saves.
 .\start-auto-push.ps1
 ```
 
+- Keep it running with the watchdog:
+
+```powershell
+.\tools\auto-push\ensure-auto-push.ps1
+```
+
 - The actual worker scripts live in `tools/auto-push/`.
 - The worker checks for saved changes every second.
 - For changed `.js` files, it runs `node --check` before committing.
