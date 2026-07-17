@@ -1,3 +1,73 @@
+/* START: Swiper 1 - Swiper Simple Starter 1 */
+document.querySelectorAll('[swiper="projects"]').forEach((sliderComponent) => {
+  const sliderEl = sliderComponent.querySelector('[swiper="slider"]');
+  const buttonNextEl = sliderComponent.querySelector('[swiper="next-button"]');
+  const buttonPrevEl = sliderComponent.querySelector('[swiper="prev-button"]');
+  const paginationEl = sliderComponent.querySelector('[swiper="pagination"]');
+
+  new Swiper(sliderEl, {
+    slidesPerView: 1,
+    slidesPerGroup: 1,
+    a11y: true,
+    spaceBetween: 16,
+    direction: "horizontal",
+    loop: true,
+    initialSlide: 1,
+    grabCursor: true,
+    loopedSlides: 2,
+    speed: 500,
+    autoHeight: false,
+    allowTouchMove: true,
+    simulateTouch: true,
+    touchEventsTarget: 'container',
+    preventInteractionOnTransition: false,
+    autoplay: {
+      delay: 4000,
+      disableOnInteraction: true
+    },
+    effect: "creative",
+    creativeEffect: {
+      prev: {
+        shadow: true,
+        translate: ["-90%", 0, -500]
+      },
+      next: {
+        shadow: true,
+        translate: ["90%", 0, -500]
+      }
+    },
+    navigation: {
+      nextEl: buttonNextEl,
+      prevEl: buttonPrevEl,
+    },
+    pagination: {
+      el: paginationEl,
+      clickable: false,
+      bulletClass: "new-swiper-pagination-bullet",
+      /*renderBullet: function (i, n) {
+        return '<div class="' + n +
+          '"><div class="custom-header-pagination-bullet-inner"></div><div class="custom-header-pagination-bullet-circle"><svg viewBox="0 0 200 200"><circle class="circle" cx="100" cy="100" r="75"/></svg></div></div>'
+      }*/
+    },
+    breakpoints: {
+      // when window width is >= 768px
+      768: {
+        spaceBetween: 32,
+      },
+    },
+  });
+});
+/* END: Swiper 1 - Swiper Simple Starter 1 */
+
+const swiper = document.querySelector('.swiper').swiper;
+
+$('.swiper').on('click', '.swiper-slide-next', function () {
+  swiper.slideNext();
+});
+
+$('.swiper').on('click', '.swiper-slide-prev', function () {
+  swiper.slidePrev();
+});
 
 
 
@@ -8,10 +78,10 @@ var u = async t => {
   let o = t?.getAttribute("fs-components-src");
   if (!o) throw new Error(
     "Failed to initialize Finsweet Component. No fs-components-src attribute found on script tag."
-    );
+  );
   if (o === "dev") return console.warn(
     "You are currently in development mode. Configs will be fetched from the Component Configurator for preview mode."
-    ), { dev: !0 };
+  ), { dev: !0 };
   let e = await import(o);
   if (!t) throw new Error(
     'No script tag found with type="module" and fs-components-src attribute');
@@ -49,27 +119,27 @@ var i,
     if (i || (i = await u(e)), !e) throw new Error(
       'No script tag found with type="module" and fs-components-src attribute');
     switch (t) {
-    case "consent":
-      let { init: n } = await import("./dist/src-WUKLV2BG.js");
-      return n(i.consent);
-    case "slider":
-      if (!document.querySelector("[fs-slider-instance]")) return p;
-      let { init: s } = await import("./dist/src-LTSKQRUT.js");
-      return s(i.slider);
-    case "tooltip":
-      if (!document.querySelector("[fs-tooltip-element]")) return p;
-      let { init: s } = await import("./dist/src-6WLNEAOF.js");
-      return s(i.tooltip);
-    case "cursor":
-      if (!document.querySelector("[fs-cursor-element]")) return p;
-      let { init: s } = await import("./dist/src-LFOR46Y3.js");
-      return s(i.cursor);
-    case "tabs":
-      if (!document.querySelector("[fs-tabs-element]")) return p;
-      let { init: s } = await import("./dist/src-Z2RCONVO.js");
-      return s(i.tabs);
-    default:
-      throw `Finsweet Component "${t}" is not supported.`;
+      case "consent":
+        let { init: n } = await import("./dist/src-WUKLV2BG.js");
+        return n(i.consent);
+      case "slider":
+        if (!document.querySelector("[fs-slider-instance]")) return p;
+        let { init: s } = await import("./dist/src-LTSKQRUT.js");
+        return s(i.slider);
+      case "tooltip":
+        if (!document.querySelector("[fs-tooltip-element]")) return p;
+        let { init: s } = await import("./dist/src-6WLNEAOF.js");
+        return s(i.tooltip);
+      case "cursor":
+        if (!document.querySelector("[fs-cursor-element]")) return p;
+        let { init: s } = await import("./dist/src-LFOR46Y3.js");
+        return s(i.cursor);
+      case "tabs":
+        if (!document.querySelector("[fs-tabs-element]")) return p;
+        let { init: s } = await import("./dist/src-Z2RCONVO.js");
+        return s(i.tabs);
+      default:
+        throw `Finsweet Component "${t}" is not supported.`;
     }
   };
 
@@ -83,7 +153,7 @@ var F = () => {
     e = [],
     n = document.querySelector('script[type="module"][fs-components-src="dev"]');
   n ? e = [n] : e = [...document.querySelectorAll(
-      `script[type="module"][src="${import.meta.url}"]`)],
+    `script[type="module"][src="${import.meta.url}"]`)],
     window.fsComponents = window.FsComponents = {
       scripts: e,
       solutions: {},
