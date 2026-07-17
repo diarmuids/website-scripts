@@ -1,5 +1,5 @@
-// Last updated: 2026-07-17 17:45:37
-ss
+// Last updated: 2026-07-17 18:10:00
+
 // DOSING LINKS
 $(function () {
   $('.dosing_link-num').each(function () {
@@ -191,6 +191,7 @@ $('.text-rich-text.is-blog-buttons').each(function () {
   const emailSelector = 'input[type="email"], input[name="EMAIL"]';
   const successSelector = '.w-form-done';
   const failSelector = '.w-form-fail';
+  const popupSelector = '.learn_email-gate-popup, .learn-video_email-gate-popup';
   let openedAfterSuccess = false;
 
   function debug(message, data) {
@@ -251,6 +252,36 @@ $('.text-rich-text.is-blog-buttons').each(function () {
     debug('pending video cleared');
   }
 
+  function getVideoItems() {
+    return Array.from(document.querySelectorAll(cardSelector)).map(function (card) {
+      const title = card.querySelector('.heading-style-h3, h3');
+
+      return {
+        src: toVideoEmbedUrl(card.getAttribute('data-video-url')),
+        type: 'iframe',
+        opts: {
+          caption: title ? title.textContent.trim() : ''
+        }
+      };
+    }).filter(function (item) {
+      return !!item.src;
+    });
+  }
+
+  function hideEmailPopup(form) {
+    const popup = (form && form.closest(popupSelector)) ||
+      document.querySelector(popupSelector);
+
+    if (!popup) return;
+
+    if (window.jQuery) jQuery(popup).stop(true, true).hide();
+
+    popup.style.setProperty('display', 'none', 'important');
+    popup.style.opacity = '0';
+    popup.setAttribute('aria-hidden', 'true');
+    debug('email popup hidden');
+  }
+
   function openVideo(url) {
     if (!url) {
       debug('open skipped because URL is empty');
@@ -258,13 +289,27 @@ $('.text-rich-text.is-blog-buttons').each(function () {
     }
 
     const embedUrl = toVideoEmbedUrl(url);
+    const items = getVideoItems();
+    let startIndex = items.findIndex(function (item) {
+      return item.src === embedUrl;
+    });
+
+    if (startIndex < 0) {
+      items.push({ src: embedUrl, type: 'iframe' });
+      startIndex = items.length - 1;
+    }
 
     if (window.jQuery && jQuery.fancybox) {
-      debug('opening with Fancybox', embedUrl);
-      jQuery.fancybox.open({
-        src: embedUrl,
-        type: 'iframe'
+      debug('opening Fancybox gallery', {
+        url: embedUrl,
+        startIndex: startIndex,
+        itemCount: items.length
       });
+      jQuery.fancybox.open(items, {
+        loop: false,
+        arrows: true,
+        infobar: true
+      }, startIndex);
     } else {
       debug('Fancybox unavailable, opening new tab', embedUrl);
       window.open(embedUrl, '_blank', 'noopener');
@@ -338,6 +383,7 @@ $('.text-rich-text.is-blog-buttons').each(function () {
 
     openedAfterSuccess = true;
     clearPendingVideoUrl();
+    hideEmailPopup(form);
 
     setTimeout(function () {
       openVideo(videoUrl);
