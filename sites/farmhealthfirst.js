@@ -1,6 +1,6 @@
 // DOSING LINKS
 // gits
-sss
+sssddd
 $(function () {
   $('.dosing_link-num').each(function () {
     const $num = $(this);
