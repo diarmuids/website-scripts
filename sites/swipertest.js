@@ -1,0 +1,127 @@
+import { a as d } from "./dist/chunk-J7NTLVPZ.js";
+import { y as f } from "./dist/chunk-KU7Q5RVC.js";
+
+var u = async t => {
+  let o = t?.getAttribute("fs-components-src");
+  if (!o) throw new Error(
+    "Failed to initialize Finsweet Component. No fs-components-src attribute found on script tag."
+    );
+  if (o === "dev") return console.warn(
+    "You are currently in development mode. Configs will be fetched from the Component Configurator for preview mode."
+    ), { dev: !0 };
+  let e = await import(o);
+  if (!t) throw new Error(
+    'No script tag found with type="module" and fs-components-src attribute');
+  return e;
+};
+
+var m = d({ fetched: !1, license: [] });
+
+m.subscribe(t => {
+  let { license: o, fetched: e } = t;
+  if (!e || !window?.fsComponents?.solutions) return;
+  let { solutions: n } = window.fsComponents;
+  Object.keys(n).forEach(r => {
+    let c = n[r];
+    if (c?.destroy) {
+      let { destroy: a } = c;
+      a && a();
+    }
+  });
+});
+
+var w = async t => {
+  if (!window?.fsComponents || m.get().fetched) return;
+  let { scripts: o = [] } = window.fsComponents;
+  if (o.length === 0) return;
+  m.set({ fetched: !0, license: [] });
+};
+
+var i,
+  g = () => ({}),
+  p = { init: g, version: "0.0.0" },
+  C = async t => {
+    let { scripts: o = [] } = window.fsComponents,
+      [e = null] = o;
+    if (i || (i = await u(e)), !e) throw new Error(
+      'No script tag found with type="module" and fs-components-src attribute');
+    switch (t) {
+    case "consent":
+      let { init: n } = await import("./dist/src-WUKLV2BG.js");
+      return n(i.consent);
+    case "slider":
+      if (!document.querySelector("[fs-slider-instance]")) return p;
+      let { init: s } = await import("./dist/src-LTSKQRUT.js");
+      return s(i.slider);
+    case "tooltip":
+      if (!document.querySelector("[fs-tooltip-element]")) return p;
+      let { init: s } = await import("./dist/src-6WLNEAOF.js");
+      return s(i.tooltip);
+    case "cursor":
+      if (!document.querySelector("[fs-cursor-element]")) return p;
+      let { init: s } = await import("./dist/src-LFOR46Y3.js");
+      return s(i.cursor);
+    case "tabs":
+      if (!document.querySelector("[fs-tabs-element]")) return p;
+      let { init: s } = await import("./dist/src-Z2RCONVO.js");
+      return s(i.tabs);
+    default:
+      throw `Finsweet Component "${t}" is not supported.`;
+    }
+  };
+
+var F = () => {
+  let { fsComponents: t } = window;
+  if (t && !Array.isArray(t)) {
+    y();
+    return;
+  }
+  let o = Array.isArray(t) ? t : [],
+    e = [],
+    n = document.querySelector('script[type="module"][fs-components-src="dev"]');
+  n ? e = [n] : e = [...document.querySelectorAll(
+      `script[type="module"][src="${import.meta.url}"]`)],
+    window.fsComponents = window.FsComponents = {
+      scripts: e,
+      solutions: {},
+      process: new Set,
+      load: h,
+      push(...s) {
+        for (let [r, c] of s) this.solutions[r]?.loading?.then(c);
+      },
+      destroy() {
+        for (let s in this.solutions) this.solutions[s]?.destroy?.();
+      }
+    },
+    y(),
+    window.fsComponents.push(...o);
+};
+
+y = () => {
+  let [t] = window.fsComponents.scripts,
+    e = (t?.getAttribute("fs-components-installed") || "")?.split(",");
+  if (e.length === 0) {
+    console.error("No Finsweet Components installed in this project.");
+    return;
+  }
+  for (let s of e) h(s);
+};
+
+h = async t => {
+  if (window.fsComponents.process.has(t)) return;
+  window.fsComponents.process.add(t);
+  let o = window.fsComponents.solutions[t] || {};
+  o.loading = new Promise(e => {
+    o.resolve = n => { e(n), delete o.resolve };
+  });
+  try {
+    let { init: e, version: n } = await C(t), { result: s, destroy: r } = await e();
+    return o.version = n, o.destroy = () => {
+      r?.(), window.fsComponents.process.delete(t);
+    }, o.restart = () => (o.destroy?.(), window.fsComponents.load(t)), o.resolve?.(s), s;
+  } catch (e) {
+    console.error(e);
+  }
+};
+
+F();
