@@ -36,7 +36,7 @@ Do not discard existing user changes. If a syntax check fails, leave the change
 uncommitted and report the failure instead of committing broken JavaScript.
 
 The live watcher checks for saved changes every second and writes activity and
-failures to `auto-push.log`.
+failures to `tools/auto-push/auto-push.log`.
 
 Use this stable public script URL:
 

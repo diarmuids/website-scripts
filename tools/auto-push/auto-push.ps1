@@ -4,8 +4,9 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$repo = Split-Path -Parent $MyInvocation.MyCommand.Path
-$log = Join-Path $repo "auto-push.log"
+$toolDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$repo = Split-Path -Parent (Split-Path -Parent $toolDir)
+$log = Join-Path $toolDir "auto-push.log"
 
 function Write-Log {
   param([string]$Message)
