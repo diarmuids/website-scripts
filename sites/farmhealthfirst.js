@@ -185,7 +185,7 @@ $('.text-rich-text.is-blog-buttons').each(function () {
   const pendingVideoKey = 'fhfPendingLearnVideoUrl';
   const cardSelector = '.learn-video_card[data-video-url]';
   const buttonSelector = `${cardSelector} .button`;
-  const formSelector = '.learn_email-gate-popup form';
+  const formSelector = '.learn_email-gate-popup form, .learn-video_email-gate-popup form';
   const emailSelector = 'input[type="email"], input[name="EMAIL"]';
 
   function getStoredEmail() {
