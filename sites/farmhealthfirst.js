@@ -1,4 +1,4 @@
-// Last updated: 2026-07-17 18:25:42
+// Last updated: 2026-07-17 18:26:12
 
 // DOSING LINKS
 $(function () {
@@ -185,6 +185,7 @@ $('.text-rich-text.is-blog-buttons').each(function () {
 document.addEventListener('DOMContentLoaded', function () {
   const cards = Array.from(document.querySelectorAll('.learn-video_card'));
   const stickyTop = 90;
+  const animationLead = 200;
   let ticking = false;
 
   if (!cards.length) return;
@@ -198,7 +199,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       const nextCardTop = cards[index + 1].getBoundingClientRect().top;
-      const animationStart = stickyTop + card.offsetHeight * 0.65;
+      const animationStart = stickyTop + animationLead;
       const progress = Math.min(1, Math.max(0,
         (animationStart - nextCardTop) / (animationStart - stickyTop)
       ));
