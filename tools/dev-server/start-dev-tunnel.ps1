@@ -4,7 +4,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$repo = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
+$repo = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path))
 $server = Join-Path $repo "tools\dev-server\server.js"
 
 if (-not (Get-Command cloudflared -ErrorAction SilentlyContinue)) {
