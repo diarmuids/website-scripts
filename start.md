@@ -5,13 +5,14 @@ immediately after saved changes are present.
 
 When an agent starts in this folder:
 
-1. Check the current Git state with `git status --short --branch`.
-2. If any files are changed, added, deleted, or renamed, review the diff briefly.
-3. For JavaScript changes, run `node --check` on changed `.js` files when Node is available.
-4. Stage all current changes with `git add -A`.
-5. Commit them with a short message that describes the changed site or script.
-6. Push the active branch to `origin`.
-7. Confirm the working tree is clean after the push.
+1. Start the live watcher with `.\start-auto-push.ps1`.
+2. Check the current Git state with `git status --short --branch`.
+3. If any files are changed, added, deleted, or renamed, review the diff briefly.
+4. For JavaScript changes, run `node --check` on changed `.js` files when Node is available.
+5. Stage all current changes with `git add -A`.
+6. Commit them with a short message that describes the changed site or script.
+7. Push the active branch to `origin`.
+8. Confirm the working tree is clean after the push.
 
 Default commit message when no better one is obvious:
 
@@ -23,6 +24,7 @@ Useful command sequence:
 
 ```powershell
 git status --short --branch
+.\start-auto-push.ps1
 node --check .\farmhealthfirst.js
 git add -A
 git commit -m "Update website scripts"
@@ -32,3 +34,5 @@ git status --short --branch
 
 Do not discard existing user changes. If a syntax check fails, report the failure
 instead of committing broken JavaScript.
+
+The live watcher writes activity and failures to `auto-push.log`.

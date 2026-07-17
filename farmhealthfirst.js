@@ -1,5 +1,4 @@
 // DOSING LINKS
-console.log("TEST")
 $('.dosing_link-num').each(function () {
   const $num = $(this);
   const slug = $num.attr('link-slug');
