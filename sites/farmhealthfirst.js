@@ -1,4 +1,4 @@
-// Last updated: 2026-07-17 18:24:07
+// Last updated: 2026-07-17 18:25:42
 
 // DOSING LINKS
 $(function () {
@@ -185,32 +185,11 @@ $('.text-rich-text.is-blog-buttons').each(function () {
 document.addEventListener('DOMContentLoaded', function () {
   const cards = Array.from(document.querySelectorAll('.learn-video_card'));
   const stickyTop = 90;
-  const holdDistance = 240;
-  const fadeDistance = 500;
-  let cardTops = [];
   let ticking = false;
 
   if (!cards.length) return;
 
-  function getNaturalTop(element) {
-    let top = 0;
-
-    while (element) {
-      top += element.offsetTop;
-      element = element.offsetParent;
-    }
-
-    return top;
-  }
-
-  function measure() {
-    cardTops = cards.map(getNaturalTop);
-    update();
-  }
-
   function update() {
-    const scrollTop = window.scrollY || document.documentElement.scrollTop;
-
     cards.forEach(function (card, index) {
       if (index === cards.length - 1) {
         card.style.scale = '1';
@@ -218,9 +197,10 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
-      const fadeStart = cardTops[index] - stickyTop + holdDistance;
+      const nextCardTop = cards[index + 1].getBoundingClientRect().top;
+      const animationStart = stickyTop + card.offsetHeight * 0.65;
       const progress = Math.min(1, Math.max(0,
-        (scrollTop - fadeStart) / fadeDistance
+        (animationStart - nextCardTop) / (animationStart - stickyTop)
       ));
       const easedProgress = progress * progress * (3 - 2 * progress);
 
@@ -242,8 +222,8 @@ document.addEventListener('DOMContentLoaded', function () {
     ticking = true;
     requestAnimationFrame(update);
   }, { passive: true });
-  window.addEventListener('resize', measure);
-  measure();
+  window.addEventListener('resize', update);
+  update();
 });
 
 // LEARN VIDEO EMAIL GATE
