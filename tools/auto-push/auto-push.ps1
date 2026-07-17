@@ -39,6 +39,43 @@ function Get-ChangedCdnFiles {
     }
 }
 
+function Set-LastUpdatedHeaders {
+  param([string[]]$Files)
+
+  $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+  $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+
+  foreach ($file in $Files) {
+    $cdnPath = $file -replace '\\', '/'
+    if ($cdnPath -notlike "sites/*.js" -and $cdnPath -notlike "sites/*.css") {
+      continue
+    }
+
+    $path = Join-Path $repo $file
+    $content = [System.IO.File]::ReadAllText($path)
+    $header = if ($file -like "*.css") {
+      "/* Last updated: $timestamp */"
+    }
+    else {
+      "// Last updated: $timestamp"
+    }
+
+    $updated = if ($content -match '^(?:// Last updated:|/\* Last updated:).*?(?:\*/)?\r?\n(?:\r?\n)?') {
+      [System.Text.RegularExpressions.Regex]::Replace(
+        $content,
+        '^(?:// Last updated:|/\* Last updated:).*?(?:\*/)?\r?\n(?:\r?\n)?',
+        "$header`r`n`r`n",
+        1
+      )
+    }
+    else {
+      "$header`r`n`r`n$content"
+    }
+
+    [System.IO.File]::WriteAllText($path, $updated, $utf8NoBom)
+  }
+}
+
 function Clear-JsDelivrCache {
   param([string[]]$Files)
 
@@ -73,6 +110,7 @@ function Invoke-AutoPush {
     }
 
     $changedCdnFiles = @(Get-ChangedCdnFiles)
+    Set-LastUpdatedHeaders -Files $changedCdnFiles
 
     foreach ($file in $changedCdnFiles) {
       if ($file -like "*.js") {

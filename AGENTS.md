@@ -28,6 +28,8 @@ GitHub/jsDelivr and should be published quickly after local saves.
 
 - The actual worker scripts live in `tools/auto-push/`.
 - The worker checks for saved changes every second.
+- Before publishing, it automatically refreshes the top-of-file local
+  `Last updated` timestamp for each changed file under `sites/`.
 - For changed `.js` files, it runs `node --check` before committing.
 - If checks pass, it stages all current changes, commits them, pushes `HEAD` to
   `origin`, and purges jsDelivr for changed `.js` and `.css` files.
