@@ -32,8 +32,8 @@ git push
 git status --short --branch
 ```
 
-Do not discard existing user changes. If a syntax check fails, report the failure
-instead of committing broken JavaScript.
+Do not discard existing user changes. If a syntax check fails, leave the change
+uncommitted and report the failure instead of committing broken JavaScript.
 
 The live watcher checks for saved changes every second and writes activity and
 failures to `auto-push.log`.
