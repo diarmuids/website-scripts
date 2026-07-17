@@ -1,5 +1,5 @@
 // DOSING LINKS
-//TESTssddddsaa
+console.assert.o
 $(function () {
   $('.dosing_link-num').each(function () {
     const $num = $(this);
