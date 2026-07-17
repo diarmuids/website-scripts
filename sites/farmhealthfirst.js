@@ -1,4 +1,4 @@
-// Last updated: 2026-07-17 18:04:36
+// Last updated: 2026-07-17 18:21:04
 
 // DOSING LINKS
 $(function () {
@@ -179,6 +179,68 @@ $('.text-rich-text.is-blog-buttons').each(function () {
     )
   });
   $rich.replaceWith($group)
+});
+
+// LEARN VIDEO STICKY CARDS
+document.addEventListener('DOMContentLoaded', function () {
+  const cards = Array.from(document.querySelectorAll('.learn-video_card'));
+  const stickyTop = 90;
+  const holdDistance = 180;
+  const fadeDistance = 280;
+  let cardTops = [];
+  let ticking = false;
+
+  if (!cards.length) return;
+
+  function getNaturalTop(element) {
+    let top = 0;
+
+    while (element) {
+      top += element.offsetTop;
+      element = element.offsetParent;
+    }
+
+    return top;
+  }
+
+  function measure() {
+    cardTops = cards.map(getNaturalTop);
+    update();
+  }
+
+  function update() {
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+
+    cards.forEach(function (card, index) {
+      const fadeStart = cardTops[index] - stickyTop + holdDistance;
+      const progress = Math.min(1, Math.max(0,
+        (scrollTop - fadeStart) / fadeDistance
+      ));
+
+      card.style.opacity = String(1 - progress * 0.85);
+      card.style.scale = String(1 - progress * 0.08);
+      card.style.pointerEvents = progress >= 0.98 ? 'none' : '';
+    });
+
+    ticking = false;
+  }
+
+  cards.forEach(function (card, index) {
+    card.style.position = 'sticky';
+    card.style.top = stickyTop + 'px';
+    card.style.zIndex = String(cards.length - index);
+    card.style.transformOrigin = 'center top';
+    card.style.willChange = 'opacity, scale';
+  });
+
+  window.addEventListener('scroll', function () {
+    if (ticking) return;
+
+    ticking = true;
+    requestAnimationFrame(update);
+  }, { passive: true });
+  window.addEventListener('resize', measure);
+  measure();
 });
 
 // LEARN VIDEO EMAIL GATE
