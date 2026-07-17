@@ -1,0 +1,13 @@
+.popup-success-message {
+  display: none;
+}
+
+.global_generic,
+.global_styles,
+.local_styles {
+  display: none;
+}
+
+.w--redirected-checked~.checkbox_label {
+  color: white;
+}
