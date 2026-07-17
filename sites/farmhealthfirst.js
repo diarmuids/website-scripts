@@ -255,15 +255,53 @@ $('.text-rich-text.is-blog-buttons').each(function () {
       return;
     }
 
+    const embedUrl = toVideoEmbedUrl(url);
+
     if (window.jQuery && jQuery.fancybox) {
-      debug('opening with Fancybox', url);
+      debug('opening with Fancybox', embedUrl);
       jQuery.fancybox.open({
-        src: url,
+        src: embedUrl,
         type: 'iframe'
       });
     } else {
-      debug('Fancybox unavailable, opening new tab', url);
-      window.open(url, '_blank', 'noopener');
+      debug('Fancybox unavailable, opening new tab', embedUrl);
+      window.open(embedUrl, '_blank', 'noopener');
+    }
+  }
+
+  function toVideoEmbedUrl(url) {
+    try {
+      const parsed = new URL(url, window.location.href);
+      const host = parsed.hostname.replace(/^www\./, '');
+      let videoId = '';
+
+      if (host === 'youtube.com' || host === 'm.youtube.com') {
+        if (parsed.pathname === '/watch') {
+          videoId = parsed.searchParams.get('v') || '';
+        } else if (parsed.pathname.startsWith('/embed/')) {
+          return parsed.href;
+        } else if (parsed.pathname.startsWith('/shorts/')) {
+          videoId = parsed.pathname.split('/')[2] || '';
+        }
+      } else if (host === 'youtu.be') {
+        videoId = parsed.pathname.slice(1).split('/')[0] || '';
+      }
+
+      if (!videoId) return url;
+
+      const embed = new URL('https://www.youtube.com/embed/' + videoId);
+      const list = parsed.searchParams.get('list');
+      const index = parsed.searchParams.get('index');
+
+      embed.searchParams.set('autoplay', '1');
+      embed.searchParams.set('rel', '0');
+
+      if (list) embed.searchParams.set('list', list);
+      if (index) embed.searchParams.set('index', index);
+
+      return embed.href;
+    } catch (error) {
+      return url;
     }
   }
 
