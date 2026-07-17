@@ -1,5 +1,5 @@
 param(
-  [int]$DebounceSeconds = 3,
+  [int]$DebounceSeconds = 1,
   [string]$CommitMessage = "Auto-publish website scripts"
 )
 
@@ -46,39 +46,9 @@ function Invoke-AutoPush {
   }
 }
 
-Write-Log "Watcher started for $repo"
-
-$watcher = New-Object System.IO.FileSystemWatcher
-$watcher.Path = $repo
-$watcher.IncludeSubdirectories = $false
-$watcher.EnableRaisingEvents = $true
-$watcher.NotifyFilter = [System.IO.NotifyFilters]'FileName, LastWrite, Size'
-
-$lastRun = Get-Date "2000-01-01"
-
-$action = {
-  $name = $Event.SourceEventArgs.Name
-  if ($name -like ".git*" -or $name -eq "auto-push.log") {
-    return
-  }
-
-  $now = Get-Date
-  if (($now - $script:lastRun).TotalSeconds -lt $using:DebounceSeconds) {
-    return
-  }
-
-  $script:lastRun = $now
-  Start-Sleep -Seconds $using:DebounceSeconds
-  Invoke-AutoPush
-}
-
-Register-ObjectEvent $watcher Changed -Action $action | Out-Null
-Register-ObjectEvent $watcher Created -Action $action | Out-Null
-Register-ObjectEvent $watcher Deleted -Action $action | Out-Null
-Register-ObjectEvent $watcher Renamed -Action $action | Out-Null
-
-Invoke-AutoPush
+Write-Log "Polling watcher started for $repo"
 
 while ($true) {
-  Start-Sleep -Seconds 60
+  Invoke-AutoPush
+  Start-Sleep -Seconds $DebounceSeconds
 }
