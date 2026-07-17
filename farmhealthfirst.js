@@ -1,11 +1,14 @@
 // DOSING LINKS
-// TEST
-$('.dosing_link-num').each(function () {
-  const $num = $(this);
-  const slug = $num.attr('link-slug');
+$(function () {
+  $('.dosing_link-num').each(function () {
+    const $num = $(this);
+    const slug = $.trim($num.attr('link-slug') || '');
 
-  // $num.text(String($num.text()).padStart(2, '0'));
-  $num.closest('a').attr('href', '#' + slug);
+    if (!slug) return;
+
+    // $num.text(String($num.text()).padStart(2, '0'));
+    $num.closest('a').attr('href', '#' + slug);
+  });
 });
 
 // SET FILTER VALUES, OPERATORS, NAMES AND UNIQUE IDS
