@@ -1,4 +1,4 @@
-// Last updated: 2026-07-17 18:00:36
+// Last updated: 2026-07-17 18:01:41
 
 // DOSING LINKS
 $(function () {
@@ -327,6 +327,7 @@ $('.text-rich-text.is-blog-buttons').each(function () {
         loop: false,
         arrows: true,
         infobar: true,
+        buttons: ['close'],
         iframe: {
           preload: false
         }
