@@ -1,4 +1,4 @@
-// Last updated: 2026-07-17 18:21:27
+// Last updated: 2026-07-17 18:22:44
 
 // DOSING LINKS
 $(function () {
@@ -185,8 +185,8 @@ $('.text-rich-text.is-blog-buttons').each(function () {
 document.addEventListener('DOMContentLoaded', function () {
   const cards = Array.from(document.querySelectorAll('.learn-video_card'));
   const stickyTop = 90;
-  const holdDistance = 180;
-  const fadeDistance = 280;
+  const holdDistance = 330;
+  const fadeDistance = 500;
   let cardTops = [];
   let ticking = false;
 
@@ -218,6 +218,7 @@ document.addEventListener('DOMContentLoaded', function () {
       ));
 
       card.style.scale = String(1 - progress * 0.2);
+      card.style.opacity = String(1 - progress * 0.25);
     });
 
     ticking = false;
@@ -225,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   cards.forEach(function (card, index) {
     card.style.transformOrigin = 'center top';
-    card.style.willChange = 'scale';
+    card.style.willChange = 'scale, opacity';
   });
 
   window.addEventListener('scroll', function () {
