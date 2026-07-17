@@ -17,6 +17,15 @@ GitHub/jsDelivr and should be published quickly after local saves.
 .\tools\auto-push\ensure-auto-push.ps1
 ```
 
+- Install the login startup keepalive without admin rights:
+
+```powershell
+.\tools\auto-push\install-startup-shortcut.ps1
+```
+
+- The keepalive runs `ensure-auto-push.ps1` once a minute and restarts the
+  watcher if it has exited.
+
 - The actual worker scripts live in `tools/auto-push/`.
 - The worker checks for saved changes every second.
 - For changed `.js` files, it runs `node --check` before committing.
