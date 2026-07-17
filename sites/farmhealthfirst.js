@@ -1,4 +1,4 @@
-// Last updated: 2026-07-17 18:01:41
+// Last updated: 2026-07-17 18:02:47
 
 // DOSING LINKS
 $(function () {
@@ -194,7 +194,10 @@ $('.text-rich-text.is-blog-buttons').each(function () {
   const successSelector = '.w-form-done';
   const failSelector = '.w-form-fail';
   const popupSelector = '.learn_email-gate-popup, .learn-video_email-gate-popup';
+  const videoPositionPrefix = 'fhfVideoPosition:';
   let openedAfterSuccess = false;
+  let videoTrackingTimer = null;
+  const lastSavedPositions = {};
 
   function debug(message, data) {
     if (data === undefined) {
@@ -297,6 +300,76 @@ $('.text-rich-text.is-blog-buttons').each(function () {
     }
   }
 
+  function getYouTubeVideoId(url) {
+    try {
+      const parsed = new URL(url, window.location.href);
+      const host = parsed.hostname.replace(/^www\./, '');
+
+      if (host === 'youtu.be') return parsed.pathname.slice(1).split('/')[0] || '';
+      if (parsed.pathname === '/watch') return parsed.searchParams.get('v') || '';
+      if (parsed.pathname.startsWith('/embed/') || parsed.pathname.startsWith('/shorts/')) {
+        return parsed.pathname.split('/')[2] || '';
+      }
+    } catch (error) {
+      return '';
+    }
+
+    return '';
+  }
+
+  function getSavedVideoPosition(videoId) {
+    if (!videoId) return 0;
+
+    try {
+      return Math.max(0, Number(localStorage.getItem(videoPositionPrefix + videoId)) || 0);
+    } catch (error) {
+      return 0;
+    }
+  }
+
+  function saveVideoPosition(videoId, seconds, duration) {
+    if (!videoId || !Number.isFinite(seconds)) return;
+
+    const position = duration && duration - seconds <= 5 ? 0 : Math.max(0, Math.floor(seconds));
+    if (lastSavedPositions[videoId] === position) return;
+
+    lastSavedPositions[videoId] = position;
+
+    try {
+      localStorage.setItem(videoPositionPrefix + videoId, String(position));
+    } catch (error) {
+      debug('video position could not be stored', error);
+    }
+  }
+
+  function requestVideoPosition() {
+    const iframe = document.querySelector('.fancybox-slide--current iframe');
+
+    if (!iframe || !iframe.contentWindow) return;
+
+    iframe.contentWindow.postMessage(JSON.stringify({
+      event: 'listening',
+      id: 'fhf-video-gate'
+    }), 'https://www.youtube.com');
+    iframe.contentWindow.postMessage(JSON.stringify({
+      event: 'command',
+      func: 'getCurrentTime',
+      args: []
+    }), 'https://www.youtube.com');
+  }
+
+  function startVideoTracking() {
+    clearInterval(videoTrackingTimer);
+    requestVideoPosition();
+    videoTrackingTimer = setInterval(requestVideoPosition, 1000);
+  }
+
+  function stopVideoTracking() {
+    requestVideoPosition();
+    clearInterval(videoTrackingTimer);
+    videoTrackingTimer = null;
+  }
+
   function openVideo(url, requestedIndex) {
     if (!url) {
       debug('open skipped because URL is empty');
@@ -330,7 +403,10 @@ $('.text-rich-text.is-blog-buttons').each(function () {
         buttons: ['close'],
         iframe: {
           preload: false
-        }
+        },
+        afterShow: startVideoTracking,
+        beforeClose: stopVideoTracking,
+        afterClose: stopVideoTracking
       }, startIndex);
     } else {
       debug('Fancybox unavailable, opening new tab', embedUrl);
@@ -361,13 +437,17 @@ $('.text-rich-text.is-blog-buttons').each(function () {
       const embed = new URL('https://www.youtube.com/embed/' + videoId);
       const list = parsed.searchParams.get('list');
       const index = parsed.searchParams.get('index');
+      const savedPosition = getSavedVideoPosition(videoId);
 
       embed.searchParams.set('autoplay', '1');
+      embed.searchParams.set('enablejsapi', '1');
+      embed.searchParams.set('origin', window.location.origin);
       embed.searchParams.set('playsinline', '1');
       embed.searchParams.set('rel', '0');
 
       if (list) embed.searchParams.set('list', list);
       if (index) embed.searchParams.set('index', index);
+      if (savedPosition > 0) embed.searchParams.set('start', String(savedPosition));
 
       return embed.href;
     } catch (error) {
@@ -382,6 +462,29 @@ $('.text-rich-text.is-blog-buttons').each(function () {
       getComputedStyle(element).visibility !== 'hidden'
     );
   }
+
+  window.addEventListener('message', function (event) {
+    if (!/^https:\/\/(?:www\.)?youtube\.com$/.test(event.origin)) return;
+
+    let message = event.data;
+
+    try {
+      if (typeof message === 'string') message = JSON.parse(message);
+    } catch (error) {
+      return;
+    }
+
+    const info = message && message.info;
+    if (!info || !Number.isFinite(info.currentTime)) return;
+
+    const iframe = Array.from(document.querySelectorAll('.fancybox-iframe, .fancybox-slide iframe'))
+      .find(function (candidate) {
+        return candidate.contentWindow === event.source;
+      });
+    const videoId = iframe ? getYouTubeVideoId(iframe.src) : '';
+
+    saveVideoPosition(videoId, info.currentTime, info.duration);
+  });
 
   function completeGate(form) {
     const videoUrl = getPendingVideoUrl();
