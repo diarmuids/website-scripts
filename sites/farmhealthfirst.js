@@ -1,4 +1,4 @@
-// Last updated: 2026-07-17 17:50:50
+// Last updated: 2026-07-17 17:52:56
 
 // DOSING LINKS
 $(function () {
@@ -325,7 +325,10 @@ $('.text-rich-text.is-blog-buttons').each(function () {
       jQuery.fancybox.open(items, {
         loop: false,
         arrows: true,
-        infobar: true
+        infobar: true,
+        iframe: {
+          preload: false
+        }
       }, startIndex);
     } else {
       debug('Fancybox unavailable, opening new tab', embedUrl);
@@ -358,6 +361,7 @@ $('.text-rich-text.is-blog-buttons').each(function () {
       const index = parsed.searchParams.get('index');
 
       embed.searchParams.set('autoplay', '1');
+      embed.searchParams.set('playsinline', '1');
       embed.searchParams.set('rel', '0');
 
       if (list) embed.searchParams.set('list', list);
