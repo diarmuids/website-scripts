@@ -187,6 +187,8 @@ $('.text-rich-text.is-blog-buttons').each(function () {
   const buttonSelector = `${cardSelector} .button`;
   const formSelector = '.learn_email-gate-popup form, .learn-video_email-gate-popup form';
   const emailSelector = 'input[type="email"], input[name="EMAIL"]';
+  const successSelector = '.w-form-done';
+  let openedAfterSuccess = false;
 
   function getStoredEmail() {
     try {
@@ -246,6 +248,65 @@ $('.text-rich-text.is-blog-buttons').each(function () {
     }
   }
 
+  function isVisible(element) {
+    return !!(
+      element &&
+      element.offsetParent !== null &&
+      getComputedStyle(element).display !== 'none' &&
+      getComputedStyle(element).visibility !== 'hidden'
+    );
+  }
+
+  function completeGate(form) {
+    const videoUrl = getPendingVideoUrl();
+
+    if (!form || !videoUrl || openedAfterSuccess) return;
+
+    const emailInput = form.querySelector(emailSelector);
+    const email = emailInput && emailInput.value.trim();
+
+    if (email) storeEmail(email);
+
+    openedAfterSuccess = true;
+    clearPendingVideoUrl();
+
+    setTimeout(function () {
+      openVideo(videoUrl);
+      openedAfterSuccess = false;
+    }, 100);
+  }
+
+  function successIsVisibleForForm(form) {
+    const formWrap = form && form.closest('.w-form');
+    const success = formWrap && formWrap.querySelector(successSelector);
+
+    return isVisible(success);
+  }
+
+  function watchForSuccess(form) {
+    const formWrap = form && form.closest('.w-form');
+    const success = formWrap && formWrap.querySelector(successSelector);
+
+    if (!formWrap || !success) return;
+
+    if (successIsVisibleForForm(form)) {
+      completeGate(form);
+      return;
+    }
+
+    const observer = new MutationObserver(function () {
+      if (!successIsVisibleForForm(form)) return;
+
+      observer.disconnect();
+      completeGate(form);
+    });
+
+    observer.observe(success, {
+      attributes: true,
+      attributeFilter: ['class', 'style', 'hidden']
+    });
+  }
+
   document.addEventListener('click', function (event) {
     const button = event.target.closest(buttonSelector);
 
@@ -276,13 +337,16 @@ $('.text-rich-text.is-blog-buttons').each(function () {
 
     if (!email || !videoUrl || !form.checkValidity()) return;
 
-    storeEmail(email);
-    clearPendingVideoUrl();
+    watchForSuccess(form);
 
     setTimeout(function () {
-      openVideo(videoUrl);
-    }, 100);
+      if (successIsVisibleForForm(form)) completeGate(form);
+    }, 500);
   }, true);
+
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll(formSelector).forEach(watchForSuccess);
+  });
 })();
 
 // CLEAR SEARCH INPUT
