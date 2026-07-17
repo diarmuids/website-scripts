@@ -1,3 +1,5 @@
+// Last updated: 2026-07-17 17:45:37 +01:00
+
 $(document).ready(function () {
   $('[data-field="duration"]').hide().find('input, select, textarea').prop('required', false);
   $('input[name="Type"]').on('change', function () {

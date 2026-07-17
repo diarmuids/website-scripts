@@ -1,3 +1,5 @@
+// Last updated: 2026-07-17 17:45:37 +01:00
+
 (function () {
   const PRICE_MAX = 100000;
   const DISTANCE_MAX = 200;
