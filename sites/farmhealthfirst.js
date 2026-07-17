@@ -1,4 +1,4 @@
-// Last updated: 2026-07-17 18:23:07
+// Last updated: 2026-07-17 18:23:39
 
 // DOSING LINKS
 $(function () {
@@ -212,6 +212,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const scrollTop = window.scrollY || document.documentElement.scrollTop;
 
     cards.forEach(function (card, index) {
+      if (index === cards.length - 1) {
+        card.style.scale = '1';
+        card.style.opacity = '1';
+        return;
+      }
+
       const fadeStart = cardTops[index] - stickyTop + holdDistance;
       const progress = Math.min(1, Math.max(0,
         (scrollTop - fadeStart) / fadeDistance
@@ -225,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function () {
     ticking = false;
   }
 
-  cards.forEach(function (card, index) {
+  cards.slice(0, -1).forEach(function (card) {
     card.style.transformOrigin = 'center top';
     card.style.willChange = 'scale, opacity';
   });
