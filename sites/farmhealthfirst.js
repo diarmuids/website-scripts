@@ -1,4 +1,5 @@
 // DOSING LINKS
+
 $(function () {
   $('.dosing_link-num').each(function () {
     const $num = $(this);
