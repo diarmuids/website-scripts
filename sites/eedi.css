@@ -1,0 +1,81 @@
+  /* For Chrome, Safari, and Edge */
+  /*input[type="number"] {*/
+  /*  -moz-appearance: textfield;*/
+  /*}*/
+
+  /*input[type="number"]::-webkit-outer-spin-button,*/
+  /*input[type="number"]::-webkit-inner-spin-button {*/
+  /*  -webkit-: none;*/
+  /*  margin: 0;*/
+  /*}*/
+
+  /*.nav_shop-dd_inner {*/
+  /*  display: none;*/
+  /*  border-bottom: 0px !important;*/
+  /*}*/
+
+  /*.prod-list_link:hover .prod-list_image {*/
+  /*  -webkit-transform: scale(1.06);*/
+  /*  -moz-transform: scale(1.06);*/
+  /*  -ms-transform: scale(1.06);*/
+  /*  transform: scale(1.06);*/
+  /*}*/
+
+  /*.nav_link {*/
+  /*  color: #ffffff;*/
+  /*}*/
+
+  /*.nav_component.is-open .nav_link,*/
+  /*.nav_component.is-sticky .nav_link {*/
+  /*  color: var(--grey-1);*/
+  /*}*/
+
+  /*.nav_main,*/
+  /*.nav_menu-button {*/
+  /*  background-color: transparent;*/
+  /*}*/
+
+  /*.nav_component.is-open .nav_main,*/
+  /*.nav_component.is-sticky .nav_main,*/
+  /*.nav_component.is-open .nav_menu-button,*/
+  /*.nav_component.is-sticky .nav_menu-button {*/
+  /*  background-color: #ffffff;*/
+  /*}*/
+
+  /*.nav_logo.is-dark,*/
+  /*.nav_icon.is-cart-dark,*/
+  /*.nav_menu-lottie.is-dark {*/
+  /*  display: none;*/
+  /*}*/
+
+  /*.nav_component.is-open .nav_logo.is-dark,*/
+  /*.nav_component.is-sticky .nav_logo.is-dark,*/
+  /*.nav_component.is-open .nav_icon.is-cart-dark,*/
+  /*.nav_component.is-sticky .nav_icon.is-cart-dark,*/
+  /*.nav_component.is-open .nav_menu-lottie.is-dark,*/
+  /*.nav_component.is-sticky .nav_menu-lottie.is-dark {*/
+  /*  display: block;*/
+  /*}*/
+
+  /*.nav_logo.is-white,*/
+  /*.nav_icon.is-cart-white,*/
+  /*.nav_menu-lottie.is-white {*/
+  /*  display: block;*/
+  /*}*/
+
+  /*.nav_component.is-open .nav_logo.is-white,*/
+  /*.nav_component.is-sticky .nav_logo.is-white,*/
+  /*.nav_component.is-open .nav_icon.is-cart-white,*/
+  /*.nav_component.is-sticky .nav_icon.is-cart-white,*/
+  /*.nav_component.is-open .nav_menu-lottie.is-white,*/
+  /*.nav_component.is-sticky .nav_menu-lottie.is-white {*/
+  /*  display: none;*/
+  /*}*/
+
+  /*---------------------------------------------*/
+  /*-------------------OTHER---------------------*/
+  /*---------------------------------------------*/
+
+  /*.home-header_col:hover .home-header_blur {*/
+  /*  opacity: 1*/
+  /*}*/
