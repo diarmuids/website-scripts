@@ -191,6 +191,15 @@ $('.text-rich-text.is-blog-buttons').each(function () {
   const failSelector = '.w-form-fail';
   let openedAfterSuccess = false;
 
+  function debug(message, data) {
+    if (data === undefined) {
+      console.log('[FHF video gate]', message);
+      return;
+    }
+
+    console.log('[FHF video gate]', message, data);
+  }
+
   function getStoredEmail() {
     try {
       return localStorage.getItem(storageKey) || '';
@@ -226,6 +235,8 @@ $('.text-rich-text.is-blog-buttons').each(function () {
     } catch (error) {
       window[pendingVideoKey] = url;
     }
+
+    debug('pending video set', url);
   }
 
   function clearPendingVideoUrl() {
@@ -234,17 +245,24 @@ $('.text-rich-text.is-blog-buttons').each(function () {
     } catch (error) {
       window[pendingVideoKey] = '';
     }
+
+    debug('pending video cleared');
   }
 
   function openVideo(url) {
-    if (!url) return;
+    if (!url) {
+      debug('open skipped because URL is empty');
+      return;
+    }
 
     if (window.jQuery && jQuery.fancybox) {
+      debug('opening with Fancybox', url);
       jQuery.fancybox.open({
         src: url,
         type: 'iframe'
       });
     } else {
+      debug('Fancybox unavailable, opening new tab', url);
       window.open(url, '_blank', 'noopener');
     }
   }
@@ -260,12 +278,23 @@ $('.text-rich-text.is-blog-buttons').each(function () {
   function completeGate(form) {
     const videoUrl = getPendingVideoUrl();
 
+    debug('completeGate called', {
+      hasForm: !!form,
+      videoUrl: videoUrl,
+      openedAfterSuccess: openedAfterSuccess
+    });
+
     if (!form || !videoUrl || openedAfterSuccess) return;
 
     const emailInput = form.querySelector(emailSelector);
     const email = emailInput && emailInput.value.trim();
 
-    if (email) storeEmail(email);
+    if (email) {
+      storeEmail(email);
+      debug('email stored');
+    } else {
+      debug('email missing at completion');
+    }
 
     openedAfterSuccess = true;
     clearPendingVideoUrl();
@@ -294,17 +323,30 @@ $('.text-rich-text.is-blog-buttons').each(function () {
     const formWrap = form && form.closest('.w-form');
     const success = formWrap && formWrap.querySelector(successSelector);
 
+    debug('watchForSuccess called', {
+      hasFormWrap: !!formWrap,
+      hasSuccess: !!success,
+      successVisible: successIsVisibleForForm(form)
+    });
+
     if (!formWrap || !success) return;
 
     if (successIsVisibleForForm(form)) {
+      debug('success already visible');
       completeGate(form);
       return;
     }
 
     const observer = new MutationObserver(function () {
+      debug('form mutation observed', {
+        successVisible: successIsVisibleForForm(form),
+        failureVisible: failureIsVisibleForForm(form)
+      });
+
       if (!successIsVisibleForForm(form)) return;
 
       observer.disconnect();
+      debug('success became visible');
       completeGate(form);
     });
 
@@ -323,6 +365,12 @@ $('.text-rich-text.is-blog-buttons').each(function () {
 
     const card = button.closest(cardSelector);
     const videoUrl = card && card.getAttribute('data-video-url');
+
+    debug('watch button clicked', {
+      hasCard: !!card,
+      videoUrl: videoUrl,
+      hasStoredEmail: !!getStoredEmail()
+    });
 
     if (!videoUrl) return;
 
@@ -344,22 +392,46 @@ $('.text-rich-text.is-blog-buttons').each(function () {
     const email = emailInput && emailInput.value.trim();
     const videoUrl = getPendingVideoUrl();
 
+    debug('form submit captured', {
+      emailPresent: !!email,
+      videoUrl: videoUrl,
+      valid: form.checkValidity()
+    });
+
     if (!email || !videoUrl || !form.checkValidity()) return;
 
     watchForSuccess(form);
 
     setTimeout(function () {
+      debug('500ms success check', {
+        successVisible: successIsVisibleForForm(form),
+        failureVisible: failureIsVisibleForForm(form)
+      });
+
       if (successIsVisibleForForm(form)) completeGate(form);
     }, 500);
 
     setTimeout(function () {
+      debug('2500ms fallback check', {
+        successVisible: successIsVisibleForForm(form),
+        failureVisible: failureIsVisibleForForm(form)
+      });
+
       if (successIsVisibleForForm(form) || failureIsVisibleForForm(form)) return;
 
+      debug('no success or failure visible, using fallback completion');
       completeGate(form);
     }, 2500);
   }, true);
 
   document.addEventListener('DOMContentLoaded', function () {
+    debug('DOMContentLoaded setup', {
+      formCount: document.querySelectorAll(formSelector).length,
+      cardCount: document.querySelectorAll(cardSelector).length,
+      fancyboxAvailable: !!(window.jQuery && jQuery.fancybox),
+      storedEmailPresent: !!getStoredEmail()
+    });
+
     document.querySelectorAll(formSelector).forEach(watchForSuccess);
   });
 })();
