@@ -1,4 +1,4 @@
-// Last updated: 2026-07-17 17:45:37 +01:00
+// Last updated: 2026-07-17 17:45:37
 
 // // HIDE NAV ON FILLOUT FORM VALIDATION
 // var position1 = $(window).scrollTop(); // Initial scroll position
