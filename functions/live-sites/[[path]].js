@@ -15,7 +15,7 @@ export async function onRequest(context) {
     return new Response('Not found', { status: 404 });
   }
 
-  const rawUrl = REPO_RAW_BASE + path;
+  const rawUrl = REPO_RAW_BASE + path + '?t=' + Date.now();
   const response = await fetch(rawUrl, {
     cf: { cacheTtl: 0, cacheEverything: false },
     headers: {
