@@ -30,12 +30,18 @@ function Clear-JsDelivrCache {
     $cdnPath = $file -replace '\\', '/'
     $purgeUrl = "https://purge.jsdelivr.net/gh/diarmuids/website-scripts@main/$cdnPath"
 
-    try {
-      Invoke-WebRequest -UseBasicParsing -Uri $purgeUrl | Out-Null
-      Write-Log "Purged jsDelivr cache: $cdnPath"
-    }
-    catch {
-      Write-Log "jsDelivr purge failed for $cdnPath`: $($_.Exception.Message)"
+    for ($attempt = 1; $attempt -le 3; $attempt++) {
+      if ($attempt -gt 1) {
+        Start-Sleep -Seconds (2 * $attempt)
+      }
+
+      try {
+        $response = Invoke-WebRequest -UseBasicParsing -Uri $purgeUrl
+        Write-Log "Purged jsDelivr cache: $cdnPath (attempt $attempt, status $($response.StatusCode))"
+      }
+      catch {
+        Write-Log "jsDelivr purge failed for $cdnPath (attempt $attempt): $($_.Exception.Message)"
+      }
     }
   }
 }
