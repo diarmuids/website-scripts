@@ -179,6 +179,112 @@ $('.text-rich-text.is-blog-buttons').each(function () {
   $rich.replaceWith($group)
 });
 
+// LEARN VIDEO EMAIL GATE
+(function () {
+  const storageKey = 'fhfLearnVideoEmail';
+  const pendingVideoKey = 'fhfPendingLearnVideoUrl';
+  const cardSelector = '.learn-video_card[data-video-url]';
+  const buttonSelector = `${cardSelector} .button`;
+  const formSelector = '.learn_email-gate-popup form';
+  const emailSelector = 'input[type="email"], input[name="EMAIL"]';
+
+  function getStoredEmail() {
+    try {
+      return localStorage.getItem(storageKey) || '';
+    } catch (error) {
+      const match = document.cookie.match(
+        new RegExp('(?:^|; )' + storageKey + '=([^;]*)')
+      );
+
+      return match ? decodeURIComponent(match[1]) : '';
+    }
+  }
+
+  function storeEmail(email) {
+    try {
+      localStorage.setItem(storageKey, email);
+    } catch (error) {
+      document.cookie = storageKey + '=' + encodeURIComponent(email) +
+        '; max-age=315360000; path=/; SameSite=Lax';
+    }
+  }
+
+  function getPendingVideoUrl() {
+    try {
+      return sessionStorage.getItem(pendingVideoKey) || '';
+    } catch (error) {
+      return window[pendingVideoKey] || '';
+    }
+  }
+
+  function setPendingVideoUrl(url) {
+    try {
+      sessionStorage.setItem(pendingVideoKey, url);
+    } catch (error) {
+      window[pendingVideoKey] = url;
+    }
+  }
+
+  function clearPendingVideoUrl() {
+    try {
+      sessionStorage.removeItem(pendingVideoKey);
+    } catch (error) {
+      window[pendingVideoKey] = '';
+    }
+  }
+
+  function openVideo(url) {
+    if (!url) return;
+
+    if (window.jQuery && jQuery.fancybox) {
+      jQuery.fancybox.open({
+        src: url,
+        type: 'iframe'
+      });
+    } else {
+      window.open(url, '_blank', 'noopener');
+    }
+  }
+
+  document.addEventListener('click', function (event) {
+    const button = event.target.closest(buttonSelector);
+
+    if (!button) return;
+
+    const card = button.closest(cardSelector);
+    const videoUrl = card && card.getAttribute('data-video-url');
+
+    if (!videoUrl) return;
+
+    setPendingVideoUrl(videoUrl);
+
+    if (!getStoredEmail()) return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    openVideo(videoUrl);
+  }, true);
+
+  document.addEventListener('submit', function (event) {
+    const form = event.target;
+
+    if (!form.matches(formSelector)) return;
+
+    const emailInput = form.querySelector(emailSelector);
+    const email = emailInput && emailInput.value.trim();
+    const videoUrl = getPendingVideoUrl();
+
+    if (!email || !videoUrl || !form.checkValidity()) return;
+
+    storeEmail(email);
+    clearPendingVideoUrl();
+
+    setTimeout(function () {
+      openVideo(videoUrl);
+    }, 100);
+  }, true);
+})();
+
 // CLEAR SEARCH INPUT
 $(function () {
   const $search = $('#field');
