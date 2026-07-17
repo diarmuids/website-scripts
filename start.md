@@ -37,3 +37,12 @@ uncommitted and report the failure instead of committing broken JavaScript.
 
 The live watcher checks for saved changes every second and writes activity and
 failures to `auto-push.log`.
+
+Use this stable public script URL:
+
+```html
+<script src="https://cdn.jsdelivr.net/gh/diarmuids/website-scripts@main/farmhealthfirst.js"></script>
+```
+
+The watcher purges jsDelivr after changed JavaScript files are pushed, so the URL
+does not need a manual version parameter.

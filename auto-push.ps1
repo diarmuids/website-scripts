@@ -19,6 +19,23 @@ function Get-ChangedJsFiles {
     Where-Object { $_ -like "*.js" -and (Test-Path (Join-Path $repo $_)) }
 }
 
+function Clear-JsDelivrCache {
+  param([string[]]$Files)
+
+  foreach ($file in $Files) {
+    $cdnPath = $file -replace '\\', '/'
+    $purgeUrl = "https://purge.jsdelivr.net/gh/diarmuids/website-scripts@main/$cdnPath"
+
+    try {
+      Invoke-WebRequest -UseBasicParsing -Uri $purgeUrl | Out-Null
+      Write-Log "Purged jsDelivr cache: $cdnPath"
+    }
+    catch {
+      Write-Log "jsDelivr purge failed for $cdnPath`: $($_.Exception.Message)"
+    }
+  }
+}
+
 function Invoke-AutoPush {
   try {
     $status = git -C $repo status --porcelain
@@ -26,7 +43,9 @@ function Invoke-AutoPush {
       return
     }
 
-    foreach ($file in Get-ChangedJsFiles) {
+    $changedJsFiles = @(Get-ChangedJsFiles)
+
+    foreach ($file in $changedJsFiles) {
       $path = Join-Path $repo $file
       node --check $path | Out-Null
     }
@@ -39,6 +58,7 @@ function Invoke-AutoPush {
 
     git -C $repo commit -m $CommitMessage | Out-Null
     git -C $repo push origin HEAD | Out-Null
+    Clear-JsDelivrCache -Files $changedJsFiles
     Write-Log "Committed and pushed: $($pending -join ', ')"
   }
   catch {
