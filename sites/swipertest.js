@@ -71,6 +71,60 @@ $('.swiper').on('click', '.swiper-slide-prev', function () {
 
 
 
+const initFsComponents = async e => {
+  const s = window?.finsweetComponentsConfigLoading,
+    i = document?.querySelector("script[fs-components-src]"); if (void 0 !== import.meta && !
+      i && !s) {
+    document?.querySelector(
+      'script[finsweet="components"][async][type="module"]'); const s = await import(import.meta
+        .url),
+        i = Object.keys(s) || []; return new Promise(((s, t) => {
+          const n = document
+            .createElement("script");
+          n.src = e, n.type = "module", n.async = !0, n.setAttribute("fs-components-src",
+            import.meta.url), n.setAttribute("fs-components-installed", i?.join(",")), n
+              .onload = () => s(), n.onerror = () => t(new Error("Failed to load script")),
+            document.head.appendChild(n)
+        }))
+  }
+};
+initFsComponents("https://slater.app/8685/19163.js");
+export const slider = {
+  "fs-slider-instance='fs-slider'": {
+    slideActiveClass: "is-slide-active",
+    slideNextClass: "is-slide-next", slidePrevClass: "is-slide-previous", direction: "horizontal",
+    loop: !0, autoHeight: !0, allowTouchMove: !0, centeredSlides: !0, slideToClickedSlide: !0,
+    initialSlide: 0, speed: 300, followFinger: !0, keyboard: !0, mousewheel: !0, effect: "slide",
+    pagination: {
+      el: "[fs-slider-instance='fs-slider'] [fs-slider-element='pagination']",
+      type: "bullets", bulletElement: "div", bulletActiveClass: "is-bullet-active", clickable: !
+        0
+    },
+    navigation: {
+      prevEl: "[fs-slider-instance='fs-slider'] [fs-slider-element='previous']",
+      nextEl: "[fs-slider-instance='fs-slider'] [fs-slider-element='next']", hideOnClick: !1,
+      disabledClass: "is-nav-disabled"
+    }, autoplay: {
+      delay: 3050, disableOnInteraction: !0,
+      stopOnLastSlide: !1, reverseDirection: !1, pauseOnMouseEnter: !1
+    },
+    scrollbar: {
+      el: "[fs-slider-instance='fs-slider'] [fs-slider-element='scrollbar']",
+      draggable: !0, hide: !1, snapOnRelease: !1
+    }, breakpoints: {
+      320: {
+        slidesPerView: 1,
+        slidesPerGroup: 1, spaceBetween: 16
+      }, 991: {
+        slidesPerView: 3, slidesPerGroup: 1,
+        spaceBetween: 16
+      }
+    }
+  }
+};
+
+
+//
 
 
 import { a as d } from "./dist/chunk-J7NTLVPZ.js";
