@@ -58,5 +58,8 @@ jsDelivr after JavaScript and CSS pushes.
 
 - Keep site scripts and stylesheets under `sites/`.
 - Keep automation and helper scripts under `tools/`.
+- For every edited site `.js` or `.css` file, keep a top-of-file comment with
+  the exact local last-updated date and time, followed by one blank line before
+  the file content.
 - Preserve user changes; never discard local edits to make a commit cleaner.
 - If a syntax check fails, leave the change uncommitted and report the failure.

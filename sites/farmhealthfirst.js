@@ -1,3 +1,5 @@
+// Last updated: 2026-07-17 17:45:10 +01:00
+
 // DOSING LINKS
 $(function () {
   $('.dosing_link-num').each(function () {
