@@ -7,6 +7,22 @@ $ErrorActionPreference = "Stop"
 $toolDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repo = Split-Path -Parent (Split-Path -Parent $toolDir)
 $log = Join-Path $toolDir "auto-push.log"
+$mutexName = "Global\WebsiteScriptsAutoPush-$($repo.ToLowerInvariant().GetHashCode())"
+$mutex = New-Object System.Threading.Mutex($false, $mutexName)
+$hasMutex = $false
+
+try {
+  $hasMutex = $mutex.WaitOne(0)
+}
+catch {
+  $hasMutex = $false
+}
+
+if (-not $hasMutex) {
+  $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+  "$timestamp Auto-push watcher already running for $repo; exiting duplicate process." | Add-Content -Path $log
+  exit 0
+}
 
 function Write-Log {
   param([string]$Message)
@@ -30,18 +46,21 @@ function Clear-JsDelivrCache {
     $cdnPath = $file -replace '\\', '/'
     $purgeUrl = "https://purge.jsdelivr.net/gh/diarmuids/website-scripts@main/$cdnPath"
 
-    for ($attempt = 1; $attempt -le 3; $attempt++) {
-      if ($attempt -gt 1) {
-        Start-Sleep -Seconds (2 * $attempt)
-      }
+    try {
+      $response = Invoke-WebRequest -UseBasicParsing -Uri $purgeUrl
+      $purge = $response.Content | ConvertFrom-Json
+      $path = "/gh/diarmuids/website-scripts@main/$cdnPath"
+      $pathStatus = $purge.paths.$path
 
-      try {
-        $response = Invoke-WebRequest -UseBasicParsing -Uri $purgeUrl
-        Write-Log "Purged jsDelivr cache: $cdnPath (attempt $attempt, status $($response.StatusCode))"
+      if ($pathStatus -and $pathStatus.throttled) {
+        Write-Log "jsDelivr purge throttled for $cdnPath; reset in $($pathStatus.throttlingReset) seconds."
       }
-      catch {
-        Write-Log "jsDelivr purge failed for $cdnPath (attempt $attempt): $($_.Exception.Message)"
+      else {
+        Write-Log "Purged jsDelivr cache: $cdnPath (status $($response.StatusCode))"
       }
+    }
+    catch {
+      Write-Log "jsDelivr purge failed for $cdnPath`: $($_.Exception.Message)"
     }
   }
 }
