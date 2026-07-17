@@ -14,10 +14,13 @@ function Write-Log {
   "$timestamp $Message" | Add-Content -Path $log
 }
 
-function Get-ChangedJsFiles {
+function Get-ChangedCdnFiles {
   git -C $repo status --porcelain |
     ForEach-Object { $_.Substring(3) } |
-    Where-Object { $_ -like "*.js" -and (Test-Path (Join-Path $repo $_)) }
+    Where-Object {
+      ($_ -like "*.js" -or $_ -like "*.css") -and
+      (Test-Path (Join-Path $repo $_))
+    }
 }
 
 function Clear-JsDelivrCache {
@@ -44,11 +47,13 @@ function Invoke-AutoPush {
       return
     }
 
-    $changedJsFiles = @(Get-ChangedJsFiles)
+    $changedCdnFiles = @(Get-ChangedCdnFiles)
 
-    foreach ($file in $changedJsFiles) {
-      $path = Join-Path $repo $file
-      node --check $path | Out-Null
+    foreach ($file in $changedCdnFiles) {
+      if ($file -like "*.js") {
+        $path = Join-Path $repo $file
+        node --check $path | Out-Null
+      }
     }
 
     git -C $repo add -A | Out-Null
@@ -59,7 +64,7 @@ function Invoke-AutoPush {
 
     git -C $repo commit -m $CommitMessage | Out-Null
     git -C $repo push origin HEAD | Out-Null
-    Clear-JsDelivrCache -Files $changedJsFiles
+    Clear-JsDelivrCache -Files $changedCdnFiles
     Write-Log "Committed and pushed: $($pending -join ', ')"
   }
   catch {

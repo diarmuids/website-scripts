@@ -41,8 +41,8 @@ failures to `tools/auto-push/auto-push.log`.
 Use this stable public script URL:
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/diarmuids/website-scripts@main/farmhealthfirst.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/diarmuids/website-scripts@main/sites/farmhealthfirst.js"></script>
 ```
 
-The watcher purges jsDelivr after changed JavaScript files are pushed, so the URL
-does not need a manual version parameter.
+The watcher purges jsDelivr after changed JavaScript and CSS files are pushed,
+so the URL does not need a manual version parameter.
