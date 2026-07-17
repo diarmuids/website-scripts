@@ -19,15 +19,23 @@ cloudflared tunnel login
 Write-Host "Creating tunnel: $TunnelName"
 cloudflared tunnel create $TunnelName
 
+$tunnels = cloudflared tunnel list --output json | ConvertFrom-Json
+$tunnel = $tunnels | Where-Object { $_.name -eq $TunnelName } | Select-Object -First 1
+
+if (-not $tunnel) {
+  throw "Could not find created tunnel named $TunnelName."
+}
+
 Write-Host "Routing $Hostname to tunnel: $TunnelName"
 cloudflared tunnel route dns $TunnelName $Hostname
 
 $cloudflaredDir = Join-Path $env:USERPROFILE ".cloudflared"
 $configPath = Join-Path $cloudflaredDir "website-scripts-dev.yml"
+$credentialsPath = Join-Path $cloudflaredDir "$($tunnel.id).json"
 
 @"
-tunnel: $TunnelName
-credentials-file: $cloudflaredDir\$TunnelName.json
+tunnel: $($tunnel.id)
+credentials-file: $credentialsPath
 
 ingress:
   - hostname: $Hostname
