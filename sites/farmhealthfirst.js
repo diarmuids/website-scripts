@@ -188,6 +188,7 @@ $('.text-rich-text.is-blog-buttons').each(function () {
   const formSelector = '.learn_email-gate-popup form, .learn-video_email-gate-popup form';
   const emailSelector = 'input[type="email"], input[name="EMAIL"]';
   const successSelector = '.w-form-done';
+  const failSelector = '.w-form-fail';
   let openedAfterSuccess = false;
 
   function getStoredEmail() {
@@ -251,7 +252,6 @@ $('.text-rich-text.is-blog-buttons').each(function () {
   function isVisible(element) {
     return !!(
       element &&
-      element.offsetParent !== null &&
       getComputedStyle(element).display !== 'none' &&
       getComputedStyle(element).visibility !== 'hidden'
     );
@@ -283,6 +283,13 @@ $('.text-rich-text.is-blog-buttons').each(function () {
     return isVisible(success);
   }
 
+  function failureIsVisibleForForm(form) {
+    const formWrap = form && form.closest('.w-form');
+    const failure = formWrap && formWrap.querySelector(failSelector);
+
+    return isVisible(failure);
+  }
+
   function watchForSuccess(form) {
     const formWrap = form && form.closest('.w-form');
     const success = formWrap && formWrap.querySelector(successSelector);
@@ -301,8 +308,10 @@ $('.text-rich-text.is-blog-buttons').each(function () {
       completeGate(form);
     });
 
-    observer.observe(success, {
+    observer.observe(formWrap, {
       attributes: true,
+      childList: true,
+      subtree: true,
       attributeFilter: ['class', 'style', 'hidden']
     });
   }
@@ -342,6 +351,12 @@ $('.text-rich-text.is-blog-buttons').each(function () {
     setTimeout(function () {
       if (successIsVisibleForForm(form)) completeGate(form);
     }, 500);
+
+    setTimeout(function () {
+      if (successIsVisibleForForm(form) || failureIsVisibleForForm(form)) return;
+
+      completeGate(form);
+    }, 2500);
   }, true);
 
   document.addEventListener('DOMContentLoaded', function () {
