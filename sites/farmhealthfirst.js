@@ -1,4 +1,4 @@
-// Last updated: 2026-07-17 17:48:45
+// Last updated: 2026-07-17 17:49:30
 
 // DOSING LINKS
 $(function () {
@@ -185,6 +185,7 @@ $('.text-rich-text.is-blog-buttons').each(function () {
 (function () {
   const storageKey = 'fhfLearnVideoEmail';
   const pendingVideoKey = 'fhfPendingLearnVideoUrl';
+  const pendingVideoIndexKey = 'fhfPendingLearnVideoIndex';
   const cardSelector = '.learn-video_card[data-video-url]';
   const buttonSelector = `${cardSelector} .button`;
   const formSelector = '.learn_email-gate-popup form, .learn-video_email-gate-popup form';
@@ -232,11 +233,13 @@ $('.text-rich-text.is-blog-buttons').each(function () {
     }
   }
 
-  function setPendingVideoUrl(url) {
+  function setPendingVideoUrl(url, index) {
     try {
       sessionStorage.setItem(pendingVideoKey, url);
+      sessionStorage.setItem(pendingVideoIndexKey, String(index));
     } catch (error) {
       window[pendingVideoKey] = url;
+      window[pendingVideoIndexKey] = index;
     }
 
     debug('pending video set', url);
@@ -245,8 +248,10 @@ $('.text-rich-text.is-blog-buttons').each(function () {
   function clearPendingVideoUrl() {
     try {
       sessionStorage.removeItem(pendingVideoKey);
+      sessionStorage.removeItem(pendingVideoIndexKey);
     } catch (error) {
       window[pendingVideoKey] = '';
+      window[pendingVideoIndexKey] = '';
     }
 
     debug('pending video cleared');
@@ -282,7 +287,16 @@ $('.text-rich-text.is-blog-buttons').each(function () {
     debug('email popup hidden');
   }
 
-  function openVideo(url) {
+  function getPendingVideoIndex() {
+    try {
+      const value = sessionStorage.getItem(pendingVideoIndexKey);
+      return value === null ? -1 : Number(value);
+    } catch (error) {
+      return Number(window[pendingVideoIndexKey] ?? -1);
+    }
+  }
+
+  function openVideo(url, requestedIndex) {
     if (!url) {
       debug('open skipped because URL is empty');
       return;
@@ -290,9 +304,12 @@ $('.text-rich-text.is-blog-buttons').each(function () {
 
     const embedUrl = toVideoEmbedUrl(url);
     const items = getVideoItems();
-    let startIndex = items.findIndex(function (item) {
-      return item.src === embedUrl;
-    });
+    let startIndex = Number.isInteger(requestedIndex) &&
+      requestedIndex >= 0 && requestedIndex < items.length
+      ? requestedIndex
+      : items.findIndex(function (item) {
+        return item.src === embedUrl;
+      });
 
     if (startIndex < 0) {
       items.push({ src: embedUrl, type: 'iframe' });
@@ -362,6 +379,7 @@ $('.text-rich-text.is-blog-buttons').each(function () {
 
   function completeGate(form) {
     const videoUrl = getPendingVideoUrl();
+    const videoIndex = getPendingVideoIndex();
 
     debug('completeGate called', {
       hasForm: !!form,
@@ -386,7 +404,7 @@ $('.text-rich-text.is-blog-buttons').each(function () {
     hideEmailPopup(form);
 
     setTimeout(function () {
-      openVideo(videoUrl);
+      openVideo(videoUrl, videoIndex);
       openedAfterSuccess = false;
     }, 100);
   }
@@ -451,6 +469,8 @@ $('.text-rich-text.is-blog-buttons').each(function () {
 
     const card = button.closest(cardSelector);
     const videoUrl = card && card.getAttribute('data-video-url');
+    const cards = Array.from(document.querySelectorAll(cardSelector));
+    const videoIndex = cards.indexOf(card);
 
     debug('watch button clicked', {
       hasCard: !!card,
@@ -460,13 +480,13 @@ $('.text-rich-text.is-blog-buttons').each(function () {
 
     if (!videoUrl) return;
 
-    setPendingVideoUrl(videoUrl);
+    setPendingVideoUrl(videoUrl, videoIndex);
 
     if (!getStoredEmail()) return;
 
     event.preventDefault();
     event.stopImmediatePropagation();
-    openVideo(videoUrl);
+    openVideo(videoUrl, videoIndex);
   }, true);
 
   document.addEventListener('submit', function (event) {
