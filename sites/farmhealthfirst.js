@@ -1,4 +1,4 @@
-// Last updated: 2026-07-17 18:02:47
+// Last updated: 2026-07-17 18:04:36
 
 // DOSING LINKS
 $(function () {
@@ -195,6 +195,7 @@ $('.text-rich-text.is-blog-buttons').each(function () {
   const failSelector = '.w-form-fail';
   const popupSelector = '.learn_email-gate-popup, .learn-video_email-gate-popup';
   const videoPositionPrefix = 'fhfVideoPosition:';
+  const videoPositionTtl = 12 * 60 * 60 * 1000;
   let openedAfterSuccess = false;
   let videoTrackingTimer = null;
   const lastSavedPositions = {};
@@ -321,7 +322,16 @@ $('.text-rich-text.is-blog-buttons').each(function () {
     if (!videoId) return 0;
 
     try {
-      return Math.max(0, Number(localStorage.getItem(videoPositionPrefix + videoId)) || 0);
+      const key = videoPositionPrefix + videoId;
+      const saved = JSON.parse(localStorage.getItem(key) || 'null');
+
+      if (!saved || !Number.isFinite(saved.position) ||
+        !Number.isFinite(saved.savedAt) || Date.now() - saved.savedAt >= videoPositionTtl) {
+        localStorage.removeItem(key);
+        return 0;
+      }
+
+      return Math.max(0, saved.position);
     } catch (error) {
       return 0;
     }
@@ -336,7 +346,10 @@ $('.text-rich-text.is-blog-buttons').each(function () {
     lastSavedPositions[videoId] = position;
 
     try {
-      localStorage.setItem(videoPositionPrefix + videoId, String(position));
+      localStorage.setItem(videoPositionPrefix + videoId, JSON.stringify({
+        position: position,
+        savedAt: Date.now()
+      }));
     } catch (error) {
       debug('video position could not be stored', error);
     }
