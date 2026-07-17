@@ -1,4 +1,4 @@
-// Last updated: 2026-07-17 17:59:31
+// Last updated: 2026-07-17 18:00:36
 
 // DOSING LINKS
 $(function () {
@@ -187,7 +187,8 @@ $('.text-rich-text.is-blog-buttons').each(function () {
   const pendingVideoKey = 'fhfPendingLearnVideoUrl';
   const pendingVideoIndexKey = 'fhfPendingLearnVideoIndex';
   const cardSelector = '.learn-video_card[data-video-url]';
-  const buttonSelector = `${cardSelector} .button`;
+  const triggerSelector =
+    `${cardSelector} .button, ${cardSelector} .learn-video_image-wrapper`;
   const formSelector = '.learn_email-gate-popup form, .learn-video_email-gate-popup form';
   const emailSelector = 'input[type="email"], input[name="EMAIL"]';
   const successSelector = '.w-form-done';
@@ -467,16 +468,17 @@ $('.text-rich-text.is-blog-buttons').each(function () {
   }
 
   document.addEventListener('click', function (event) {
-    const button = event.target.closest(buttonSelector);
+    const trigger = event.target.closest(triggerSelector);
 
-    if (!button) return;
+    if (!trigger) return;
 
-    const card = button.closest(cardSelector);
+    const card = trigger.closest(cardSelector);
     const videoUrl = card && card.getAttribute('data-video-url');
     const cards = Array.from(document.querySelectorAll(cardSelector));
     const videoIndex = cards.indexOf(card);
 
-    debug('watch button clicked', {
+    debug('video trigger clicked', {
+      trigger: trigger.matches('.learn-video_image-wrapper') ? 'image' : 'button',
       hasCard: !!card,
       videoUrl: videoUrl,
       hasStoredEmail: !!getStoredEmail()
