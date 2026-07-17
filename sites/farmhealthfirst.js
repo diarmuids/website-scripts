@@ -1,4 +1,4 @@
-// Last updated: 2026-07-17 18:21:04
+// Last updated: 2026-07-17 18:21:27
 
 // DOSING LINKS
 $(function () {
@@ -217,20 +217,15 @@ document.addEventListener('DOMContentLoaded', function () {
         (scrollTop - fadeStart) / fadeDistance
       ));
 
-      card.style.opacity = String(1 - progress * 0.85);
-      card.style.scale = String(1 - progress * 0.08);
-      card.style.pointerEvents = progress >= 0.98 ? 'none' : '';
+      card.style.scale = String(1 - progress * 0.2);
     });
 
     ticking = false;
   }
 
   cards.forEach(function (card, index) {
-    card.style.position = 'sticky';
-    card.style.top = stickyTop + 'px';
-    card.style.zIndex = String(cards.length - index);
     card.style.transformOrigin = 'center top';
-    card.style.willChange = 'opacity, scale';
+    card.style.willChange = 'scale';
   });
 
   window.addEventListener('scroll', function () {
