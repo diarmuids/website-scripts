@@ -1,4 +1,4 @@
-// Last updated: 2026-07-17 18:22:44
+// Last updated: 2026-07-17 18:23:07
 
 // DOSING LINKS
 $(function () {
@@ -216,9 +216,10 @@ document.addEventListener('DOMContentLoaded', function () {
       const progress = Math.min(1, Math.max(0,
         (scrollTop - fadeStart) / fadeDistance
       ));
+      const easedProgress = progress * progress * (3 - 2 * progress);
 
-      card.style.scale = String(1 - progress * 0.2);
-      card.style.opacity = String(1 - progress * 0.25);
+      card.style.scale = String(1 - easedProgress * 0.1);
+      card.style.opacity = String(1 - easedProgress * 0.25);
     });
 
     ticking = false;
