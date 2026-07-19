@@ -5,6 +5,25 @@ GitHub/jsDelivr and should be published quickly after local saves.
 
 ## Auto-publish workflow
 
+- At the start of every work session in this repository, start both the local
+  dev tunnel and auto-push worker before reading or editing site files:
+
+```powershell
+.\tools\dev-server\ensure-dev-tunnel.ps1
+.\start-auto-push.ps1
+```
+
+- The dev-tunnel helper is safe to run repeatedly. It starts the local server
+  on port `8787` and the named Cloudflare Tunnel only when they are not already
+  running.
+- The permanent dev base URL is:
+
+```text
+https://dev.wsitefiles.com/sites
+```
+
+- Do not install or run the dev tunnel automatically at Windows login. It is
+  needed only while work is happening in this repository.
 - Start the local auto-push worker before editing:
 
 ```powershell
