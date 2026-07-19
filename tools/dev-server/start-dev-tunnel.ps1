@@ -38,7 +38,7 @@ else {
 
 Write-Host "Starting Cloudflare Tunnel from: $ConfigPath"
 Write-Host "Use this in Webflow:"
-Write-Host "  <script src=""https://scripts-dev.wsitemail.com/sites/farmhealthfirst.js""></script>"
+Write-Host "  <script src=""https://dev.wsitefiles.com/sites/farmhealthfirst.js""></script>"
 Write-Host ""
 
 cloudflared tunnel --config $ConfigPath run
