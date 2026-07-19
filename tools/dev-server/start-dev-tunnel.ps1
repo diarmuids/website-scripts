@@ -7,7 +7,16 @@ $ErrorActionPreference = "Stop"
 $repo = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path))
 $server = Join-Path $repo "tools\dev-server\server.js"
 
-if (-not (Get-Command cloudflared -ErrorAction SilentlyContinue)) {
+$cloudflared = (Get-Command cloudflared -ErrorAction SilentlyContinue).Source
+
+if (-not $cloudflared) {
+  $installedCloudflared = "C:\Program Files (x86)\cloudflared\cloudflared.exe"
+  if (Test-Path $installedCloudflared) {
+    $cloudflared = $installedCloudflared
+  }
+}
+
+if (-not $cloudflared) {
   Write-Host "cloudflared is not installed."
   Write-Host "Install it with:"
   Write-Host "  winget install --id Cloudflare.cloudflared"
@@ -41,4 +50,12 @@ Write-Host "Use this in Webflow:"
 Write-Host "  <script src=""https://dev.wsitefiles.com/sites/farmhealthfirst.js""></script>"
 Write-Host ""
 
-cloudflared tunnel --config $ConfigPath run
+$existingTunnel = Get-CimInstance Win32_Process -Filter "name = 'cloudflared.exe'" |
+  Where-Object { $_.CommandLine -like "*$ConfigPath*" }
+
+if ($existingTunnel) {
+  Write-Host "Named tunnel already running with PID $($existingTunnel.ProcessId -join ', ')"
+  exit 0
+}
+
+& $cloudflared tunnel --config $ConfigPath run
