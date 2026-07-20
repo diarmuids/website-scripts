@@ -1,4 +1,4 @@
-// Last updated: 2026-07-20 11:33:52
+// Last updated: 2026-07-20 11:41:59
 
 // DOSING LINKS
 $(function () {
@@ -186,6 +186,7 @@ function initLearnVideoStickyCards() {
   const cards = Array.from(document.querySelectorAll('.learn-video_card'));
   const stickyTop = 90;
   const animationLead = 230;
+  const overlays = [];
   let ticking = false;
 
   if (!cards.length) return;
@@ -205,12 +206,22 @@ function initLearnVideoStickyCards() {
       const easedProgress = progress * progress * (3 - 2 * progress);
 
       card.style.transform = 'scale(' + (1 - easedProgress * 0.2) + ')';
+      overlays[index].style.opacity = String(easedProgress);
     });
 
     ticking = false;
   }
 
   cards.slice(0, -1).forEach(function (card) {
+    const overlay = document.createElement('div');
+
+    overlay.setAttribute('aria-hidden', 'true');
+    overlay.style.cssText =
+      'position:absolute;inset:0;z-index:999;pointer-events:none;' +
+      'border-radius:inherit;background:rgba(17,17,17,0.25);opacity:0;';
+    card.appendChild(overlay);
+    overlays.push(overlay);
+
     card.style.transformOrigin = 'center top';
     card.style.willChange = 'transform';
   });
