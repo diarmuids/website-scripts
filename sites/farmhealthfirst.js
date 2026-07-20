@@ -1,4 +1,4 @@
-// Last updated: 2026-07-20 11:41:59
+// Last updated: 2026-07-20 18:15:34
 
 // DOSING LINKS
 $(function () {
@@ -12,6 +12,71 @@ $(function () {
     $num.closest('a').attr('href', '#' + slug);
   });
 });
+
+// DISEASE PAGE HEADING LINKS
+function initDiseaseHeadingLinks() {
+  document.querySelectorAll('.disease_row').forEach(function (row) {
+    if (row.dataset.diseaseHeadingLinksReady === 'true') return;
+
+    const sidebar = row.querySelector('.disease_sidebar-inner');
+    const richText = row.querySelector('.disease_rich-text');
+    const template = sidebar && Array.from(sidebar.querySelectorAll('.disease_sidebar-link'))
+      .find(function (link) {
+        return link.getAttribute('href') === '#';
+      });
+
+    if (!sidebar || !richText || !template) return;
+
+    let headings = [];
+
+    for (let level = 1; level <= 6; level += 1) {
+      headings = Array.from(richText.querySelectorAll('h' + level));
+      if (headings.length) break;
+    }
+
+    if (!headings.length) return;
+
+    const usedIds = new Set(Array.from(document.querySelectorAll('[id]')).map(function (element) {
+      return element.id;
+    }));
+
+    headings.forEach(function (heading, index) {
+      const baseId = heading.textContent.trim().toLowerCase()
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'section-' + (index + 1);
+      let anchorId = baseId;
+      let suffix = 2;
+
+      while (usedIds.has(anchorId)) {
+        anchorId = baseId + '-' + suffix;
+        suffix += 1;
+      }
+
+      usedIds.add(anchorId);
+
+      const anchor = document.createElement('div');
+      anchor.id = anchorId;
+      anchor.className = 'anchor-link';
+      heading.before(anchor);
+
+      const link = template.cloneNode(true);
+      link.href = '#' + anchorId;
+      link.textContent = heading.textContent.trim();
+      sidebar.insertBefore(link, template);
+    });
+
+    template.remove();
+    row.dataset.diseaseHeadingLinksReady = 'true';
+  });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initDiseaseHeadingLinks);
+} else {
+  initDiseaseHeadingLinks();
+}
 
 // SET FILTER VALUES, OPERATORS, NAMES AND UNIQUE IDS
 $('.button.is-filter').each(function (index) {
