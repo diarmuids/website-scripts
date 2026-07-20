@@ -1,4 +1,4 @@
-// Last updated: 2026-07-17 18:45:12
+// Last updated: 2026-07-20 11:33:20
 
 // DOSING LINKS
 $(function () {
@@ -210,9 +210,15 @@ document.addEventListener('DOMContentLoaded', function () {
     ticking = false;
   }
 
-  cards.slice(0, -1).forEach(function (card) {
+  cards.forEach(function (card, index) {
+    card.style.position = 'sticky';
+    card.style.top = stickyTop + 'px';
+    card.style.zIndex = String(cards.length - index);
     card.style.transformOrigin = 'center top';
-    card.style.willChange = 'scale';
+
+    if (index < cards.length - 1) {
+      card.style.willChange = 'scale';
+    }
   });
 
   window.addEventListener('scroll', function () {
