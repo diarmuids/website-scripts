@@ -1,4 +1,4 @@
-// Last updated: 2026-07-20 18:17:17
+// Last updated: 2026-07-20 18:33:58
 
 // DOSING LINKS
 $(function () {
@@ -59,7 +59,7 @@ function initDiseaseHeadingLinks() {
       const anchor = document.createElement('div');
       anchor.id = anchorId;
       anchor.className = 'anchor-link is-disease-heading';
-      anchor.style.marginBottom = '-30px';
+      anchor.style.marginTop = '-70px';
       heading.before(anchor);
 
       const link = template.cloneNode(true);
