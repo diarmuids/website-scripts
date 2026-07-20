@@ -1,4 +1,4 @@
-// Last updated: 2026-07-20 11:33:20
+// Last updated: 2026-07-20 11:33:52
 
 // DOSING LINKS
 $(function () {
@@ -182,7 +182,7 @@ $('.text-rich-text.is-blog-buttons').each(function () {
 });
 
 // LEARN VIDEO STICKY CARDS
-document.addEventListener('DOMContentLoaded', function () {
+function initLearnVideoStickyCards() {
   const cards = Array.from(document.querySelectorAll('.learn-video_card'));
   const stickyTop = 90;
   const animationLead = 230;
@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function update() {
     cards.forEach(function (card, index) {
       if (index === cards.length - 1) {
-        card.style.scale = '1';
+        card.style.transform = 'scale(1)';
         return;
       }
 
@@ -204,21 +204,15 @@ document.addEventListener('DOMContentLoaded', function () {
       ));
       const easedProgress = progress * progress * (3 - 2 * progress);
 
-      card.style.scale = String(1 - easedProgress * 0.2);
+      card.style.transform = 'scale(' + (1 - easedProgress * 0.2) + ')';
     });
 
     ticking = false;
   }
 
-  cards.forEach(function (card, index) {
-    card.style.position = 'sticky';
-    card.style.top = stickyTop + 'px';
-    card.style.zIndex = String(cards.length - index);
+  cards.slice(0, -1).forEach(function (card) {
     card.style.transformOrigin = 'center top';
-
-    if (index < cards.length - 1) {
-      card.style.willChange = 'scale';
-    }
+    card.style.willChange = 'transform';
   });
 
   window.addEventListener('scroll', function () {
@@ -229,7 +223,13 @@ document.addEventListener('DOMContentLoaded', function () {
   }, { passive: true });
   window.addEventListener('resize', update);
   update();
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initLearnVideoStickyCards);
+} else {
+  initLearnVideoStickyCards();
+}
 
 // LEARN VIDEO EMAIL GATE
 (function () {
