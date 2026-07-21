@@ -1,4 +1,4 @@
-// Last updated: 2026-07-21 15:21:45
+// Last updated: 2026-07-21 15:24:44
 
 // DOSING LINKS
 $(function () {
@@ -97,7 +97,7 @@ function initDiseaseHeadingLinks() {
       }
 
       sectionLinks.forEach(function (section, index) {
-        section.link.classList.toggle('w--current', index === currentIndex);
+        section.link.classList.toggle('is-current', index === currentIndex);
       });
     }
 
