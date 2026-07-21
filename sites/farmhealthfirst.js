@@ -1,4 +1,4 @@
-// Last updated: 2026-07-20 18:33:58
+// Last updated: 2026-07-21 09:05:12
 
 // DOSING LINKS
 $(function () {
@@ -78,6 +78,39 @@ if (document.readyState === 'loading') {
 } else {
   initDiseaseHeadingLinks();
 }
+
+// RICH TEXT IMAGE LIGHTBOXES
+$(function () {
+  $('.w-richtext').each(function (richTextIndex) {
+    const galleryName = 'rich-text-images-' + richTextIndex;
+    const $images = $(this).find('figure.w-richtext-figure-type-image img');
+
+    $images.each(function () {
+      const $image = $(this);
+      const caption = $.trim($image.closest('figure').find('figcaption').first().text());
+
+      $image.attr({
+        'data-fancybox': galleryName,
+        'data-src': $image.attr('src'),
+        'data-caption': caption
+      });
+    });
+
+    $images.fancybox({
+      loop: false,
+      arrows: true,
+      infobar: false,
+      buttons: ['close'],
+      animationEffect: 'zoom',
+      animationDuration: 500,
+      transitionEffect: 'fade',
+      transitionDuration: 500,
+      clickContent: function (current) {
+        return current.type === 'image' ? 'next' : false;
+      }
+    });
+  });
+});
 
 // SET FILTER VALUES, OPERATORS, NAMES AND UNIQUE IDS
 $('.button.is-filter').each(function (index) {
