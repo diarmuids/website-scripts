@@ -1,4 +1,4 @@
-// Last updated: 2026-07-21 09:34:23
+// Last updated: 2026-07-21 11:21:02
 
 // DOSING LINKS
 $(function () {
@@ -65,7 +65,11 @@ function initDiseaseHeadingLinks() {
       const link = template.cloneNode(true);
       link.href = '#' + anchorId;
       const headingText = heading.textContent.trim().toLowerCase();
-      link.textContent = headingText.charAt(0).toUpperCase() + headingText.slice(1);
+      const linkText = link.querySelector('.disease_sidebar-link-text');
+
+      if (!linkText) return;
+
+      linkText.textContent = headingText.charAt(0).toUpperCase() + headingText.slice(1);
       sidebar.insertBefore(link, template);
     });
 
