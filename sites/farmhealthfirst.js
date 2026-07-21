@@ -1,4 +1,4 @@
-// Last updated: 2026-07-21 15:24:44
+// Last updated: 2026-07-21 15:25:47
 
 // DOSING LINKS
 $(function () {
@@ -82,7 +82,7 @@ function initDiseaseHeadingLinks() {
     function updateCurrentDiseaseLink() {
       scrollFrame = null;
 
-      const marker = Math.min(160, window.innerHeight * 0.25);
+      const marker = window.innerHeight * 0.3;
       const rowBounds = row.getBoundingClientRect();
       let currentIndex = -1;
 
