@@ -1,4 +1,4 @@
-// Last updated: 2026-07-21 15:25:47
+// Last updated: 2026-07-21 15:27:45
 
 // DOSING LINKS
 $(function () {
@@ -87,8 +87,6 @@ function initDiseaseHeadingLinks() {
       let currentIndex = -1;
 
       if (rowBounds.top <= marker && rowBounds.bottom > marker) {
-        currentIndex = 0;
-
         sectionLinks.forEach(function (section, index) {
           if (section.heading.getBoundingClientRect().top <= marker) {
             currentIndex = index;
