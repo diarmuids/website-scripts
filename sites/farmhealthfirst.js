@@ -1,4 +1,4 @@
-// Last updated: 2026-07-21 11:21:07
+// Last updated: 2026-07-21 15:21:45
 
 // DOSING LINKS
 $(function () {
@@ -39,6 +39,7 @@ function initDiseaseHeadingLinks() {
     const usedIds = new Set(Array.from(document.querySelectorAll('[id]')).map(function (element) {
       return element.id;
     }));
+    const sectionLinks = [];
 
     headings.forEach(function (heading, index) {
       const baseId = heading.textContent.trim().toLowerCase()
@@ -71,9 +72,43 @@ function initDiseaseHeadingLinks() {
 
       linkText.textContent = headingText.charAt(0).toUpperCase() + headingText.slice(1);
       sidebar.insertBefore(link, template);
+      sectionLinks.push({ heading: heading, link: link });
     });
 
     template.remove();
+
+    let scrollFrame = null;
+
+    function updateCurrentDiseaseLink() {
+      scrollFrame = null;
+
+      const marker = Math.min(160, window.innerHeight * 0.25);
+      const rowBounds = row.getBoundingClientRect();
+      let currentIndex = -1;
+
+      if (rowBounds.top <= marker && rowBounds.bottom > marker) {
+        currentIndex = 0;
+
+        sectionLinks.forEach(function (section, index) {
+          if (section.heading.getBoundingClientRect().top <= marker) {
+            currentIndex = index;
+          }
+        });
+      }
+
+      sectionLinks.forEach(function (section, index) {
+        section.link.classList.toggle('w--current', index === currentIndex);
+      });
+    }
+
+    function requestCurrentDiseaseLinkUpdate() {
+      if (scrollFrame !== null) return;
+      scrollFrame = window.requestAnimationFrame(updateCurrentDiseaseLink);
+    }
+
+    window.addEventListener('scroll', requestCurrentDiseaseLinkUpdate, { passive: true });
+    window.addEventListener('resize', requestCurrentDiseaseLinkUpdate);
+    updateCurrentDiseaseLink();
     row.dataset.diseaseHeadingLinksReady = 'true';
   });
 }
