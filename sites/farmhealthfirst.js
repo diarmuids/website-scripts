@@ -1,4 +1,4 @@
-// Last updated: 2026-07-22 19:29:33
+// Last updated: 2026-07-22 19:32:21
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -9,52 +9,58 @@ function sentenceCaseSidebarLabel(value) {
   });
 }
 
-// TEMPORARY COUNTRY CONTENT DEBUG
-function showUkCountryContentForDebug() {
-  function showUkElements(root) {
-    const elements = [];
+// COUNTRY LOGIC, THEN LOAD FINSWEET
+const countryContentReady = (async function () {
+  try {
+    let test = new URLSearchParams(location.search).get('test-country')?.toUpperCase();
 
-    if (root.nodeType === 1 && root.matches('[data-country="UK"]')) {
-      elements.push(root);
+    if (test === 'UK') test = 'GB';
+
+    if (test) {
+      $(document).on('click', 'a[href]', function () {
+        const url = new URL(this.href, location.origin);
+
+        if (url.origin === location.origin) {
+          url.searchParams.set('test-country', test);
+          this.href = url;
+        }
+      });
     }
 
-    if (root.querySelectorAll) {
-      elements.push.apply(elements, root.querySelectorAll('[data-country="UK"]'));
-    }
+    const country = test || (await $.getJSON('https://ipapi.co/json/')).country_code;
+    const isIreland = country === 'IE';
 
-    elements.forEach(function (element) {
-      element.hidden = false;
-
-      if (window.getComputedStyle(element).display === 'none') {
-        element.style.setProperty('display', 'block', 'important');
-      }
-    });
+    $('[data-country="' + (isIreland ? 'UK' : 'IE') + '"]').remove();
+    $('[data-country="' + (isIreland ? 'IE' : 'UK') + '"]').show();
+    $('[name="COUNTRY"]').val(isIreland ? 'Ireland' : 'UK');
+  } catch (error) {
+    console.warn('Country lookup unavailable');
+    $('[data-country="IE"]').remove();
+    $('[data-country="UK"]').show();
+    $('[name="COUNTRY"]').val('UK');
   }
 
-  showUkElements(document);
+  const script = document.createElement('script');
+  script.type = 'module';
+  script.src = 'https://cdn.jsdelivr.net/npm/@finsweet/attributes@2/attributes.js';
+  script.setAttribute('fs-list', '');
+  document.body.appendChild(script);
+})();
 
-  new MutationObserver(function (mutations) {
-    mutations.forEach(function (mutation) {
-      if (mutation.type === 'attributes') {
-        showUkElements(mutation.target);
-        return;
-      }
+// TESTING IP
+$(document).on('click', '[data-test-country]', function (event) {
+  event.preventDefault();
+  const url = new URL(location.href);
+  url.searchParams.set('test-country', $(this).data('test-country'));
+  location.href = url;
+});
 
-      mutation.addedNodes.forEach(showUkElements);
-    });
-  }).observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ['hidden', 'style'],
-    childList: true,
-    subtree: true
-  });
-}
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', showUkCountryContentForDebug);
-} else {
-  showUkCountryContentForDebug();
-}
+// SHOW ALTERNATING FOOTER IMAGE DEPENDING ON EVEN/ODD SECOND
+$(function () {
+  const isEvenSecond = new Date().getSeconds() % 2 === 0;
+  $('.footer_img').hide();
+  $('.footer_img' + (isEvenSecond ? ':not(.is-alt)' : '.is-alt')).show();
+});
 
 // DOSING LINKS
 $(function () {
