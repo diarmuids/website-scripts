@@ -1,4 +1,4 @@
-// Last updated: 2026-07-22 19:27:52
+// Last updated: 2026-07-22 19:29:25
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -7,6 +7,56 @@ function sentenceCaseSidebarLabel(value) {
   return sentenceCaseLabel.replace(/\b(?:ii|i)\b/g, function (romanNumeral) {
     return romanNumeral.toUpperCase();
   });
+}
+
+// TEMPORARY COUNTRY CONTENT DEBUG
+function showUkCountryContentForDebug() {
+  function showUkElements(root) {
+    const elements = [];
+
+    if (root.nodeType === 1 && root.matches('[data-country="UK"]')) {
+      elements.push(root);
+    }
+
+    if (root.querySelectorAll) {
+      elements.push.apply(elements, root.querySelectorAll('[data-country="UK"]'));
+    }
+
+    elements.forEach(function (element) {
+      element.hidden = false;
+
+      if (
+        element.style.getPropertyValue('display') !== 'block' ||
+        element.style.getPropertyPriority('display') !== 'important'
+      ) {
+        element.style.setProperty('display', 'block', 'important');
+      }
+    });
+  }
+
+  showUkElements(document);
+
+  new MutationObserver(function (mutations) {
+    mutations.forEach(function (mutation) {
+      if (mutation.type === 'attributes') {
+        showUkElements(mutation.target);
+        return;
+      }
+
+      mutation.addedNodes.forEach(showUkElements);
+    });
+  }).observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['hidden', 'style'],
+    childList: true,
+    subtree: true
+  });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', showUkCountryContentForDebug);
+} else {
+  showUkCountryContentForDebug();
 }
 
 // DOSING LINKS
