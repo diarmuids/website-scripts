@@ -1,4 +1,4 @@
-// Last updated: 2026-07-22 19:44:10
+// Last updated: 2026-07-22 19:44:46
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -88,6 +88,7 @@ function initCuratorFeedLayout() {
     if (columnCount >= 5) return 5;
     if (columnCount === 4) return 8;
     if (columnCount === 3) return 6;
+    if (columnCount === 2) return 4;
     return 2;
   }
 
