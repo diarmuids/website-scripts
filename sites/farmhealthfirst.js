@@ -1,4 +1,4 @@
-// Last updated: 2026-07-22 10:03:27
+// Last updated: 2026-07-22 10:04:44
 
 // DOSING LINKS
 $(function () {
@@ -148,7 +148,10 @@ function initRelatedSectionSidebarLinks() {
 
       if (!link) return;
 
-      link.hidden = !section || !section.querySelector(config.item);
+      const hasItems = !!(section && section.querySelector(config.item));
+
+      link.hidden = !hasItems;
+      link.style.display = hasItems ? '' : 'none';
     });
   }
 
