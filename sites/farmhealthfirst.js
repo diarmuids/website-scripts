@@ -1,4 +1,4 @@
-// Last updated: 2026-07-22 09:23:09
+// Last updated: 2026-07-22 09:24:08
 
 // DOSING LINKS
 $(function () {
@@ -235,22 +235,29 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(() => {
   update();
 }, 300));
 
-// VIDEO AND PRODUCT SWIPER JS
+// VIDEO, PRODUCT AND BLOG SWIPER JS
 function initContentSwipers() {
   if (typeof Swiper === 'undefined') return;
 
   document.querySelectorAll(
-    '.video-list_list-wrapper.is-slider, .product-slider_list-wrapper'
+    '.video-list_list-wrapper.is-slider, .product-slider_list-wrapper, .blog-list_list-wrapper'
   ).forEach(function (wrapper) {
     if (wrapper.dataset.swiperReady === 'true') return;
 
     var isProductSlider = wrapper.classList.contains('product-slider_list-wrapper');
-    var list = wrapper.querySelector(
-      isProductSlider ? '.product-slider_list' : '.video-list_list'
-    );
-    var items = wrapper.querySelectorAll(
-      isProductSlider ? '.product-slider_item' : '.video-list_item'
-    );
+    var isBlogSlider = wrapper.classList.contains('blog-list_list-wrapper');
+    var listSelector = isProductSlider
+      ? '.product-slider_list'
+      : isBlogSlider
+        ? '.blog-list_list.is-slider'
+        : '.video-list_list';
+    var itemSelector = isProductSlider
+      ? '.product-slider_item'
+      : isBlogSlider
+        ? '.blog-list_item.is-slider'
+        : '.video-list_item';
+    var list = wrapper.querySelector(listSelector);
+    var items = wrapper.querySelectorAll(itemSelector);
     var section = wrapper.closest('.container-large');
     var prev = section && section.querySelector('[slider-arrow="prev"]');
     var next = section && section.querySelector('[slider-arrow="next"]');
