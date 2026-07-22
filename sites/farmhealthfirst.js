@@ -1,4 +1,4 @@
-// Last updated: 2026-07-22 19:24:54
+// Last updated: 2026-07-22 19:26:19
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -579,10 +579,19 @@ $('.text-rich-text.is-blog-buttons[data-country="UK"]').each(function () {
   const $rich = $(this);
   const $group = $(
     '<div class="button-group is-vertical"></div>');
+  const usedLinks = new Set();
+
   $rich.find('a').each(function () {
     const $a = $(this);
-    $group.append('<a href="' + $a.attr('href') +
-      '" class="button is-tertiary w-inline-block"><div>' + $a.text() +
+    const href = $a.attr('href') || '';
+    const label = $.trim($a.text());
+    const linkKey = href + '\n' + label;
+
+    if (usedLinks.has(linkKey)) return;
+    usedLinks.add(linkKey);
+
+    $group.append('<a href="' + href +
+      '" class="button is-tertiary w-inline-block"><div>' + label +
       '</div><div class="button_icon w-embed"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width="100%" height="100%" fill="none"><path d="M534.9 278.6l22.6-22.6-22.6-22.6-160-160-22.6-22.6-45.3 45.3c1.3 1.3 44 44 128 128l-402.7 0 0 64 402.7 0c-84 84-126.7 126.7-128 128l45.3 45.3 22.6-22.6 160-160z" fill="currentColor" stroke="currentColor"></path></svg></div></a>'
     )
   });
