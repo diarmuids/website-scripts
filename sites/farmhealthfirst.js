@@ -1,4 +1,4 @@
-// Last updated: 2026-07-22 19:44:46
+// Last updated: 2026-07-22 19:45:33
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -104,7 +104,24 @@ function initCuratorFeedLayout() {
       const posts = Array.from(feed.querySelectorAll('.crt-post')).sort(function (a, b) {
         return Number(a.dataset.position || Infinity) - Number(b.dataset.position || Infinity);
       });
-      const postLimit = getCuratorPostLimit(getCuratorColumnCount(feed));
+      const curatorColumnCount = getCuratorColumnCount(feed);
+      const forceTwoColumns = curatorColumnCount < 2;
+      const columns = Array.from(feed.children).filter(function (element) {
+        return /(^|\s)crt-col-\d+(\s|$)/.test(element.className);
+      });
+
+      feed.style.display = forceTwoColumns ? 'grid' : '';
+      feed.style.gridTemplateColumns = forceTwoColumns ? 'repeat(2, minmax(0, 1fr))' : '';
+
+      columns.forEach(function (column) {
+        column.style.setProperty('display', forceTwoColumns ? 'contents' : '');
+      });
+
+      posts.forEach(function (post) {
+        post.style.order = forceTwoColumns ? String(Number(post.dataset.position || 0)) : '';
+      });
+
+      const postLimit = getCuratorPostLimit(Math.max(2, curatorColumnCount));
       const visiblePosts = new Set(posts.slice(0, postLimit));
 
       posts.forEach(function (post) {
