@@ -1,4 +1,4 @@
-// Last updated: 2026-07-22 19:32:21
+// Last updated: 2026-07-22 19:32:44
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -627,60 +627,101 @@ if (document.readyState === 'loading') {
 
 window.addEventListener('load', initContentSwipers);
 
-// BLOG LEARN MORE BUTTONS
-function createLearnMoreButtonGroup($richTexts) {
-  const $group = $(
-    '<div class="button-group is-vertical"></div>');
-  const usedLinks = new Set();
-
-  $richTexts.find('a').each(function () {
-    const $a = $(this);
-    const href = $a.attr('href') || '';
-    const label = $.trim($a.text());
-    const linkKey = href + '\n' + label;
-
-    if (usedLinks.has(linkKey)) return;
-    usedLinks.add(linkKey);
-
-    $group.append('<a href="' + href +
-      '" class="button is-tertiary w-inline-block"><div>' + label +
-      '</div><div class="button_icon w-embed"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width="100%" height="100%" fill="none"><path d="M534.9 278.6l22.6-22.6-22.6-22.6-160-160-22.6-22.6-45.3 45.3c1.3 1.3 44 44 128 128l-402.7 0 0 64 402.7 0c-84 84-126.7 126.7-128 128l45.3 45.3 22.6-22.6 160-160z" fill="currentColor" stroke="currentColor"></path></svg></div></a>'
-    )
-  });
-
-  return $group;
-}
-
-const enableUkLearnMoreConversion = false;
-
-if (enableUkLearnMoreConversion) {
+// CONVERT FAQ LINKS TO BUTTON LIST AFTER COUNTRY CONTENT IS RESOLVED
+function initFaqLinkButtons() {
   $('.faq_answer').each(function () {
     const $answer = $(this);
+    let $group = $answer.children('.button-group.is-vertical').first();
 
-    if ($answer.attr('data-learn-more-ready') === 'true') return;
-
-    const $richTexts = $answer.find(
-      '.text-rich-text.is-blog-buttons[data-country="UK"]'
-    );
-
-    if (!$richTexts.length) return;
-
-    const $group = createLearnMoreButtonGroup($richTexts);
-
-    $richTexts.remove();
-
-    if ($group.children().length) {
+    if (!$group.length) {
+      $group = $('<div class="button-group is-vertical" style="padding-bottom:1.5rem;"></div>');
       $answer.append($group);
     }
 
-    $answer.attr('data-learn-more-ready', 'true');
-  });
+    function makeButton(href, text) {
+      text = $.trim(text).replace(/\.{2,}$/, '');
 
-  $('.text-rich-text.is-blog-buttons[data-country="UK"]').each(function () {
-    const $rich = $(this);
-    $rich.replaceWith(createLearnMoreButtonGroup($rich));
+      const $button = $('<a>', {
+        href: href,
+        class: 'button is-tertiary w-inline-block'
+      });
+
+      $button.append($('<div>').text(text));
+      $button.append(
+        '<div class="button_icon w-embed"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width="100%" height="100%" fill="none"><path d="M534.9 278.6l22.6-22.6-22.6-22.6-160-160-22.6-22.6-45.3 45.3c1.3 1.3 44 44 128 128l-402.7 0 0 64 402.7 0c-84 84-126.7 126.7-128 128l45.3 45.3 22.6-22.6 160-160z" fill="currentColor" stroke="currentColor"></path></svg></div>'
+      );
+
+      return $button;
+    }
+
+    const mainButtons = [];
+    const extraButtons = [];
+
+    $answer.find('.text-rich-text.is-faq:not(.is-faq-buttons)').each(function () {
+      const $lastP = $(this).children('p').last();
+
+      while ($lastP.length) {
+        let node = $lastP.contents().last()[0];
+
+        while (
+          node &&
+          ((node.nodeType === 3 && !$.trim(node.nodeValue)) ||
+            (node.nodeType === 1 && node.tagName === 'BR'))
+        ) {
+          $(node).remove();
+          node = $lastP.contents().last()[0];
+        }
+
+        if (!node || node.nodeType !== 1 || node.tagName.toLowerCase() !== 'a') break;
+
+        const $link = $(node);
+        mainButtons.unshift(makeButton($link.attr('href'), $link.text()));
+        $link.remove();
+      }
+    });
+
+    $answer.find('.text-rich-text.is-faq-buttons').each(function () {
+      $(this).find('a').each(function () {
+        extraButtons.push(makeButton($(this).attr('href'), $(this).text()));
+      });
+
+      $(this).remove();
+    });
+
+    $group.empty().append(mainButtons).append(extraButtons);
   });
 }
+
+countryContentReady.then(initFaqLinkButtons);
+
+// SET SLIDER MASK HEIGHT
+$(function () {
+  function setMaskHeights() {
+    $('.w-slider').each(function () {
+      const $slider = $(this);
+      const height = $slider.find('.w-slider-mask').outerHeight();
+
+      if (height) {
+        $slider.find('.w-slide').height(height);
+      }
+    });
+  }
+
+  let timeout;
+
+  function runSetMaskHeights() {
+    clearTimeout(timeout);
+    timeout = setTimeout(setMaskHeights, 50);
+  }
+
+  setMaskHeights();
+  $(window).on('resize', runSetMaskHeights);
+
+  new MutationObserver(runSetMaskHeights).observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+});
 
 // LEARN VIDEO STICKY CARDS
 function initLearnVideoStickyCards() {
