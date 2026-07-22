@@ -1,4 +1,4 @@
-// Last updated: 2026-07-22 09:24:08
+// Last updated: 2026-07-22 10:03:27
 
 // DOSING LINKS
 $(function () {
@@ -116,6 +116,64 @@ if (document.readyState === 'loading') {
 } else {
   initDiseaseHeadingLinks();
 }
+
+// RELATED SECTION SIDEBAR LINKS
+function initRelatedSectionSidebarLinks() {
+  if (document.documentElement.dataset.relatedSectionLinksReady === 'true') return;
+
+  const sections = [
+    {
+      href: '#related-products',
+      section: '.section_related-products',
+      item: '.product-slider_item'
+    },
+    {
+      href: '#related-videos',
+      section: '.section_related-videos',
+      item: '.video-list_item'
+    },
+    {
+      href: '#related-blogs',
+      section: '.section_related-blogs',
+      item: '.blog-list_item.is-slider'
+    }
+  ];
+
+  function updateRelatedSectionSidebarLinks() {
+    sections.forEach(function (config) {
+      const link = document.querySelector(
+        '.disease_sidebar-link-section[href="' + config.href + '"]'
+      );
+      const section = document.querySelector(config.section);
+
+      if (!link) return;
+
+      link.hidden = !section || !section.querySelector(config.item);
+    });
+  }
+
+  sections.forEach(function (config) {
+    const section = document.querySelector(config.section);
+
+    if (section) {
+      new MutationObserver(updateRelatedSectionSidebarLinks).observe(section, {
+        childList: true,
+        subtree: true
+      });
+    }
+  });
+
+  document.documentElement.dataset.relatedSectionLinksReady = 'true';
+  updateRelatedSectionSidebarLinks();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initRelatedSectionSidebarLinks);
+} else {
+  initRelatedSectionSidebarLinks();
+}
+
+window.addEventListener('load', initRelatedSectionSidebarLinks);
 
 // RICH TEXT IMAGE LIGHTBOXES
 $(function () {
