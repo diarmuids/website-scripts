@@ -1,4 +1,13 @@
-// Last updated: 2026-07-22 14:23:11
+// Last updated: 2026-07-22 17:06:33
+
+function sentenceCaseSidebarLabel(value) {
+  const lowerCaseLabel = String(value || '').trim().toLowerCase();
+  const sentenceCaseLabel = lowerCaseLabel.charAt(0).toUpperCase() + lowerCaseLabel.slice(1);
+
+  return sentenceCaseLabel.replace(/\b(?:ii|i)\b/g, function (romanNumeral) {
+    return romanNumeral.toUpperCase();
+  });
+}
 
 // DOSING LINKS
 $(function () {
@@ -107,12 +116,11 @@ function initDiseaseHeadingLinks() {
 
       const link = template.cloneNode(true);
       link.href = '#' + anchorId;
-      const headingText = heading.textContent.trim().toLowerCase();
       const linkText = link.querySelector('.disease_sidebar-link-text');
 
       if (!linkText) return;
 
-      linkText.textContent = headingText.charAt(0).toUpperCase() + headingText.slice(1);
+      linkText.textContent = sentenceCaseSidebarLabel(heading.textContent);
       sidebar.insertBefore(link, template);
       sectionLinks.push({ heading: heading, link: link });
     });
@@ -216,13 +224,12 @@ function initBlogHeadingLinks() {
       }
 
       const link = template.cloneNode(true);
-      const sentenceCaseLabel = headingLabel.toLowerCase();
       const linkText = link.querySelector('.blog_sidebar-link-text');
 
       if (!linkText) return;
 
       link.href = '#' + anchorId;
-      linkText.textContent = sentenceCaseLabel.charAt(0).toUpperCase() + sentenceCaseLabel.slice(1);
+      linkText.textContent = sentenceCaseSidebarLabel(headingLabel);
       sidebar.insertBefore(link, template);
       sectionLinks.push({ heading: heading, link: link });
     });
