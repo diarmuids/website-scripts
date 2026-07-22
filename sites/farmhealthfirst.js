@@ -1,4 +1,4 @@
-// Last updated: 2026-07-22 19:46:32
+// Last updated: 2026-07-22 19:47:09
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -128,6 +128,15 @@ function initCuratorFeedLayout() {
         post.style.display = visiblePosts.has(post) ? '' : 'none';
 
         const postContent = post.querySelector('.crt-post-content');
+        const postCard = post.querySelector('.crt-post-c');
+
+        if (postCard) {
+          postCard.style.border = '0';
+          postCard.style.boxShadow = 'none';
+          postCard.style.background = 'transparent';
+          postCard.style.borderRadius = '8px';
+          postCard.style.overflow = 'hidden';
+        }
 
         if (postContent) {
           postContent.style.borderRadius = '8px';
