@@ -1,4 +1,4 @@
-// Last updated: 2026-07-22 19:27:20
+// Last updated: 2026-07-22 19:27:52
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -598,32 +598,36 @@ function createLearnMoreButtonGroup($richTexts) {
   return $group;
 }
 
-$('.faq_answer').each(function () {
-  const $answer = $(this);
+const enableUkLearnMoreConversion = false;
 
-  if ($answer.attr('data-learn-more-ready') === 'true') return;
+if (enableUkLearnMoreConversion) {
+  $('.faq_answer').each(function () {
+    const $answer = $(this);
 
-  const $richTexts = $answer.find(
-    '.text-rich-text.is-blog-buttons[data-country="UK"]'
-  );
+    if ($answer.attr('data-learn-more-ready') === 'true') return;
 
-  if (!$richTexts.length) return;
+    const $richTexts = $answer.find(
+      '.text-rich-text.is-blog-buttons[data-country="UK"]'
+    );
 
-  const $group = createLearnMoreButtonGroup($richTexts);
+    if (!$richTexts.length) return;
 
-  $richTexts.remove();
+    const $group = createLearnMoreButtonGroup($richTexts);
 
-  if ($group.children().length) {
-    $answer.append($group);
-  }
+    $richTexts.remove();
 
-  $answer.attr('data-learn-more-ready', 'true');
-});
+    if ($group.children().length) {
+      $answer.append($group);
+    }
 
-$('.text-rich-text.is-blog-buttons[data-country="UK"]').each(function () {
-  const $rich = $(this);
-  $rich.replaceWith(createLearnMoreButtonGroup($rich));
-});
+    $answer.attr('data-learn-more-ready', 'true');
+  });
+
+  $('.text-rich-text.is-blog-buttons[data-country="UK"]').each(function () {
+    const $rich = $(this);
+    $rich.replaceWith(createLearnMoreButtonGroup($rich));
+  });
+}
 
 // LEARN VIDEO STICKY CARDS
 function initLearnVideoStickyCards() {
