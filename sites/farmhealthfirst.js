@@ -1,4 +1,4 @@
-// Last updated: 2026-07-22 19:26:19
+// Last updated: 2026-07-22 19:27:20
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -575,13 +575,12 @@ if (document.readyState === 'loading') {
 window.addEventListener('load', initContentSwipers);
 
 // BLOG LEARN MORE BUTTONS
-$('.text-rich-text.is-blog-buttons[data-country="UK"]').each(function () {
-  const $rich = $(this);
+function createLearnMoreButtonGroup($richTexts) {
   const $group = $(
     '<div class="button-group is-vertical"></div>');
   const usedLinks = new Set();
 
-  $rich.find('a').each(function () {
+  $richTexts.find('a').each(function () {
     const $a = $(this);
     const href = $a.attr('href') || '';
     const label = $.trim($a.text());
@@ -595,7 +594,35 @@ $('.text-rich-text.is-blog-buttons[data-country="UK"]').each(function () {
       '</div><div class="button_icon w-embed"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width="100%" height="100%" fill="none"><path d="M534.9 278.6l22.6-22.6-22.6-22.6-160-160-22.6-22.6-45.3 45.3c1.3 1.3 44 44 128 128l-402.7 0 0 64 402.7 0c-84 84-126.7 126.7-128 128l45.3 45.3 22.6-22.6 160-160z" fill="currentColor" stroke="currentColor"></path></svg></div></a>'
     )
   });
-  $rich.replaceWith($group)
+
+  return $group;
+}
+
+$('.faq_answer').each(function () {
+  const $answer = $(this);
+
+  if ($answer.attr('data-learn-more-ready') === 'true') return;
+
+  const $richTexts = $answer.find(
+    '.text-rich-text.is-blog-buttons[data-country="UK"]'
+  );
+
+  if (!$richTexts.length) return;
+
+  const $group = createLearnMoreButtonGroup($richTexts);
+
+  $richTexts.remove();
+
+  if ($group.children().length) {
+    $answer.append($group);
+  }
+
+  $answer.attr('data-learn-more-ready', 'true');
+});
+
+$('.text-rich-text.is-blog-buttons[data-country="UK"]').each(function () {
+  const $rich = $(this);
+  $rich.replaceWith(createLearnMoreButtonGroup($rich));
 });
 
 // LEARN VIDEO STICKY CARDS
