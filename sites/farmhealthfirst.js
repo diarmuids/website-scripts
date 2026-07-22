@@ -1,4 +1,4 @@
-// Last updated: 2026-07-22 17:06:33
+// Last updated: 2026-07-22 19:24:54
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -575,7 +575,7 @@ if (document.readyState === 'loading') {
 window.addEventListener('load', initContentSwipers);
 
 // BLOG LEARN MORE BUTTONS
-$('.text-rich-text.is-blog-buttons').each(function () {
+$('.text-rich-text.is-blog-buttons[data-country="UK"]').each(function () {
   const $rich = $(this);
   const $group = $(
     '<div class="button-group is-vertical"></div>');
