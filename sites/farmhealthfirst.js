@@ -1,4 +1,4 @@
-// Last updated: 2026-07-22 10:21:02
+// Last updated: 2026-07-22 10:24:25
 
 // DOSING LINKS
 $(function () {
@@ -79,6 +79,7 @@ function initDiseaseHeadingLinks() {
     const sectionLinks = [];
 
     headings.forEach(function (heading, index) {
+      const isFirstRichTextElement = heading === richText.firstElementChild;
       const baseId = heading.textContent.trim().toLowerCase()
         .normalize('NFKD')
         .replace(/[\u0300-\u036f]/g, '')
@@ -99,6 +100,10 @@ function initDiseaseHeadingLinks() {
       anchor.className = 'anchor-link is-disease-heading';
       anchor.style.marginTop = '-70px';
       heading.before(anchor);
+
+      if (isFirstRichTextElement) {
+        heading.style.marginTop = '0px';
+      }
 
       const link = template.cloneNode(true);
       link.href = '#' + anchorId;
@@ -183,6 +188,7 @@ function initBlogHeadingLinks() {
     const sectionLinks = [];
 
     headings.forEach(function (heading, index) {
+      const isFirstRichTextElement = heading === richText.firstElementChild;
       const headingLabel = heading.textContent.trim();
       const baseId = headingLabel.toLowerCase()
         .normalize('NFKD')
@@ -204,6 +210,10 @@ function initBlogHeadingLinks() {
       anchor.className = 'anchor-link is-blog-heading';
       anchor.style.marginTop = '-70px';
       heading.before(anchor);
+
+      if (isFirstRichTextElement) {
+        heading.style.marginTop = '0px';
+      }
 
       const link = template.cloneNode(true);
       const sentenceCaseLabel = headingLabel.toLowerCase();
