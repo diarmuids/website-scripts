@@ -1,4 +1,4 @@
-// Last updated: 2026-07-22 19:45:33
+// Last updated: 2026-07-22 19:46:32
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -126,6 +126,13 @@ function initCuratorFeedLayout() {
 
       posts.forEach(function (post) {
         post.style.display = visiblePosts.has(post) ? '' : 'none';
+
+        const postContent = post.querySelector('.crt-post-content');
+
+        if (postContent) {
+          postContent.style.borderRadius = '8px';
+          postContent.style.overflow = 'hidden';
+        }
 
         post.querySelectorAll(
           '.crt-post-header, .crt-post-text, .crt-post-footer, ' +
