@@ -1,4 +1,4 @@
-// Last updated: 2026-07-21 15:27:45
+// Last updated: 2026-07-22 08:45:24
 
 // DOSING LINKS
 $(function () {
@@ -236,15 +236,21 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(() => {
 }, 300));
 
 // VIDEO SWIPER JS
-document.addEventListener('DOMContentLoaded', function () {
+function initVideoSwipers() {
+  if (typeof Swiper === 'undefined') return;
+
   document.querySelectorAll('.video-list_list-wrapper.is-slider').forEach(function (wrapper) {
+    if (wrapper.dataset.videoSwiperReady === 'true') return;
+
     var list = wrapper.querySelector('.video-list_list');
     var items = wrapper.querySelectorAll('.video-list_item');
     var section = wrapper.closest('.container-large');
-    var prev = section.querySelector('[slider-arrow="prev"]');
-    var next = section.querySelector('[slider-arrow="next"]');
+    var prev = section && section.querySelector('[slider-arrow="prev"]');
+    var next = section && section.querySelector('[slider-arrow="next"]');
 
     if (!list || !items.length || !section || !prev || !next) return;
+
+    wrapper.dataset.videoSwiperReady = 'true';
 
     function getSetup() {
       list.style.gap = '';
@@ -301,7 +307,15 @@ document.addEventListener('DOMContentLoaded', function () {
       swiper.navigation.update();
     });
   });
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initVideoSwipers);
+} else {
+  initVideoSwipers();
+}
+
+window.addEventListener('load', initVideoSwipers);
 
 // BLOG LEARN MORE BUTTONS
 $('.text-rich-text.is-blog-buttons').each(function () {
