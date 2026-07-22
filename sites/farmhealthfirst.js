@@ -1,7 +1,9 @@
-// Last updated: 2026-07-22 10:04:44
+// Last updated: 2026-07-22 10:07:23
 
 // DOSING LINKS
 $(function () {
+  const dosingSections = [];
+
   $('.dosing_link-num').each(function () {
     const $num = $(this);
     const slug = $.trim($num.attr('link-slug') || '');
@@ -9,8 +11,43 @@ $(function () {
     if (!slug) return;
 
     // $num.text(String($num.text()).padStart(2, '0'));
-    $num.closest('a').attr('href', '#' + slug);
+    const $link = $num.closest('a');
+    const target = document.getElementById(slug);
+
+    $link.attr('href', '#' + slug);
+
+    if ($link.length && target) {
+      dosingSections.push({ link: $link[0], target: target });
+    }
   });
+
+  let scrollFrame = null;
+
+  function updateCurrentDosingLink() {
+    scrollFrame = null;
+
+    const marker = window.innerHeight * 0.3;
+    let currentIndex = -1;
+
+    dosingSections.forEach(function (section, index) {
+      if (section.target.getBoundingClientRect().top <= marker) {
+        currentIndex = index;
+      }
+    });
+
+    dosingSections.forEach(function (section, index) {
+      section.link.classList.toggle('is-current', index === currentIndex);
+    });
+  }
+
+  function requestCurrentDosingLinkUpdate() {
+    if (scrollFrame !== null) return;
+    scrollFrame = window.requestAnimationFrame(updateCurrentDosingLink);
+  }
+
+  window.addEventListener('scroll', requestCurrentDosingLinkUpdate, { passive: true });
+  window.addEventListener('resize', requestCurrentDosingLinkUpdate);
+  updateCurrentDosingLink();
 });
 
 // DISEASE PAGE HEADING LINKS
