@@ -1,4 +1,4 @@
-// Last updated: 2026-07-22 19:32:44
+// Last updated: 2026-07-22 19:42:02
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -61,6 +61,51 @@ $(function () {
   $('.footer_img').hide();
   $('.footer_img' + (isEvenSecond ? ':not(.is-alt)' : '.is-alt')).show();
 });
+
+// LIMIT CURATOR FEED TO FIVE MEDIA-ONLY POSTS
+function initCuratorFeedLayout() {
+  let updateFrame = null;
+
+  function updateCuratorFeeds() {
+    updateFrame = null;
+
+    document.querySelectorAll('.crt-feed').forEach(function (feed) {
+      const posts = Array.from(feed.querySelectorAll('.crt-post')).sort(function (a, b) {
+        return Number(a.dataset.position || Infinity) - Number(b.dataset.position || Infinity);
+      });
+      const visiblePosts = new Set(posts.slice(0, 5));
+
+      posts.forEach(function (post) {
+        post.style.display = visiblePosts.has(post) ? '' : 'none';
+
+        post.querySelectorAll(
+          '.crt-post-header, .crt-post-text, .crt-post-footer, ' +
+          '.crt-post-max-height-read-more, .crt-sr-only'
+        ).forEach(function (element) {
+          element.style.display = 'none';
+        });
+      });
+    });
+  }
+
+  function requestCuratorFeedUpdate() {
+    if (updateFrame !== null) return;
+    updateFrame = window.requestAnimationFrame(updateCuratorFeeds);
+  }
+
+  new MutationObserver(requestCuratorFeedUpdate).observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+
+  updateCuratorFeeds();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initCuratorFeedLayout);
+} else {
+  initCuratorFeedLayout();
+}
 
 // DOSING LINKS
 $(function () {
