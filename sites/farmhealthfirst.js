@@ -1,4 +1,4 @@
-// Last updated: 2026-07-22 10:15:25
+// Last updated: 2026-07-22 10:21:02
 
 // DOSING LINKS
 $(function () {
@@ -207,8 +207,12 @@ function initBlogHeadingLinks() {
 
       const link = template.cloneNode(true);
       const sentenceCaseLabel = headingLabel.toLowerCase();
+      const linkText = link.querySelector('.blog_sidebar-link-text');
+
+      if (!linkText) return;
+
       link.href = '#' + anchorId;
-      link.textContent = sentenceCaseLabel.charAt(0).toUpperCase() + sentenceCaseLabel.slice(1);
+      linkText.textContent = sentenceCaseLabel.charAt(0).toUpperCase() + sentenceCaseLabel.slice(1);
       sidebar.insertBefore(link, template);
       sectionLinks.push({ heading: heading, link: link });
     });
