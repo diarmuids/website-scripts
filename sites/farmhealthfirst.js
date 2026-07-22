@@ -1,4 +1,4 @@
-// Last updated: 2026-07-22 10:24:25
+// Last updated: 2026-07-22 14:23:11
 
 // DOSING LINKS
 $(function () {
@@ -527,11 +527,34 @@ function initContentSwipers() {
       observeParents: true
     });
 
+    function setArrowDisabledState(arrow, disabled) {
+      arrow.classList.toggle('is-disabled', disabled);
+      arrow.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+      arrow.setAttribute('tabindex', disabled ? '-1' : '0');
+      arrow.style.pointerEvents = disabled ? 'none' : '';
+      arrow.style.opacity = disabled ? '0.4' : '';
+    }
+
+    function updateSliderArrowStates() {
+      setArrowDisabledState(prev, swiper.isBeginning || swiper.isLocked);
+      setArrowDisabledState(next, swiper.isEnd || swiper.isLocked);
+    }
+
+    swiper.on('slideChange', updateSliderArrowStates);
+    swiper.on('reachBeginning', updateSliderArrowStates);
+    swiper.on('reachEnd', updateSliderArrowStates);
+    swiper.on('fromEdge', updateSliderArrowStates);
+    swiper.on('lock', updateSliderArrowStates);
+    swiper.on('unlock', updateSliderArrowStates);
+    swiper.on('update', updateSliderArrowStates);
+    updateSliderArrowStates();
+
     window.addEventListener('resize', function () {
       setup = getSetup();
       swiper.params.spaceBetween = setup.gap;
       swiper.update();
       swiper.navigation.update();
+      updateSliderArrowStates();
     });
   });
 }
