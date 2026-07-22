@@ -1,4 +1,4 @@
-// Last updated: 2026-07-22 10:07:23
+// Last updated: 2026-07-22 10:15:25
 
 // DOSING LINKS
 $(function () {
@@ -152,6 +152,107 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initDiseaseHeadingLinks);
 } else {
   initDiseaseHeadingLinks();
+}
+
+// BLOG POST HEADING LINKS
+function initBlogHeadingLinks() {
+  document.querySelectorAll('.blog_row').forEach(function (row) {
+    if (row.dataset.blogHeadingLinksReady === 'true') return;
+
+    const sidebar = row.querySelector('.blog_sidebar-inner');
+    const richText = row.querySelector('.blog_text-rich-text');
+    const template = sidebar && Array.from(sidebar.querySelectorAll('.blog_sidebar-link'))
+      .find(function (link) {
+        return link.getAttribute('href') === '#';
+      });
+
+    if (!sidebar || !richText || !template) return;
+
+    let headings = [];
+
+    for (let level = 1; level <= 6; level += 1) {
+      headings = Array.from(richText.querySelectorAll('h' + level));
+      if (headings.length) break;
+    }
+
+    if (!headings.length) return;
+
+    const usedIds = new Set(Array.from(document.querySelectorAll('[id]')).map(function (element) {
+      return element.id;
+    }));
+    const sectionLinks = [];
+
+    headings.forEach(function (heading, index) {
+      const headingLabel = heading.textContent.trim();
+      const baseId = headingLabel.toLowerCase()
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'blog-section-' + (index + 1);
+      let anchorId = baseId;
+      let suffix = 2;
+
+      while (usedIds.has(anchorId)) {
+        anchorId = baseId + '-' + suffix;
+        suffix += 1;
+      }
+
+      usedIds.add(anchorId);
+
+      const anchor = document.createElement('div');
+      anchor.id = anchorId;
+      anchor.className = 'anchor-link is-blog-heading';
+      anchor.style.marginTop = '-70px';
+      heading.before(anchor);
+
+      const link = template.cloneNode(true);
+      const sentenceCaseLabel = headingLabel.toLowerCase();
+      link.href = '#' + anchorId;
+      link.textContent = sentenceCaseLabel.charAt(0).toUpperCase() + sentenceCaseLabel.slice(1);
+      sidebar.insertBefore(link, template);
+      sectionLinks.push({ heading: heading, link: link });
+    });
+
+    template.remove();
+
+    let scrollFrame = null;
+
+    function updateCurrentBlogLink() {
+      scrollFrame = null;
+
+      const marker = window.innerHeight * 0.3;
+      const rowBounds = row.getBoundingClientRect();
+      let currentIndex = -1;
+
+      if (rowBounds.top <= marker && rowBounds.bottom > marker) {
+        sectionLinks.forEach(function (section, index) {
+          if (section.heading.getBoundingClientRect().top <= marker) {
+            currentIndex = index;
+          }
+        });
+      }
+
+      sectionLinks.forEach(function (section, index) {
+        section.link.classList.toggle('is-current', index === currentIndex);
+      });
+    }
+
+    function requestCurrentBlogLinkUpdate() {
+      if (scrollFrame !== null) return;
+      scrollFrame = window.requestAnimationFrame(updateCurrentBlogLink);
+    }
+
+    window.addEventListener('scroll', requestCurrentBlogLinkUpdate, { passive: true });
+    window.addEventListener('resize', requestCurrentBlogLinkUpdate);
+    updateCurrentBlogLink();
+    row.dataset.blogHeadingLinksReady = 'true';
+  });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initBlogHeadingLinks);
+} else {
+  initBlogHeadingLinks();
 }
 
 // RELATED SECTION SIDEBAR LINKS
