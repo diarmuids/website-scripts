@@ -1,4 +1,4 @@
-// Last updated: 2026-07-22 08:45:24
+// Last updated: 2026-07-22 09:23:09
 
 // DOSING LINKS
 $(function () {
@@ -235,22 +235,29 @@ document.addEventListener('DOMContentLoaded', () => setTimeout(() => {
   update();
 }, 300));
 
-// VIDEO SWIPER JS
-function initVideoSwipers() {
+// VIDEO AND PRODUCT SWIPER JS
+function initContentSwipers() {
   if (typeof Swiper === 'undefined') return;
 
-  document.querySelectorAll('.video-list_list-wrapper.is-slider').forEach(function (wrapper) {
-    if (wrapper.dataset.videoSwiperReady === 'true') return;
+  document.querySelectorAll(
+    '.video-list_list-wrapper.is-slider, .product-slider_list-wrapper'
+  ).forEach(function (wrapper) {
+    if (wrapper.dataset.swiperReady === 'true') return;
 
-    var list = wrapper.querySelector('.video-list_list');
-    var items = wrapper.querySelectorAll('.video-list_item');
+    var isProductSlider = wrapper.classList.contains('product-slider_list-wrapper');
+    var list = wrapper.querySelector(
+      isProductSlider ? '.product-slider_list' : '.video-list_list'
+    );
+    var items = wrapper.querySelectorAll(
+      isProductSlider ? '.product-slider_item' : '.video-list_item'
+    );
     var section = wrapper.closest('.container-large');
     var prev = section && section.querySelector('[slider-arrow="prev"]');
     var next = section && section.querySelector('[slider-arrow="next"]');
 
     if (!list || !items.length || !section || !prev || !next) return;
 
-    wrapper.dataset.videoSwiperReady = 'true';
+    wrapper.dataset.swiperReady = 'true';
 
     function getSetup() {
       list.style.gap = '';
@@ -310,12 +317,12 @@ function initVideoSwipers() {
 }
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initVideoSwipers);
+  document.addEventListener('DOMContentLoaded', initContentSwipers);
 } else {
-  initVideoSwipers();
+  initContentSwipers();
 }
 
-window.addEventListener('load', initVideoSwipers);
+window.addEventListener('load', initContentSwipers);
 
 // BLOG LEARN MORE BUTTONS
 $('.text-rich-text.is-blog-buttons').each(function () {
