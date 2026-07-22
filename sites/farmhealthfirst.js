@@ -1,4 +1,4 @@
-// Last updated: 2026-07-22 19:42:02
+// Last updated: 2026-07-22 19:44:10
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -65,15 +65,46 @@ $(function () {
 // LIMIT CURATOR FEED TO FIVE MEDIA-ONLY POSTS
 function initCuratorFeedLayout() {
   let updateFrame = null;
+  const observedFeeds = new WeakSet();
+  const feedResizeObserver = new ResizeObserver(requestCuratorFeedUpdate);
+
+  function getCuratorColumnCount(feed) {
+    const firstColumn = Array.from(feed.children).find(function (element) {
+      return /(^|\s)crt-col-\d+(\s|$)/.test(element.className);
+    });
+
+    if (!firstColumn) return 1;
+
+    const widthPercent = parseFloat(firstColumn.style.width);
+
+    if (widthPercent > 0) {
+      return Math.max(1, Math.round(100 / widthPercent));
+    }
+
+    return Math.max(1, Math.round(feed.clientWidth / firstColumn.getBoundingClientRect().width));
+  }
+
+  function getCuratorPostLimit(columnCount) {
+    if (columnCount >= 5) return 5;
+    if (columnCount === 4) return 8;
+    if (columnCount === 3) return 6;
+    return 2;
+  }
 
   function updateCuratorFeeds() {
     updateFrame = null;
 
     document.querySelectorAll('.crt-feed').forEach(function (feed) {
+      if (!observedFeeds.has(feed)) {
+        observedFeeds.add(feed);
+        feedResizeObserver.observe(feed);
+      }
+
       const posts = Array.from(feed.querySelectorAll('.crt-post')).sort(function (a, b) {
         return Number(a.dataset.position || Infinity) - Number(b.dataset.position || Infinity);
       });
-      const visiblePosts = new Set(posts.slice(0, 5));
+      const postLimit = getCuratorPostLimit(getCuratorColumnCount(feed));
+      const visiblePosts = new Set(posts.slice(0, postLimit));
 
       posts.forEach(function (post) {
         post.style.display = visiblePosts.has(post) ? '' : 'none';
@@ -97,6 +128,8 @@ function initCuratorFeedLayout() {
     childList: true,
     subtree: true
   });
+
+  window.addEventListener('resize', requestCuratorFeedUpdate);
 
   updateCuratorFeeds();
 }
