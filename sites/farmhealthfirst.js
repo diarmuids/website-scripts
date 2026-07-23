@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 10:29:04
+// Last updated: 2026-07-23 10:29:58
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -14,7 +14,8 @@ const WEBFLOW_PAGE_IDS = {
   dosingGuide: '6a292541aac8585a2a153456',
   videos: '6a29b82a83695807b19eda76',
   blog: '6a29b80bed0ef116784e6870',
-  products: '6a5512935c6e71d87c982ec7'
+  products: '6a5512935c6e71d87c982ec7',
+  learnCpd: '6a292536d120dc8df39722ce'
 };
 
 // COUNTRY LOGIC, THEN LOAD FINSWEET
@@ -1106,6 +1107,81 @@ function generateProductsCollectionSchema() {
   document.head.appendChild(schema);
 }
 
+// LEARN AND CPD COLLECTION SCHEMA
+function generateLearnCpdCollectionSchema() {
+  if (document.documentElement.dataset.wfPage !== WEBFLOW_PAGE_IDS.learnCpd) return;
+
+  const canonical = document.querySelector('link[rel="canonical"]');
+  const pageUrl = canonical ? canonical.href : location.href.split('#')[0];
+  const itemListElement = [];
+  const usedUrls = new Set();
+
+  document.querySelectorAll('.section_learn-video .learn-video_card[data-video-url]').forEach(function (card) {
+    const videoUrl = card.getAttribute('data-video-url');
+    const title = card.querySelector('.heading-style-h3');
+
+    if (!videoUrl || !title) return;
+
+    const url = new URL(videoUrl, location.origin).href;
+    const name = title.textContent.replace(/\s+/g, ' ').trim();
+
+    if (!name || usedUrls.has(url)) return;
+
+    usedUrls.add(url);
+
+    const listItem = {
+      '@type': 'ListItem',
+      position: itemListElement.length + 1,
+      name: name,
+      url: url
+    };
+    const content = card.querySelector('.learn-video_card-content-top');
+    const image = card.querySelector('.learn-video_image[src]');
+
+    if (content) {
+      const contentClone = content.cloneNode(true);
+      const removableTitle = contentClone.querySelector('.heading-style-h3');
+      const removableTag = contentClone.querySelector('.learn-video_tag');
+
+      if (removableTitle) removableTitle.remove();
+      if (removableTag) removableTag.remove();
+
+      const description = contentClone.textContent.replace(/\s+/g, ' ').trim();
+      if (description) listItem.description = description;
+    }
+
+    if (image) listItem.image = new URL(image.src, location.href).href;
+
+    itemListElement.push(listItem);
+  });
+
+  if (!itemListElement.length) return;
+
+  const existingSchema = document.getElementById('learn-cpd-collection-schema');
+
+  if (existingSchema) existingSchema.remove();
+
+  const schema = document.createElement('script');
+  schema.id = 'learn-cpd-collection-schema';
+  schema.type = 'application/ld+json';
+  schema.textContent = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    '@id': pageUrl + '#collection',
+    name: document.title,
+    description:
+      document.querySelector('meta[name="description"]')?.content || undefined,
+    url: pageUrl,
+    mainEntity: {
+      '@type': 'ItemList',
+      itemListOrder: 'https://schema.org/ItemListOrderAscending',
+      numberOfItems: itemListElement.length,
+      itemListElement: itemListElement
+    }
+  });
+  document.head.appendChild(schema);
+}
+
 // CONVERT FAQ LINKS TO BUTTON LIST AFTER COUNTRY CONTENT IS RESOLVED
 function initFaqLinkButtons() {
   $('.faq_answer').each(function () {
@@ -1176,6 +1252,7 @@ countryContentReady.then(generateDosingGuideSchema);
 countryContentReady.then(generateVideosCollectionSchema);
 countryContentReady.then(generateBlogCollectionSchema);
 countryContentReady.then(generateProductsCollectionSchema);
+countryContentReady.then(generateLearnCpdCollectionSchema);
 countryContentReady.then(initFaqLinkButtons);
 
 // SET SLIDER MASK HEIGHT
