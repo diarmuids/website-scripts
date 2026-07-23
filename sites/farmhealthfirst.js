@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 12:03:04
+// Last updated: 2026-07-23 14:12:59
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -26,6 +26,67 @@ const WEBFLOW_PAGE_IDS = {
 };
 
 const SCHEMA_SITE_URL = 'https://www.farmhealthfirst.com/';
+
+// SUBSCRIBE FORM DEBUGGER
+// Visit /subscribe?debug-subscribe=1 to inspect the exact Mailchimp payload
+// before allowing the browser to submit it.
+document.addEventListener('DOMContentLoaded', function () {
+  if (
+    location.pathname.replace(/\/+$/, '') !== '/subscribe' ||
+    new URLSearchParams(location.search).get('debug-subscribe') !== '1'
+  ) {
+    return;
+  }
+
+  const form = document.querySelector('.section_subscribe-page form');
+  if (!form) return;
+
+  form.addEventListener('submit', function debugSubscribeSubmission(event) {
+    event.preventDefault();
+
+    const payload = {};
+    new FormData(form).forEach(function (value, key) {
+      payload[key] = value;
+    });
+
+    console.log('[Subscribe debug]', {
+      action: form.action,
+      method: form.method,
+      payload: payload
+    });
+
+    document.querySelector('.subscribe-debug-panel')?.remove();
+
+    const panel = document.createElement('div');
+    panel.className = 'subscribe-debug-panel';
+    panel.style.cssText =
+      'margin-top:1rem;padding:1rem;background:#fff;color:#111;border:2px solid #111;border-radius:8px;font:14px/1.5 monospace;white-space:pre-wrap;overflow-wrap:anywhere;';
+
+    const output = document.createElement('pre');
+    output.style.cssText = 'margin:0 0 1rem;white-space:pre-wrap;';
+    output.textContent = JSON.stringify(
+      {
+        action: form.action,
+        method: form.method.toUpperCase(),
+        payload: payload
+      },
+      null,
+      2
+    );
+
+    const continueButton = document.createElement('button');
+    continueButton.type = 'button';
+    continueButton.textContent = 'Continue and submit this payload';
+    continueButton.style.cssText =
+      'padding:.75rem 1rem;border:0;border-radius:999px;background:#111;color:#fff;cursor:pointer;';
+    continueButton.addEventListener('click', function () {
+      form.submit();
+    });
+
+    panel.append(output, continueButton);
+    form.insertAdjacentElement('afterend', panel);
+  });
+});
 
 function getSchemaPageUrl() {
   const canonical = document.querySelector('link[rel="canonical"]');
