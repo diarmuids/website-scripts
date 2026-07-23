@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 11:54:22
+// Last updated: 2026-07-23 11:54:55
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -922,6 +922,226 @@ function generateFaqPageSchema() {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
     mainEntity: mainEntity
+  });
+  document.head.appendChild(schema);
+}
+
+// DISEASE DETAIL SCHEMA
+function generateDiseaseDetailSchema() {
+  if (document.documentElement.dataset.wfPage !== WEBFLOW_PAGE_IDS.diseaseDetail) return;
+
+  const pageUrl = getSchemaPageUrl();
+  const siteUrl = new URL('/', pageUrl).href;
+  const organizationId = siteUrl + '#organization';
+  const websiteId = siteUrl + '#website';
+  const webpageId = pageUrl + '#webpage';
+  const conditionId = pageUrl + '#condition';
+  const breadcrumbId = pageUrl + '#breadcrumb';
+  const diseaseSection = document.querySelector('.section_disease-page');
+  const heading = diseaseSection?.querySelector('.heading_wrap.is-disease h1')
+    ?.textContent.replace(/\s+/g, ' ').trim();
+  const richText = diseaseSection?.querySelector('.disease_rich-text[data-country="UK"]') ||
+    Array.from(diseaseSection?.querySelectorAll('.disease_rich-text:not([data-country])') || [])
+      .find(function (element) {
+        return !element.closest('.disease_ref-wrap');
+      });
+
+  if (!diseaseSection || !heading || !richText) return;
+
+  const articleBody = richText.textContent.replace(/\s+/g, ' ').trim();
+  const firstParagraph = richText.querySelector('p')
+    ?.textContent.replace(/\s+/g, ' ').trim() || '';
+  const metaDescription = document.querySelector('meta[name="description"]')?.content.trim();
+  const description = metaDescription || firstParagraph;
+  const factValues = {};
+
+  diseaseSection.querySelectorAll('.disease_detail-item').forEach(function (item) {
+    const labelElement = item.querySelector('.disease_detail-title');
+    const valueElement = Array.from(item.children).find(function (element) {
+      return element !== labelElement;
+    });
+    const label = labelElement?.textContent.replace(/\s+/g, ' ').trim().toLowerCase();
+    const value = valueElement?.textContent.replace(/\s+/g, ' ').trim();
+
+    if (
+      !label ||
+      !value ||
+      /^(?:n\/a|filler text|not set|none)$/i.test(value)
+    ) return;
+
+    factValues[label] = value;
+  });
+
+  function getFactValue(labelStart) {
+    const key = Object.keys(factValues).find(function (label) {
+      return label.startsWith(labelStart);
+    });
+
+    return key ? factValues[key] : '';
+  }
+
+  const diseaseName = getFactValue('disease') || heading;
+  const otherNames = getFactValue('other names');
+  const cause = getFactValue('caused by');
+  const risk = getFactValue('most at risk');
+  const spread = getFactValue('spread');
+  const signs = getFactValue('key signs');
+  const monitoring = getFactValue('monitoring tools');
+  const logo = document.querySelector('.footer_logo[src]');
+  const copyrightText = document.querySelector('.footer_copyright')
+    ?.textContent.replace(/\s+/g, ' ').trim() || '';
+  const legalNameMatch = copyrightText.match(/\u00a9\s*\d{4}\s+(.+?)\s+All Rights/i);
+  const siteName = document.title.split(/\s*\u00b7\s*/).pop().trim();
+  const socialUrls = Array.from(document.querySelectorAll(
+    '.section_socials-cta a[href^="http"], .footer_component .social_link[href^="http"]'
+  ))
+    .map(function (link) {
+      const url = new URL(link.getAttribute('href'), pageUrl);
+      url.search = '';
+      return url.href;
+    })
+    .filter(function (url, index, urls) {
+      return urls.indexOf(url) === index;
+    });
+  const organization = {
+    '@type': 'Organization',
+    '@id': organizationId,
+    name: siteName,
+    url: siteUrl
+  };
+
+  if (legalNameMatch) organization.legalName = legalNameMatch[1].trim();
+  if (logo) {
+    const logoUrl = new URL(logo.getAttribute('src'), pageUrl).href;
+
+    organization.logo = {
+      '@type': 'ImageObject',
+      '@id': siteUrl + '#logo',
+      url: logoUrl,
+      contentUrl: logoUrl,
+      caption: siteName
+    };
+    organization.image = { '@id': siteUrl + '#logo' };
+  }
+  if (socialUrls.length) organization.sameAs = socialUrls;
+
+  const condition = {
+    '@type': 'MedicalCondition',
+    '@id': conditionId,
+    url: pageUrl,
+    name: diseaseName,
+    mainEntityOfPage: { '@id': webpageId }
+  };
+
+  if (description) condition.description = description;
+  if (otherNames) condition.alternateName = otherNames;
+  if (cause) {
+    condition.cause = {
+      '@type': 'MedicalCause',
+      name: cause
+    };
+  }
+  if (risk) {
+    condition.riskFactor = {
+      '@type': 'MedicalRiskFactor',
+      name: risk
+    };
+  }
+  if (spread) condition.epidemiology = spread;
+  if (signs) {
+    condition.signOrSymptom = {
+      '@type': 'MedicalSignOrSymptom',
+      name: signs
+    };
+  }
+  if (monitoring) {
+    condition.typicalTest = {
+      '@type': 'MedicalTest',
+      name: monitoring
+    };
+  }
+
+  const webPage = {
+    '@type': ['WebPage', 'MedicalWebPage'],
+    '@id': webpageId,
+    url: pageUrl,
+    name: document.title,
+    headline: heading,
+    isPartOf: { '@id': websiteId },
+    mainEntity: { '@id': conditionId },
+    about: { '@id': conditionId },
+    publisher: { '@id': organizationId },
+    breadcrumb: { '@id': breadcrumbId },
+    inLanguage: document.documentElement.lang || 'en'
+  };
+
+  if (description) webPage.description = description;
+  if (articleBody) webPage.text = articleBody;
+
+  document.querySelectorAll('script[type="application/ld+json"]').forEach(function (script) {
+    try {
+      const existingSchema = JSON.parse(script.textContent);
+      const graph = Array.isArray(existingSchema['@graph'])
+        ? existingSchema['@graph']
+        : [existingSchema];
+
+      if (graph.some(function (item) {
+        const types = Array.isArray(item?.['@type']) ? item['@type'] : [item?.['@type']];
+
+        return item && (
+          types.includes('MedicalCondition') ||
+          item['@id'] === conditionId
+        );
+      })) {
+        script.remove();
+      }
+    } catch (error) {
+      // Leave unrelated invalid JSON-LD untouched.
+    }
+  });
+
+  const schema = document.createElement('script');
+  schema.id = 'disease-detail-schema';
+  schema.type = 'application/ld+json';
+  schema.textContent = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@graph': [
+      organization,
+      {
+        '@type': 'WebSite',
+        '@id': websiteId,
+        url: siteUrl,
+        name: siteName,
+        publisher: { '@id': organizationId },
+        inLanguage: document.documentElement.lang || 'en'
+      },
+      webPage,
+      condition,
+      {
+        '@type': 'BreadcrumbList',
+        '@id': breadcrumbId,
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Home',
+            item: siteUrl
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Diseases',
+            item: siteUrl
+          },
+          {
+            '@type': 'ListItem',
+            position: 3,
+            name: heading,
+            item: pageUrl
+          }
+        ]
+      }
+    ]
   });
   document.head.appendChild(schema);
 }
