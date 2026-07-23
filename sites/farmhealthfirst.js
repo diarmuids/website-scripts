@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 11:17:55
+// Last updated: 2026-07-23 11:18:03
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -1565,7 +1565,11 @@ function generateHomePageSchema() {
     headline: headline || document.title,
     isPartOf: { '@id': websiteId },
     about: { '@id': organizationId },
-    mainEntity: { '@id': organizationId },
+    mainEntity: [{ '@id': organizationId }].concat(
+      contentLists.map(function (list) {
+        return { '@id': list['@id'] };
+      })
+    ),
     publisher: { '@id': organizationId },
     inLanguage: document.documentElement.lang || 'en'
   };
@@ -1577,12 +1581,6 @@ function generateHomePageSchema() {
       url: new URL(primaryImage, pageUrl).href
     };
   }
-  if (contentLists.length) {
-    homePage.hasPart = contentLists.map(function (list) {
-      return { '@id': list['@id'] };
-    });
-  }
-
   document.querySelectorAll('script[type="application/ld+json"]').forEach(function (script) {
     try {
       const existingSchema = JSON.parse(script.textContent);
