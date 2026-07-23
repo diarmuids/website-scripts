@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 10:40:24
+// Last updated: 2026-07-23 10:41:29
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -83,14 +83,20 @@ const countryContentReady = (async function () {
 })();
 
 // TESTING IP
-$(document).on('click', '[data-test-country]', function (event) {
+document.addEventListener('click', function (event) {
+  const trigger = event.target.closest('[data-test-country]');
+
+  if (!trigger) return;
+
   event.preventDefault();
+  event.stopImmediatePropagation();
+
   const url = new URL(location.href);
-  const country = String($(this).data('test-country') || '').toUpperCase();
+  const country = String(trigger.getAttribute('data-test-country') || '').toUpperCase();
 
   url.search = '?' + (country === 'IE' ? 'IE' : 'UK');
-  location.href = url;
-});
+  location.assign(url.href);
+}, true);
 
 // SHOW ALTERNATING FOOTER IMAGE DEPENDING ON EVEN/ODD SECOND
 $(function () {
