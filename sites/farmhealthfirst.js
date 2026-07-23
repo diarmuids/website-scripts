@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 10:29:58
+// Last updated: 2026-07-23 10:31:14
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -797,11 +797,10 @@ if (document.readyState === 'loading') {
 window.addEventListener('load', initContentSwipers);
 
 // FAQ PAGE SCHEMA
-function generateFaqPageSchema(selectedCountry) {
+function generateFaqPageSchema() {
   if (document.documentElement.dataset.wfPage !== WEBFLOW_PAGE_IDS.faq) return;
 
-  const mainEntity = [];
-  const usedQuestions = new Set();
+  const questions = new Map();
 
   document.querySelectorAll('.faq_item').forEach(function (item) {
     const questionElement = item.querySelector('.faq_question-text');
@@ -809,29 +808,36 @@ function generateFaqPageSchema(selectedCountry) {
 
     if (!questionElement || !answer) return;
 
-    const countryAnswer = answer.querySelector(
-      '.text-rich-text.is-faq[data-country="' + selectedCountry + '"]:not(.is-faq-buttons)'
-    ) || answer.querySelector(
-      '.text-rich-text.is-faq:not(.is-faq-buttons)'
-    );
-
-    if (!countryAnswer) return;
-
     const question = questionElement.textContent.replace(/\s+/g, ' ').trim();
-    const answerText = countryAnswer.textContent.replace(/\s+/g, ' ').trim();
 
-    if (!question || !answerText || usedQuestions.has(question)) return;
+    if (!question) return;
 
-    usedQuestions.add(question);
-    mainEntity.push({
-      '@type': 'Question',
-      name: question,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: answerText
-      }
+    if (!questions.has(question)) questions.set(question, new Set());
+
+    answer.querySelectorAll(
+      '.text-rich-text.is-faq:not(.is-faq-buttons)'
+    ).forEach(function (countryAnswer) {
+      const answerText = countryAnswer.textContent.replace(/\s+/g, ' ').trim();
+      if (answerText) questions.get(question).add(answerText);
     });
   });
+
+  const mainEntity = Array.from(questions, function ([question, answerTexts]) {
+    const acceptedAnswers = Array.from(answerTexts, function (answerText) {
+      return {
+        '@type': 'Answer',
+        text: answerText
+      };
+    });
+
+    if (!acceptedAnswers.length) return null;
+
+    return {
+      '@type': 'Question',
+      name: question,
+      acceptedAnswer: acceptedAnswers.length === 1 ? acceptedAnswers[0] : acceptedAnswers
+    };
+  }).filter(Boolean);
 
   if (!mainEntity.length) return;
 
@@ -1052,14 +1058,20 @@ function generateProductsCollectionSchema() {
 
   document.querySelectorAll('.section_product-list .product-list_item').forEach(function (card) {
     const link = card.querySelector('a.product-list_link[href]');
-    const title = card.querySelector('.product-list_title');
+    const titles = Array.from(card.querySelectorAll('.product-list_title'))
+      .map(function (title) {
+        return title.textContent.replace(/\s+/g, ' ').trim();
+      })
+      .filter(function (title, index, allTitles) {
+        return title && title.toLowerCase() !== 'n/a' && allTitles.indexOf(title) === index;
+      });
 
-    if (!link || !title) return;
+    if (!link || !titles.length) return;
 
     const url = new URL(link.getAttribute('href'), location.origin).href;
-    const name = title.textContent.replace(/\s+/g, ' ').trim();
+    const name = titles[0];
 
-    if (!name || name.toLowerCase() === 'n/a' || usedUrls.has(url)) return;
+    if (usedUrls.has(url)) return;
 
     usedUrls.add(url);
 
@@ -1069,15 +1081,25 @@ function generateProductsCollectionSchema() {
       name: name,
       url: url
     };
-    const image = card.querySelector('.product-list_img[src]');
+    const images = Array.from(card.querySelectorAll('.product-list_img[src]'))
+      .filter(function (image) {
+        return image.alt.trim().toLowerCase() !== 'n/a';
+      })
+      .map(function (image) {
+        return new URL(image.src, location.href).href;
+      })
+      .filter(function (imageUrl, index, allImageUrls) {
+        return allImageUrls.indexOf(imageUrl) === index;
+      });
     const details = Array.from(card.querySelectorAll('.product-list_detail'))
       .map(function (detail) {
         return detail.textContent.replace(/\s+/g, ' ').trim();
       })
       .filter(Boolean);
 
+    if (titles.length > 1) listItem.alternateName = titles.slice(1);
     if (details.length) listItem.description = details.join(' — ');
-    if (image) listItem.image = new URL(image.src, location.href).href;
+    if (images.length) listItem.image = images.length === 1 ? images[0] : images;
 
     itemListElement.push(listItem);
   });
@@ -1247,12 +1269,14 @@ function initFaqLinkButtons() {
   });
 }
 
-countryContentReady.then(generateFaqPageSchema);
-countryContentReady.then(generateDosingGuideSchema);
-countryContentReady.then(generateVideosCollectionSchema);
-countryContentReady.then(generateBlogCollectionSchema);
-countryContentReady.then(generateProductsCollectionSchema);
-countryContentReady.then(generateLearnCpdCollectionSchema);
+// Generate schema synchronously from the complete Webflow DOM, before the
+// asynchronous country lookup removes either the UK or Ireland content.
+generateFaqPageSchema();
+generateDosingGuideSchema();
+generateVideosCollectionSchema();
+generateBlogCollectionSchema();
+generateProductsCollectionSchema();
+generateLearnCpdCollectionSchema();
 countryContentReady.then(initFaqLinkButtons);
 
 // SET SLIDER MASK HEIGHT
