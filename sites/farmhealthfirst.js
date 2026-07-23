@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 11:45:25
+// Last updated: 2026-07-23 11:45:31
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -1266,12 +1266,6 @@ function generateBlogArticleSchema() {
     name: document.title,
     headline: headline || document.title,
     isPartOf: { '@id': websiteId },
-    about: categoryNames.map(function (category) {
-      return {
-        '@type': 'Thing',
-        name: category
-      };
-    }),
     mainEntity: { '@id': articleId },
     publisher: { '@id': organizationId },
     inLanguage: document.documentElement.lang || 'en',
@@ -1279,6 +1273,14 @@ function generateBlogArticleSchema() {
   };
 
   if (description) webPage.description = description;
+  if (categoryNames.length) {
+    webPage.about = categoryNames.map(function (category) {
+      return {
+        '@type': 'Thing',
+        name: category
+      };
+    });
+  }
   if (imageUrl) {
     webPage.primaryImageOfPage = {
       '@type': 'ImageObject',
