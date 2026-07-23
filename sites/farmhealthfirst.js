@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 11:06:23
+// Last updated: 2026-07-23 11:09:44
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -1439,8 +1439,13 @@ function generateContactPageSchema() {
     };
     if (companyLink) organization.parentOrganization.url = companyLink.href;
   }
+  const organizationLocation = {
+    '@type': 'Place',
+    name: companyName || siteName
+  };
+
   if (addressParts.length) {
-    organization.address = {
+    organizationLocation.address = {
       '@type': 'PostalAddress',
       streetAddress: addressParts.slice(0, 2).join(', '),
       addressLocality: addressParts[2] || undefined,
@@ -1451,18 +1456,19 @@ function generateContactPageSchema() {
     };
   }
   if (mapLink) {
-    organization.hasMap = mapLink.href;
+    organizationLocation.hasMap = mapLink.href;
 
     const coordinates = mapLink.href.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/);
 
     if (coordinates) {
-      organization.geo = {
+      organizationLocation.geo = {
         '@type': 'GeoCoordinates',
         latitude: Number(coordinates[1]),
         longitude: Number(coordinates[2])
       };
     }
   }
+  if (addressParts.length || mapLink) organization.location = organizationLocation;
   if (servedCountryCodes.length) {
     organization.areaServed = servedCountryCodes.map(function (country) {
       return {
