@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 11:45:31
+// Last updated: 2026-07-23 11:49:35
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -17,6 +17,7 @@ const WEBFLOW_PAGE_IDS = {
   blog: '6a29b80bed0ef116784e6870',
   blogArticle: '6a29b38982b15a3fd705423b',
   products: '6a5512935c6e71d87c982ec7',
+  productDetail: '6a55f738d48eaa72bc8b9f4e',
   learnCpd: '6a292536d120dc8df39722ce',
   retailers: '6a57bce442180c02d24933e7',
   contact: '6a293da118e494568ea9bc54'
@@ -49,6 +50,7 @@ generateVideosCollectionSchema();
 generateBlogCollectionSchema();
 generateBlogArticleSchema();
 generateProductsCollectionSchema();
+generateProductDetailSchema();
 generateLearnCpdCollectionSchema();
 generateRetailersCollectionSchema();
 generateContactPageSchema();
@@ -1421,6 +1423,212 @@ function generateProductsCollectionSchema() {
       numberOfItems: itemListElement.length,
       itemListElement: itemListElement
     }
+  });
+  document.head.appendChild(schema);
+}
+
+// PRODUCT DETAIL SCHEMA
+function generateProductDetailSchema() {
+  if (document.documentElement.dataset.wfPage !== WEBFLOW_PAGE_IDS.productDetail) return;
+
+  const pageUrl = getSchemaPageUrl();
+  const siteUrl = new URL('/', pageUrl).href;
+  const organizationId = siteUrl + '#organization';
+  const websiteId = siteUrl + '#website';
+  const webpageId = pageUrl + '#webpage';
+  const productId = pageUrl + '#product';
+  const breadcrumbId = pageUrl + '#breadcrumb';
+  const productSection = document.querySelector('.section_product-detail');
+
+  if (!productSection) return;
+
+  const productName = (
+    productSection.querySelector('h1[data-country="UK"]') ||
+    productSection.querySelector('h1:not([data-country])')
+  )?.textContent.replace(/\s+/g, ' ').trim();
+
+  if (!productName) return;
+
+  const metaDescription = document.querySelector('meta[name="description"]')?.content.trim();
+  const imageElement = productSection.querySelector(
+    '.product-detail_img[data-country="UK"][src]'
+  ) || productSection.querySelector(
+    '.product-detail_img:not([data-country])[src]'
+  );
+  const imageUrl = imageElement
+    ? new URL(imageElement.getAttribute('src'), pageUrl).href
+    : '';
+  const properties = [];
+  const propertyValues = {};
+
+  productSection.querySelectorAll('.product-detail_item').forEach(function (item) {
+    const label = item.querySelector('.product-detail_title')
+      ?.textContent.replace(/\s+/g, ' ').trim();
+    const valueElement = item.querySelector(
+      '.product-detail_content-wrap [data-country="UK"]'
+    ) || item.querySelector(
+      '.product-detail_text[data-country="UK"]'
+    ) || item.querySelector(
+      '.product-detail_content-wrap > :not([data-country])'
+    ) || item.querySelector(
+      '.product-detail_text:not([data-country])'
+    );
+    const value = valueElement?.textContent.replace(/\s+/g, ' ').trim();
+
+    if (!label || !value || value.toLowerCase() === 'n/a') return;
+
+    propertyValues[label.toLowerCase()] = value;
+    properties.push({
+      '@type': 'PropertyValue',
+      name: label,
+      value: value
+    });
+  });
+
+  const description = metaDescription || propertyValues.description || '';
+  const logo = document.querySelector('.footer_logo[src]');
+  const copyrightText = document.querySelector('.footer_copyright')
+    ?.textContent.replace(/\s+/g, ' ').trim() || '';
+  const legalNameMatch = copyrightText.match(/\u00a9\s*\d{4}\s+(.+?)\s+All Rights/i);
+  const siteName = document.title.split(/\s*\u00b7\s*/).pop().trim();
+  const socialUrls = Array.from(document.querySelectorAll(
+    '.section_socials-cta a[href^="http"], .footer_component .social_link[href^="http"]'
+  ))
+    .map(function (link) {
+      const url = new URL(link.getAttribute('href'), pageUrl);
+      url.search = '';
+      return url.href;
+    })
+    .filter(function (url, index, urls) {
+      return urls.indexOf(url) === index;
+    });
+  const organization = {
+    '@type': 'Organization',
+    '@id': organizationId,
+    name: siteName,
+    url: siteUrl
+  };
+
+  if (legalNameMatch) organization.legalName = legalNameMatch[1].trim();
+  if (logo) {
+    const logoUrl = new URL(logo.getAttribute('src'), pageUrl).href;
+
+    organization.logo = {
+      '@type': 'ImageObject',
+      '@id': siteUrl + '#logo',
+      url: logoUrl,
+      contentUrl: logoUrl,
+      caption: siteName
+    };
+    organization.image = { '@id': siteUrl + '#logo' };
+  }
+  if (socialUrls.length) organization.sameAs = socialUrls;
+
+  const product = {
+    '@type': 'Product',
+    '@id': productId,
+    url: pageUrl,
+    name: productName,
+    mainEntityOfPage: { '@id': webpageId }
+  };
+
+  if (description) product.description = description;
+  if (imageUrl) {
+    product.image = {
+      '@type': 'ImageObject',
+      url: imageUrl,
+      contentUrl: imageUrl,
+      caption: imageElement.alt || productName
+    };
+  }
+  if (propertyValues.class) product.category = propertyValues.class;
+  if (properties.length) product.additionalProperty = properties;
+
+  const webPage = {
+    '@type': 'WebPage',
+    '@id': webpageId,
+    url: pageUrl,
+    name: document.title,
+    headline: productName,
+    isPartOf: { '@id': websiteId },
+    mainEntity: { '@id': productId },
+    publisher: { '@id': organizationId },
+    breadcrumb: { '@id': breadcrumbId },
+    inLanguage: document.documentElement.lang || 'en'
+  };
+
+  if (description) webPage.description = description;
+  if (imageUrl) {
+    webPage.primaryImageOfPage = {
+      '@type': 'ImageObject',
+      url: imageUrl
+    };
+  }
+
+  document.querySelectorAll('script[type="application/ld+json"]').forEach(function (script) {
+    try {
+      const existingSchema = JSON.parse(script.textContent);
+      const graph = Array.isArray(existingSchema['@graph'])
+        ? existingSchema['@graph']
+        : [existingSchema];
+
+      if (graph.some(function (item) {
+        const types = Array.isArray(item?.['@type']) ? item['@type'] : [item?.['@type']];
+
+        return item && (
+          types.includes('Product') ||
+          item['@id'] === productId
+        );
+      })) {
+        script.remove();
+      }
+    } catch (error) {
+      // Leave unrelated invalid JSON-LD untouched.
+    }
+  });
+
+  const schema = document.createElement('script');
+  schema.id = 'product-detail-schema';
+  schema.type = 'application/ld+json';
+  schema.textContent = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@graph': [
+      organization,
+      {
+        '@type': 'WebSite',
+        '@id': websiteId,
+        url: siteUrl,
+        name: siteName,
+        publisher: { '@id': organizationId },
+        inLanguage: document.documentElement.lang || 'en'
+      },
+      webPage,
+      product,
+      {
+        '@type': 'BreadcrumbList',
+        '@id': breadcrumbId,
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Home',
+            item: siteUrl
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Products',
+            item: new URL('/products', siteUrl).href
+          },
+          {
+            '@type': 'ListItem',
+            position: 3,
+            name: productName,
+            item: pageUrl
+          }
+        ]
+      }
+    ]
   });
   document.head.appendChild(schema);
 }
