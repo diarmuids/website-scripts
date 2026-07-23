@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 11:54:55
+// Last updated: 2026-07-23 11:54:59
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -1130,12 +1130,6 @@ function generateDiseaseDetailSchema() {
           {
             '@type': 'ListItem',
             position: 2,
-            name: 'Diseases',
-            item: siteUrl
-          },
-          {
-            '@type': 'ListItem',
-            position: 3,
             name: heading,
             item: pageUrl
           }
