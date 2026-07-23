@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 14:16:34
+// Last updated: 2026-07-23 14:19:12
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -26,6 +26,29 @@ const WEBFLOW_PAGE_IDS = {
 };
 
 const SCHEMA_SITE_URL = 'https://www.farmhealthfirst.com/';
+
+// NORMALISE SUBSCRIBE PAGE FIELDS TO MAILCHIMP'S HOSTED FORM NAMES
+function normaliseSubscribeMailchimpFields() {
+  if (location.pathname.replace(/\/+$/, '') !== '/subscribe') return;
+
+  const form = document.querySelector('.section_subscribe-page form');
+  if (!form) return;
+
+  [
+    ['EMAIL', 'MERGE0'],
+    ['FNAME', 'MERGE1'],
+    ['LNAME', 'MERGE2']
+  ].forEach(function ([audienceTag, hostedFormName]) {
+    const field = form.querySelector(
+      `[name="${audienceTag}"], [name="${hostedFormName}"]`
+    );
+    if (!field) return;
+
+    field.name = hostedFormName;
+    field.id = hostedFormName;
+    field.setAttribute('data-name', hostedFormName);
+  });
+}
 
 // SUBSCRIBE FORM DEBUGGER
 // Visit /subscribe?debug-subscribe=1 to inspect the exact Mailchimp payload
@@ -90,8 +113,12 @@ function initSubscribeDebugger() {
 }
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initSubscribeDebugger);
+  document.addEventListener('DOMContentLoaded', function () {
+    normaliseSubscribeMailchimpFields();
+    initSubscribeDebugger();
+  });
 } else {
+  normaliseSubscribeMailchimpFields();
   initSubscribeDebugger();
 }
 
