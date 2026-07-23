@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 10:08:34
+// Last updated: 2026-07-23 10:08:45
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -787,6 +787,60 @@ if (document.readyState === 'loading') {
 
 window.addEventListener('load', initContentSwipers);
 
+// FAQ PAGE SCHEMA
+function generateFaqPageSchema(selectedCountry) {
+  if (location.pathname.replace(/\/+$/, '') !== '/faq') return;
+
+  const mainEntity = [];
+  const usedQuestions = new Set();
+
+  document.querySelectorAll('.faq_item').forEach(function (item) {
+    const questionElement = item.querySelector('.faq_question-text');
+    const answer = item.querySelector('.faq_answer');
+
+    if (!questionElement || !answer) return;
+
+    const countryAnswer = answer.querySelector(
+      '.text-rich-text.is-faq[data-country="' + selectedCountry + '"]:not(.is-faq-buttons)'
+    ) || answer.querySelector(
+      '.text-rich-text.is-faq:not(.is-faq-buttons)'
+    );
+
+    if (!countryAnswer) return;
+
+    const question = questionElement.textContent.replace(/\s+/g, ' ').trim();
+    const answerText = countryAnswer.textContent.replace(/\s+/g, ' ').trim();
+
+    if (!question || !answerText || usedQuestions.has(question)) return;
+
+    usedQuestions.add(question);
+    mainEntity.push({
+      '@type': 'Question',
+      name: question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: answerText
+      }
+    });
+  });
+
+  if (!mainEntity.length) return;
+
+  const existingSchema = document.getElementById('faq-page-schema');
+
+  if (existingSchema) existingSchema.remove();
+
+  const schema = document.createElement('script');
+  schema.id = 'faq-page-schema';
+  schema.type = 'application/ld+json';
+  schema.textContent = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: mainEntity
+  });
+  document.head.appendChild(schema);
+}
+
 // CONVERT FAQ LINKS TO BUTTON LIST AFTER COUNTRY CONTENT IS RESOLVED
 function initFaqLinkButtons() {
   $('.faq_answer').each(function () {
@@ -852,6 +906,7 @@ function initFaqLinkButtons() {
   });
 }
 
+countryContentReady.then(generateFaqPageSchema);
 countryContentReady.then(initFaqLinkButtons);
 
 // SET SLIDER MASK HEIGHT
