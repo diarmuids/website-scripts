@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 10:08:45
+// Last updated: 2026-07-23 10:11:27
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -8,6 +8,11 @@ function sentenceCaseSidebarLabel(value) {
     return romanNumeral.toUpperCase();
   });
 }
+
+const WEBFLOW_PAGE_IDS = {
+  faq: '6a298df45cd69f1a53c202a7',
+  dosingGuide: '6a292541aac8585a2a153456'
+};
 
 // COUNTRY LOGIC, THEN LOAD FINSWEET
 const countryContentReady = (async function () {
@@ -789,7 +794,7 @@ window.addEventListener('load', initContentSwipers);
 
 // FAQ PAGE SCHEMA
 function generateFaqPageSchema(selectedCountry) {
-  if (location.pathname.replace(/\/+$/, '') !== '/faq') return;
+  if (document.documentElement.dataset.wfPage !== WEBFLOW_PAGE_IDS.faq) return;
 
   const mainEntity = [];
   const usedQuestions = new Set();
