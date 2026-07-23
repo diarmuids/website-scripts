@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 10:11:27
+// Last updated: 2026-07-23 10:11:38
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -846,6 +846,63 @@ function generateFaqPageSchema(selectedCountry) {
   document.head.appendChild(schema);
 }
 
+// DOSING GUIDE SCHEMA
+function generateDosingGuideSchema() {
+  if (document.documentElement.dataset.wfPage !== WEBFLOW_PAGE_IDS.dosingGuide) return;
+
+  const canonical = document.querySelector('link[rel="canonical"]');
+  const pageUrl = canonical ? canonical.href : location.href.split('#')[0];
+  const pageHeading = document.querySelector('.section_header .heading-style-h1');
+  const steps = [];
+
+  document.querySelectorAll('.dosing_item').forEach(function (item, index) {
+    const title = item.querySelector('.dosing_title');
+    const content = item.querySelector('.dosing_content .text-rich-text:not(.is-blog-buttons)');
+    const anchor = item.querySelector('.anchor-link.is-dosing-guide[id]');
+    const image = item.querySelector('.dosing_img[src]');
+
+    if (!title || !content) return;
+
+    const name = title.textContent.replace(/\s+/g, ' ').trim();
+    const text = content.textContent.replace(/\s+/g, ' ').trim();
+
+    if (!name || !text) return;
+
+    const step = {
+      '@type': 'HowToStep',
+      position: index + 1,
+      name: name,
+      text: text
+    };
+
+    if (anchor) step.url = pageUrl + '#' + encodeURIComponent(anchor.id);
+    if (image) step.image = new URL(image.src, location.href).href;
+
+    steps.push(step);
+  });
+
+  if (!steps.length) return;
+
+  const existingSchema = document.getElementById('dosing-guide-schema');
+
+  if (existingSchema) existingSchema.remove();
+
+  const schema = document.createElement('script');
+  schema.id = 'dosing-guide-schema';
+  schema.type = 'application/ld+json';
+  schema.textContent = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'HowTo',
+    '@id': pageUrl + '#howto',
+    name: pageHeading
+      ? pageHeading.textContent.replace(/\s+/g, ' ').trim()
+      : document.title,
+    url: pageUrl,
+    step: steps
+  });
+  document.head.appendChild(schema);
+}
+
 // CONVERT FAQ LINKS TO BUTTON LIST AFTER COUNTRY CONTENT IS RESOLVED
 function initFaqLinkButtons() {
   $('.faq_answer').each(function () {
@@ -912,6 +969,7 @@ function initFaqLinkButtons() {
 }
 
 countryContentReady.then(generateFaqPageSchema);
+countryContentReady.then(generateDosingGuideSchema);
 countryContentReady.then(initFaqLinkButtons);
 
 // SET SLIDER MASK HEIGHT
