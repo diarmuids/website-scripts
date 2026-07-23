@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 11:52:21
+// Last updated: 2026-07-23 11:54:22
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -12,6 +12,7 @@ function sentenceCaseSidebarLabel(value) {
 const WEBFLOW_PAGE_IDS = {
   home: '6a28130a9f765f9bc4698235',
   faq: '6a298df45cd69f1a53c202a7',
+  diseaseDetail: '6a282dae1696fde426e181d9',
   dosingGuide: '6a292541aac8585a2a153456',
   videos: '6a29b82a83695807b19eda76',
   videoDetail: '6a31681be502b04dd0cceeb3',
@@ -46,6 +47,7 @@ function isIncludedInUkSchema(element) {
 // or unrelated interface initialisers can modify the page or stop execution.
 generateHomePageSchema();
 generateFaqPageSchema();
+generateDiseaseDetailSchema();
 generateDosingGuideSchema();
 generateVideosCollectionSchema();
 generateVideoDetailSchema();
