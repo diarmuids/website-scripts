@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 12:01:46
+// Last updated: 2026-07-23 12:02:40
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -983,6 +983,7 @@ function generateDiseaseDetailSchema() {
   const diseaseName = getFactValue('disease') || heading;
   const otherNames = getFactValue('other names');
   const cause = getFactValue('caused by');
+  const mainSpecies = getFactValue('main species');
   const mostAtRisk = getFactValue('most at risk');
   const riskFactors = getFactValue('risk factors');
   const spread = getFactValue('spread');
@@ -1078,6 +1079,20 @@ function generateDiseaseDetailSchema() {
     };
   }
 
+  const speciesEntities = mainSpecies
+    ? mainSpecies.split(/\s*(?:,|;|\band\b)\s*/i)
+      .map(function (species) {
+        return species.trim();
+      })
+      .filter(Boolean)
+      .map(function (species) {
+        return {
+          '@type': 'Taxon',
+          name: species
+        };
+      })
+    : [];
+
   const webPage = {
     '@type': ['WebPage', 'MedicalWebPage'],
     '@id': webpageId,
@@ -1086,7 +1101,9 @@ function generateDiseaseDetailSchema() {
     headline: heading,
     isPartOf: { '@id': websiteId },
     mainEntity: { '@id': conditionId },
-    about: { '@id': conditionId },
+    about: [
+      { '@id': conditionId }
+    ].concat(speciesEntities),
     publisher: { '@id': organizationId },
     breadcrumb: { '@id': breadcrumbId },
     inLanguage: document.documentElement.lang || 'en'
