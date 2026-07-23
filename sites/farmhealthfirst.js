@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 10:41:36
+// Last updated: 2026-07-23 10:51:46
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -25,6 +25,16 @@ function isIncludedInUkSchema(element) {
 
   return !country || country === 'UK' || country === 'GB' || country === 'BOTH';
 }
+
+// Generate UK schema from the complete Webflow DOM before country filtering
+// or unrelated interface initialisers can modify the page or stop execution.
+generateFaqPageSchema();
+generateDosingGuideSchema();
+generateVideosCollectionSchema();
+generateBlogCollectionSchema();
+generateProductsCollectionSchema();
+generateLearnCpdCollectionSchema();
+generateRetailersCollectionSchema();
 
 // COUNTRY LOGIC, THEN LOAD FINSWEET
 const countryContentReady = (async function () {
@@ -1399,15 +1409,6 @@ function initFaqLinkButtons() {
   });
 }
 
-// Generate UK schema synchronously from the complete Webflow DOM, before the
-// asynchronous country lookup removes either the UK or Ireland content.
-generateFaqPageSchema();
-generateDosingGuideSchema();
-generateVideosCollectionSchema();
-generateBlogCollectionSchema();
-generateProductsCollectionSchema();
-generateLearnCpdCollectionSchema();
-generateRetailersCollectionSchema();
 countryContentReady.then(initFaqLinkButtons);
 
 // SET SLIDER MASK HEIGHT
