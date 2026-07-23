@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 11:17:37
+// Last updated: 2026-07-23 11:17:55
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -1390,7 +1390,7 @@ function generateHomePageSchema() {
     '.section_socials-cta a[href^="http"], .section_social-feed .social_link[href^="http"]'
   ))
     .map(function (link) {
-      const url = new URL(link.href, location.href);
+      const url = new URL(link.getAttribute('href'), pageUrl);
       url.search = '';
       return url.href;
     })
@@ -1411,8 +1411,8 @@ function generateHomePageSchema() {
     organization.logo = {
       '@type': 'ImageObject',
       '@id': siteUrl + '#logo',
-      url: new URL(logo.src, location.href).href,
-      contentUrl: new URL(logo.src, location.href).href,
+      url: new URL(logo.getAttribute('src'), pageUrl).href,
+      contentUrl: new URL(logo.getAttribute('src'), pageUrl).href,
       caption: siteName
     };
     organization.image = { '@id': siteUrl + '#logo' };
@@ -1670,7 +1670,7 @@ function generateContactPageSchema() {
     .filter(Boolean);
   const socialUrls = Array.from(contactSection.querySelectorAll('.social_link[href^="http"]'))
     .map(function (link) {
-      const url = new URL(link.href, location.href);
+      const url = new URL(link.getAttribute('href'), pageUrl);
       url.search = '';
       return url.href;
     })
@@ -1701,8 +1701,8 @@ function generateContactPageSchema() {
     organization.logo = {
       '@type': 'ImageObject',
       '@id': siteUrl + '#logo',
-      url: new URL(logo.src, location.href).href,
-      contentUrl: new URL(logo.src, location.href).href,
+      url: new URL(logo.getAttribute('src'), pageUrl).href,
+      contentUrl: new URL(logo.getAttribute('src'), pageUrl).href,
       caption: siteName
     };
     organization.image = { '@id': siteUrl + '#logo' };
@@ -1793,7 +1793,7 @@ function generateContactPageSchema() {
   if (primaryImage) {
     contactPage.primaryImageOfPage = {
       '@type': 'ImageObject',
-      url: new URL(primaryImage, location.href).href
+      url: new URL(primaryImage, pageUrl).href
     };
   }
   if (significantLinks.length) contactPage.significantLink = significantLinks;
