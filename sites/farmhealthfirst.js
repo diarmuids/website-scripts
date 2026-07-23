@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 10:32:51
+// Last updated: 2026-07-23 10:33:48
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -15,7 +15,8 @@ const WEBFLOW_PAGE_IDS = {
   videos: '6a29b82a83695807b19eda76',
   blog: '6a29b80bed0ef116784e6870',
   products: '6a5512935c6e71d87c982ec7',
-  learnCpd: '6a292536d120dc8df39722ce'
+  learnCpd: '6a292536d120dc8df39722ce',
+  retailers: '6a57bce442180c02d24933e7'
 };
 
 function isIncludedInUkSchema(element) {
@@ -1248,6 +1249,68 @@ function generateLearnCpdCollectionSchema() {
   document.head.appendChild(schema);
 }
 
+// ONLINE RETAILERS COLLECTION SCHEMA
+function generateRetailersCollectionSchema() {
+  if (document.documentElement.dataset.wfPage !== WEBFLOW_PAGE_IDS.retailers) return;
+
+  const canonical = document.querySelector('link[rel="canonical"]');
+  const pageUrl = canonical ? canonical.href : location.href.split('#')[0];
+  const itemListElement = [];
+  const usedUrls = new Set();
+
+  document.querySelectorAll('.retailers_list .retailers_item').forEach(function (card) {
+    if (!isIncludedInUkSchema(card)) return;
+
+    const link = card.querySelector('a.retailers_link[href]');
+    const nameElement = card.querySelector('.retailers_name');
+
+    if (!link || !nameElement) return;
+
+    const url = new URL(link.href, location.href).href;
+    const name = nameElement.textContent.replace(/\s+/g, ' ').trim();
+
+    if (!name || usedUrls.has(url)) return;
+
+    const listItem = {
+      '@type': 'ListItem',
+      position: itemListElement.length + 1,
+      name: name,
+      url: url
+    };
+    const logo = card.querySelector('.retailers_logo[src]');
+
+    if (logo) listItem.image = new URL(logo.src, location.href).href;
+
+    usedUrls.add(url);
+    itemListElement.push(listItem);
+  });
+
+  if (!itemListElement.length) return;
+
+  const existingSchema = document.getElementById('retailers-collection-schema');
+
+  if (existingSchema) existingSchema.remove();
+
+  const schema = document.createElement('script');
+  schema.id = 'retailers-collection-schema';
+  schema.type = 'application/ld+json';
+  schema.textContent = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    '@id': pageUrl + '#online-retailers',
+    name: document.title,
+    url: pageUrl,
+    mainEntity: {
+      '@type': 'ItemList',
+      name: 'Online Retailers',
+      itemListOrder: 'https://schema.org/ItemListOrderAscending',
+      numberOfItems: itemListElement.length,
+      itemListElement: itemListElement
+    }
+  });
+  document.head.appendChild(schema);
+}
+
 // CONVERT FAQ LINKS TO BUTTON LIST AFTER COUNTRY CONTENT IS RESOLVED
 function initFaqLinkButtons() {
   $('.faq_answer').each(function () {
@@ -1321,6 +1384,7 @@ generateVideosCollectionSchema();
 generateBlogCollectionSchema();
 generateProductsCollectionSchema();
 generateLearnCpdCollectionSchema();
+generateRetailersCollectionSchema();
 countryContentReady.then(initFaqLinkButtons);
 
 // SET SLIDER MASK HEIGHT
