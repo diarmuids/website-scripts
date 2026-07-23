@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 12:02:40
+// Last updated: 2026-07-23 12:03:04
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -1992,7 +1992,11 @@ function generateProductDetailSchema() {
     );
     const value = valueElement?.textContent.replace(/\s+/g, ' ').trim();
 
-    if (!label || !value || value.toLowerCase() === 'n/a') return;
+    if (
+      !label ||
+      !value ||
+      /^(?:n\/a|filler(?: text)?|not set|none)$/i.test(value)
+    ) return;
 
     propertyValues[label.toLowerCase()] = value;
     properties.push({
