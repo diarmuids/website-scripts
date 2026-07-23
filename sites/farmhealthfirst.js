@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 11:59:18
+// Last updated: 2026-07-23 12:01:46
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -966,7 +966,7 @@ function generateDiseaseDetailSchema() {
     if (
       !label ||
       !value ||
-      /^(?:n\/a|filler text|not set|none)$/i.test(value)
+      /^(?:n\/a|filler(?: text)?|not set|none)$/i.test(value)
     ) return;
 
     factValues[label] = value;
@@ -988,6 +988,7 @@ function generateDiseaseDetailSchema() {
   const spread = getFactValue('spread');
   const signs = getFactValue('key signs');
   const monitoring = getFactValue('monitoring tools');
+  const control = getFactValue('control');
   const logo = document.querySelector('.footer_logo[src]');
   const copyrightText = document.querySelector('.footer_copyright')
     ?.textContent.replace(/\s+/g, ' ').trim() || '';
@@ -1068,6 +1069,12 @@ function generateDiseaseDetailSchema() {
     condition.typicalTest = {
       '@type': 'MedicalTest',
       name: monitoring
+    };
+  }
+  if (control) {
+    condition.primaryPrevention = {
+      '@type': 'MedicalTherapy',
+      name: control
     };
   }
 
