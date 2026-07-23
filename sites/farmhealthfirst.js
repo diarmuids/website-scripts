@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 11:09:44
+// Last updated: 2026-07-23 11:15:56
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -10,6 +10,7 @@ function sentenceCaseSidebarLabel(value) {
 }
 
 const WEBFLOW_PAGE_IDS = {
+  home: '6a28130a9f765f9bc4698235',
   faq: '6a298df45cd69f1a53c202a7',
   dosingGuide: '6a292541aac8585a2a153456',
   videos: '6a29b82a83695807b19eda76',
@@ -29,6 +30,7 @@ function isIncludedInUkSchema(element) {
 
 // Generate UK schema from the complete Webflow DOM before country filtering
 // or unrelated interface initialisers can modify the page or stop execution.
+generateHomePageSchema();
 generateFaqPageSchema();
 generateDosingGuideSchema();
 generateVideosCollectionSchema();
