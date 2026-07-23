@@ -1,4 +1,4 @@
-// Last updated: 2026-07-22 19:49:54
+// Last updated: 2026-07-23 08:41:01
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -449,11 +449,13 @@ function initBlogHeadingLinks() {
   });
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initBlogHeadingLinks);
-} else {
-  initBlogHeadingLinks();
-}
+countryContentReady.then(function () {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initBlogHeadingLinks, { once: true });
+  } else {
+    initBlogHeadingLinks();
+  }
+});
 
 // RELATED SECTION SIDEBAR LINKS
 function initRelatedSectionSidebarLinks() {
