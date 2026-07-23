@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 10:19:14
+// Last updated: 2026-07-23 10:29:04
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -13,7 +13,8 @@ const WEBFLOW_PAGE_IDS = {
   faq: '6a298df45cd69f1a53c202a7',
   dosingGuide: '6a292541aac8585a2a153456',
   videos: '6a29b82a83695807b19eda76',
-  blog: '6a29b80bed0ef116784e6870'
+  blog: '6a29b80bed0ef116784e6870',
+  products: '6a5512935c6e71d87c982ec7'
 };
 
 // COUNTRY LOGIC, THEN LOAD FINSWEET
@@ -1039,6 +1040,72 @@ function generateBlogCollectionSchema() {
   document.head.appendChild(schema);
 }
 
+// PRODUCTS COLLECTION SCHEMA
+function generateProductsCollectionSchema() {
+  if (document.documentElement.dataset.wfPage !== WEBFLOW_PAGE_IDS.products) return;
+
+  const canonical = document.querySelector('link[rel="canonical"]');
+  const pageUrl = canonical ? canonical.href : location.href.split('#')[0];
+  const itemListElement = [];
+  const usedUrls = new Set();
+
+  document.querySelectorAll('.section_product-list .product-list_item').forEach(function (card) {
+    const link = card.querySelector('a.product-list_link[href]');
+    const title = card.querySelector('.product-list_title');
+
+    if (!link || !title) return;
+
+    const url = new URL(link.getAttribute('href'), location.origin).href;
+    const name = title.textContent.replace(/\s+/g, ' ').trim();
+
+    if (!name || name.toLowerCase() === 'n/a' || usedUrls.has(url)) return;
+
+    usedUrls.add(url);
+
+    const listItem = {
+      '@type': 'ListItem',
+      position: itemListElement.length + 1,
+      name: name,
+      url: url
+    };
+    const image = card.querySelector('.product-list_img[src]');
+    const details = Array.from(card.querySelectorAll('.product-list_detail'))
+      .map(function (detail) {
+        return detail.textContent.replace(/\s+/g, ' ').trim();
+      })
+      .filter(Boolean);
+
+    if (details.length) listItem.description = details.join(' — ');
+    if (image) listItem.image = new URL(image.src, location.href).href;
+
+    itemListElement.push(listItem);
+  });
+
+  if (!itemListElement.length) return;
+
+  const existingSchema = document.getElementById('products-collection-schema');
+
+  if (existingSchema) existingSchema.remove();
+
+  const schema = document.createElement('script');
+  schema.id = 'products-collection-schema';
+  schema.type = 'application/ld+json';
+  schema.textContent = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    '@id': pageUrl + '#collection',
+    name: document.title,
+    url: pageUrl,
+    mainEntity: {
+      '@type': 'ItemList',
+      itemListOrder: 'https://schema.org/ItemListOrderAscending',
+      numberOfItems: itemListElement.length,
+      itemListElement: itemListElement
+    }
+  });
+  document.head.appendChild(schema);
+}
+
 // CONVERT FAQ LINKS TO BUTTON LIST AFTER COUNTRY CONTENT IS RESOLVED
 function initFaqLinkButtons() {
   $('.faq_answer').each(function () {
@@ -1108,6 +1175,7 @@ countryContentReady.then(generateFaqPageSchema);
 countryContentReady.then(generateDosingGuideSchema);
 countryContentReady.then(generateVideosCollectionSchema);
 countryContentReady.then(generateBlogCollectionSchema);
+countryContentReady.then(generateProductsCollectionSchema);
 countryContentReady.then(initFaqLinkButtons);
 
 // SET SLIDER MASK HEIGHT
