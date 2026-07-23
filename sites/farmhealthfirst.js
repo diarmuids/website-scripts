@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 11:16:36
+// Last updated: 2026-07-23 11:17:37
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -20,6 +20,17 @@ const WEBFLOW_PAGE_IDS = {
   retailers: '6a57bce442180c02d24933e7',
   contact: '6a293da118e494568ea9bc54'
 };
+
+const SCHEMA_SITE_URL = 'https://www.farmhealthfirst.com/';
+
+function getSchemaPageUrl() {
+  const canonical = document.querySelector('link[rel="canonical"]');
+  const pathname = canonical
+    ? new URL(canonical.href, SCHEMA_SITE_URL).pathname
+    : location.pathname;
+
+  return new URL(pathname, SCHEMA_SITE_URL).href;
+}
 
 function isIncludedInUkSchema(element) {
   const countryElement = element.closest('[data-country]');
@@ -911,8 +922,7 @@ function generateFaqPageSchema() {
 function generateDosingGuideSchema() {
   if (document.documentElement.dataset.wfPage !== WEBFLOW_PAGE_IDS.dosingGuide) return;
 
-  const canonical = document.querySelector('link[rel="canonical"]');
-  const pageUrl = canonical ? canonical.href : location.href.split('#')[0];
+  const pageUrl = getSchemaPageUrl();
   const pageHeading = document.querySelector('.section_header .heading-style-h1');
   const steps = [];
 
@@ -943,7 +953,7 @@ function generateDosingGuideSchema() {
     };
 
     if (anchor) step.url = pageUrl + '#' + encodeURIComponent(anchor.id);
-    if (image) step.image = new URL(image.src, location.href).href;
+    if (image) step.image = new URL(image.src, pageUrl).href;
 
     steps.push(step);
   });
@@ -974,8 +984,7 @@ function generateDosingGuideSchema() {
 function generateVideosCollectionSchema() {
   if (document.documentElement.dataset.wfPage !== WEBFLOW_PAGE_IDS.videos) return;
 
-  const canonical = document.querySelector('link[rel="canonical"]');
-  const pageUrl = canonical ? canonical.href : location.href.split('#')[0];
+  const pageUrl = getSchemaPageUrl();
   const itemListElement = [];
   const usedUrls = new Set();
 
@@ -987,7 +996,7 @@ function generateVideosCollectionSchema() {
 
     if (!link || !title) return;
 
-    const url = new URL(link.getAttribute('href'), location.origin).href;
+    const url = new URL(link.getAttribute('href'), pageUrl).href;
     const name = title.textContent.replace(/\s+/g, ' ').trim();
 
     if (!name || usedUrls.has(url)) return;
@@ -1008,7 +1017,7 @@ function generateVideosCollectionSchema() {
       if (descriptionText) listItem.description = descriptionText;
     }
 
-    if (image) listItem.image = new URL(image.src, location.href).href;
+    if (image) listItem.image = new URL(image.src, pageUrl).href;
 
     itemListElement.push(listItem);
   });
@@ -1042,8 +1051,7 @@ function generateVideosCollectionSchema() {
 function generateBlogCollectionSchema() {
   if (document.documentElement.dataset.wfPage !== WEBFLOW_PAGE_IDS.blog) return;
 
-  const canonical = document.querySelector('link[rel="canonical"]');
-  const pageUrl = canonical ? canonical.href : location.href.split('#')[0];
+  const pageUrl = getSchemaPageUrl();
   const itemListElement = [];
   const usedUrls = new Set();
 
@@ -1057,7 +1065,7 @@ function generateBlogCollectionSchema() {
 
     if (!link || !title) return;
 
-    const url = new URL(link.getAttribute('href'), location.origin).href;
+    const url = new URL(link.getAttribute('href'), pageUrl).href;
     const name = title.textContent.replace(/\s+/g, ' ').trim();
 
     if (!name || usedUrls.has(url)) return;
@@ -1078,7 +1086,7 @@ function generateBlogCollectionSchema() {
       if (descriptionText) listItem.description = descriptionText;
     }
 
-    if (image) listItem.image = new URL(image.src, location.href).href;
+    if (image) listItem.image = new URL(image.src, pageUrl).href;
 
     itemListElement.push(listItem);
   });
@@ -1112,8 +1120,7 @@ function generateBlogCollectionSchema() {
 function generateProductsCollectionSchema() {
   if (document.documentElement.dataset.wfPage !== WEBFLOW_PAGE_IDS.products) return;
 
-  const canonical = document.querySelector('link[rel="canonical"]');
-  const pageUrl = canonical ? canonical.href : location.href.split('#')[0];
+  const pageUrl = getSchemaPageUrl();
   const itemListElement = [];
   const usedUrls = new Set();
 
@@ -1126,7 +1133,7 @@ function generateProductsCollectionSchema() {
 
     if (!link || !title) return;
 
-    const url = new URL(link.getAttribute('href'), location.origin).href;
+    const url = new URL(link.getAttribute('href'), pageUrl).href;
     const name = title.textContent.replace(/\s+/g, ' ').trim();
 
     if (!name || name.toLowerCase() === 'n/a' || usedUrls.has(url)) return;
@@ -1149,7 +1156,7 @@ function generateProductsCollectionSchema() {
 
     if (details.length) listItem.description = details.join(' — ');
     if (image && image.alt.trim().toLowerCase() !== 'n/a') {
-      listItem.image = new URL(image.src, location.href).href;
+      listItem.image = new URL(image.src, pageUrl).href;
     }
 
     itemListElement.push(listItem);
@@ -1184,8 +1191,7 @@ function generateProductsCollectionSchema() {
 function generateLearnCpdCollectionSchema() {
   if (document.documentElement.dataset.wfPage !== WEBFLOW_PAGE_IDS.learnCpd) return;
 
-  const canonical = document.querySelector('link[rel="canonical"]');
-  const pageUrl = canonical ? canonical.href : location.href.split('#')[0];
+  const pageUrl = getSchemaPageUrl();
   const itemListElement = [];
   const usedUrls = new Set();
 
@@ -1197,7 +1203,7 @@ function generateLearnCpdCollectionSchema() {
 
     if (!videoUrl || !title) return;
 
-    const url = new URL(videoUrl, location.origin).href;
+    const url = new URL(videoUrl, pageUrl).href;
     const name = title.textContent.replace(/\s+/g, ' ').trim();
 
     if (!name || usedUrls.has(url)) return;
@@ -1225,7 +1231,7 @@ function generateLearnCpdCollectionSchema() {
       if (description) listItem.description = description;
     }
 
-    if (image) listItem.image = new URL(image.src, location.href).href;
+    if (image) listItem.image = new URL(image.src, pageUrl).href;
 
     itemListElement.push(listItem);
   });
@@ -1234,7 +1240,7 @@ function generateLearnCpdCollectionSchema() {
   const cpdLink = cpdSection?.querySelector('a.button[href^="http"]');
 
   if (cpdSection && cpdLink && isIncludedInUkSchema(cpdLink)) {
-    const url = new URL(cpdLink.href, location.href).href;
+    const url = new URL(cpdLink.getAttribute('href'), pageUrl).href;
     const heading = cpdSection.querySelector('.heading-style-h2');
     const description = cpdSection.querySelector('p');
     const name = heading
@@ -1290,8 +1296,7 @@ function generateLearnCpdCollectionSchema() {
 function generateRetailersCollectionSchema() {
   if (document.documentElement.dataset.wfPage !== WEBFLOW_PAGE_IDS.retailers) return;
 
-  const canonical = document.querySelector('link[rel="canonical"]');
-  const pageUrl = canonical ? canonical.href : location.href.split('#')[0];
+  const pageUrl = getSchemaPageUrl();
   const itemListElement = [];
   const usedUrls = new Set();
 
@@ -1303,7 +1308,7 @@ function generateRetailersCollectionSchema() {
 
     if (!link || !nameElement) return;
 
-    const url = new URL(link.href, location.href).href;
+    const url = new URL(link.getAttribute('href'), pageUrl).href;
     const name = nameElement.textContent.replace(/\s+/g, ' ').trim();
 
     if (!name || usedUrls.has(url)) return;
@@ -1316,7 +1321,7 @@ function generateRetailersCollectionSchema() {
     };
     const logo = card.querySelector('.retailers_logo[src]');
 
-    if (logo) listItem.image = new URL(logo.src, location.href).href;
+    if (logo) listItem.image = new URL(logo.src, pageUrl).href;
 
     usedUrls.add(url);
     itemListElement.push(listItem);
@@ -1352,8 +1357,7 @@ function generateRetailersCollectionSchema() {
 function generateHomePageSchema() {
   if (document.documentElement.dataset.wfPage !== WEBFLOW_PAGE_IDS.home) return;
 
-  const canonical = document.querySelector('link[rel="canonical"]');
-  const pageUrl = canonical ? canonical.href : location.href.split('#')[0];
+  const pageUrl = getSchemaPageUrl();
   const siteUrl = new URL('/', pageUrl).href;
   const organizationId = siteUrl + '#organization';
   const websiteId = siteUrl + '#website';
@@ -1626,8 +1630,7 @@ function generateContactPageSchema() {
 
   if (!contactSection) return;
 
-  const canonical = document.querySelector('link[rel="canonical"]');
-  const pageUrl = canonical ? canonical.href : location.href.split('#')[0];
+  const pageUrl = getSchemaPageUrl();
   const siteUrl = new URL('/', pageUrl).href;
   const organizationId = siteUrl + '#organization';
   const websiteId = siteUrl + '#website';
