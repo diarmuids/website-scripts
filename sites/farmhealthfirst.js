@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 14:12:59
+// Last updated: 2026-07-23 14:16:34
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -30,7 +30,7 @@ const SCHEMA_SITE_URL = 'https://www.farmhealthfirst.com/';
 // SUBSCRIBE FORM DEBUGGER
 // Visit /subscribe?debug-subscribe=1 to inspect the exact Mailchimp payload
 // before allowing the browser to submit it.
-document.addEventListener('DOMContentLoaded', function () {
+function initSubscribeDebugger() {
   if (
     location.pathname.replace(/\/+$/, '') !== '/subscribe' ||
     new URLSearchParams(location.search).get('debug-subscribe') !== '1'
@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   form.addEventListener('submit', function debugSubscribeSubmission(event) {
     event.preventDefault();
+    event.stopImmediatePropagation();
 
     const payload = {};
     new FormData(form).forEach(function (value, key) {
@@ -85,8 +86,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     panel.append(output, continueButton);
     form.insertAdjacentElement('afterend', panel);
-  });
-});
+  }, true);
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initSubscribeDebugger);
+} else {
+  initSubscribeDebugger();
+}
 
 function getSchemaPageUrl() {
   const canonical = document.querySelector('link[rel="canonical"]');
