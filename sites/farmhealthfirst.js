@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 11:04:00
+// Last updated: 2026-07-23 11:06:23
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -1363,7 +1363,7 @@ function generateContactPageSchema() {
   const breadcrumbId = pageUrl + '#breadcrumb';
   const description = document.querySelector('meta[name="description"]')?.content || '';
   const headline = contactSection.querySelector('h1')?.textContent.replace(/\s+/g, ' ').trim();
-  const siteName = document.title.split('·').pop().trim();
+  const siteName = document.title.split(/\s*\u00b7\s*/).pop().trim();
   const companyName = contactSection.querySelector('.contact_wrapper .heading-style-h5')
     ?.textContent.replace(/\s+/g, ' ').trim();
   const emailLink = contactSection.querySelector('a[href^="mailto:"]');
@@ -1377,7 +1377,7 @@ function generateContactPageSchema() {
   const primaryImage = document.querySelector('meta[property="og:image"]')?.content;
   const copyrightText = document.querySelector('.footer_copyright')
     ?.textContent.replace(/\s+/g, ' ').trim() || '';
-  const legalNameMatch = copyrightText.match(/©\s*\d{4}\s+(.+?)\s+All Rights/i);
+  const legalNameMatch = copyrightText.match(/\u00a9\s*\d{4}\s+(.+?)\s+All Rights/i);
   const email = emailLink
     ? decodeURIComponent(emailLink.href.replace(/^mailto:/i, '').split('?')[0])
     : '';
@@ -1401,6 +1401,14 @@ function generateContactPageSchema() {
     })
     .filter(function (url, index, urls) {
       return urls.indexOf(url) === index;
+    });
+  const servedCountryCodes = Array.from(document.querySelectorAll('[data-test-country]'))
+    .map(function (trigger) {
+      const country = trigger.getAttribute('data-test-country')?.toUpperCase();
+      return country === 'UK' ? 'GB' : country;
+    })
+    .filter(function (country, index, countries) {
+      return country && countries.indexOf(country) === index;
     });
   const language = document.documentElement.lang || 'en';
   const organization = {
@@ -1455,17 +1463,21 @@ function generateContactPageSchema() {
       };
     }
   }
-  organization.areaServed = [
-    { '@type': 'Country', name: 'Ireland' },
-    { '@type': 'Country', name: 'United Kingdom' }
-  ];
+  if (servedCountryCodes.length) {
+    organization.areaServed = servedCountryCodes.map(function (country) {
+      return {
+        '@type': 'Country',
+        identifier: country
+      };
+    });
+  }
   if (email || telephone) {
     organization.contactPoint = {
       '@type': 'ContactPoint',
       contactType: 'customer service',
       email: email || undefined,
       telephone: telephone || undefined,
-      areaServed: ['IE', 'GB'],
+      areaServed: servedCountryCodes.length ? servedCountryCodes : undefined,
       availableLanguage: [language]
     };
   }
