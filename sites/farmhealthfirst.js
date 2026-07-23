@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 11:44:56
+// Last updated: 2026-07-23 11:45:25
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -1114,6 +1114,240 @@ function generateBlogCollectionSchema() {
       numberOfItems: itemListElement.length,
       itemListElement: itemListElement
     }
+  });
+  document.head.appendChild(schema);
+}
+
+// BLOG ARTICLE SCHEMA
+function generateBlogArticleSchema() {
+  if (document.documentElement.dataset.wfPage !== WEBFLOW_PAGE_IDS.blogArticle) return;
+
+  const pageUrl = getSchemaPageUrl();
+  const siteUrl = new URL('/', pageUrl).href;
+  const organizationId = siteUrl + '#organization';
+  const websiteId = siteUrl + '#website';
+  const webpageId = pageUrl + '#webpage';
+  const articleId = pageUrl + '#article';
+  const breadcrumbId = pageUrl + '#breadcrumb';
+  const headline = document.querySelector('.section_blog-header h1')
+    ?.textContent.replace(/\s+/g, ' ').trim();
+  const description = document.querySelector('meta[name="description"]')?.content.trim();
+  const imageElement = document.querySelector('.section_blog-header .blog_main-img[src]');
+  const metaImage = document.querySelector('meta[property="og:image"]')?.content;
+  const imageUrl = imageElement
+    ? new URL(imageElement.getAttribute('src'), pageUrl).href
+    : metaImage
+      ? new URL(metaImage, pageUrl).href
+      : '';
+  const authorRow = document.querySelector('.blog_detail-row.is-author');
+  const authorName = authorRow
+    ? authorRow.textContent.replace(/\s+/g, ' ').replace(/^By\s+/i, '').trim()
+    : '';
+  const categoryNames = Array.from(document.querySelectorAll(
+    '.section_blog-header .category_tag'
+  ))
+    .map(function (category) {
+      return category.textContent.replace(/\s+/g, ' ').trim();
+    })
+    .filter(function (category, index, categories) {
+      return category && categories.indexOf(category) === index;
+    });
+  const articleContent = document.querySelector(
+    '.blog_text-rich-text[data-country="UK"]'
+  ) || document.querySelector(
+    '.blog_text-rich-text:not([data-country])'
+  );
+  const articleBody = articleContent
+    ?.textContent.replace(/\s+/g, ' ').trim() || '';
+  const dateText = document.querySelector('.blog_date')
+    ?.textContent.replace(/\s+/g, ' ').trim() || '';
+  const monthNumbers = {
+    january: '01',
+    february: '02',
+    march: '03',
+    april: '04',
+    may: '05',
+    june: '06',
+    july: '07',
+    august: '08',
+    september: '09',
+    october: '10',
+    november: '11',
+    december: '12'
+  };
+  const dateMatch = dateText.match(/^([A-Za-z]+)\s+(\d{1,2}),\s+(\d{4})$/);
+  const datePublished = dateMatch && monthNumbers[dateMatch[1].toLowerCase()]
+    ? dateMatch[3] + '-' +
+      monthNumbers[dateMatch[1].toLowerCase()] + '-' +
+      dateMatch[2].padStart(2, '0')
+    : '';
+  const logo = document.querySelector('.footer_logo[src]');
+  const copyrightText = document.querySelector('.footer_copyright')
+    ?.textContent.replace(/\s+/g, ' ').trim() || '';
+  const legalNameMatch = copyrightText.match(/\u00a9\s*\d{4}\s+(.+?)\s+All Rights/i);
+  const siteName = document.title.split(/\s*\u00b7\s*/).pop().trim();
+  const socialUrls = Array.from(document.querySelectorAll(
+    '.section_socials-cta a[href^="http"], .footer_component .social_link[href^="http"]'
+  ))
+    .map(function (link) {
+      const url = new URL(link.getAttribute('href'), pageUrl);
+      url.search = '';
+      return url.href;
+    })
+    .filter(function (url, index, urls) {
+      return urls.indexOf(url) === index;
+    });
+  const organization = {
+    '@type': 'Organization',
+    '@id': organizationId,
+    name: siteName,
+    url: siteUrl
+  };
+
+  if (legalNameMatch) organization.legalName = legalNameMatch[1].trim();
+  if (logo) {
+    organization.logo = {
+      '@type': 'ImageObject',
+      '@id': siteUrl + '#logo',
+      url: new URL(logo.getAttribute('src'), pageUrl).href,
+      contentUrl: new URL(logo.getAttribute('src'), pageUrl).href,
+      caption: siteName
+    };
+    organization.image = { '@id': siteUrl + '#logo' };
+  }
+  if (socialUrls.length) organization.sameAs = socialUrls;
+
+  const article = {
+    '@type': 'BlogPosting',
+    '@id': articleId,
+    url: pageUrl,
+    mainEntityOfPage: { '@id': webpageId },
+    headline: headline || document.title,
+    name: headline || document.title,
+    author: {
+      '@type': authorName ? 'Person' : 'Organization',
+      name: authorName || siteName
+    },
+    publisher: { '@id': organizationId },
+    isPartOf: { '@id': websiteId },
+    inLanguage: document.documentElement.lang || 'en',
+    isAccessibleForFree: true
+  };
+
+  if (description) article.description = description;
+  if (datePublished) article.datePublished = datePublished;
+  if (imageUrl) {
+    article.image = {
+      '@type': 'ImageObject',
+      url: imageUrl,
+      contentUrl: imageUrl,
+      caption: imageElement?.alt || headline || document.title
+    };
+    article.thumbnailUrl = imageUrl;
+  }
+  if (categoryNames.length) {
+    article.articleSection = categoryNames;
+    article.about = categoryNames.map(function (category) {
+      return {
+        '@type': 'Thing',
+        name: category
+      };
+    });
+  }
+  if (articleBody) {
+    article.articleBody = articleBody;
+    article.wordCount = articleBody.split(/\s+/).filter(Boolean).length;
+  }
+
+  const webPage = {
+    '@type': 'WebPage',
+    '@id': webpageId,
+    url: pageUrl,
+    name: document.title,
+    headline: headline || document.title,
+    isPartOf: { '@id': websiteId },
+    about: categoryNames.map(function (category) {
+      return {
+        '@type': 'Thing',
+        name: category
+      };
+    }),
+    mainEntity: { '@id': articleId },
+    publisher: { '@id': organizationId },
+    inLanguage: document.documentElement.lang || 'en',
+    breadcrumb: { '@id': breadcrumbId }
+  };
+
+  if (description) webPage.description = description;
+  if (imageUrl) {
+    webPage.primaryImageOfPage = {
+      '@type': 'ImageObject',
+      url: imageUrl
+    };
+  }
+
+  document.querySelectorAll('script[type="application/ld+json"]').forEach(function (script) {
+    try {
+      const existingSchema = JSON.parse(script.textContent);
+      const graph = Array.isArray(existingSchema['@graph'])
+        ? existingSchema['@graph']
+        : [existingSchema];
+
+      if (graph.some(function (item) {
+        return item && (
+          item['@type'] === 'BlogPosting' ||
+          item['@id'] === articleId
+        );
+      })) {
+        script.remove();
+      }
+    } catch (error) {
+      // Leave unrelated invalid JSON-LD untouched.
+    }
+  });
+
+  const schema = document.createElement('script');
+  schema.id = 'blog-article-schema';
+  schema.type = 'application/ld+json';
+  schema.textContent = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@graph': [
+      organization,
+      {
+        '@type': 'WebSite',
+        '@id': websiteId,
+        url: siteUrl,
+        name: siteName,
+        publisher: { '@id': organizationId },
+        inLanguage: document.documentElement.lang || 'en'
+      },
+      webPage,
+      article,
+      {
+        '@type': 'BreadcrumbList',
+        '@id': breadcrumbId,
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Home',
+            item: siteUrl
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Blog',
+            item: new URL('/blog', siteUrl).href
+          },
+          {
+            '@type': 'ListItem',
+            position: 3,
+            name: headline || document.title,
+            item: pageUrl
+          }
+        ]
+      }
+    ]
   });
   document.head.appendChild(schema);
 }
