@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 09:09:01
+// Last updated: 2026-07-23 10:08:34
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -11,6 +11,8 @@ function sentenceCaseSidebarLabel(value) {
 
 // COUNTRY LOGIC, THEN LOAD FINSWEET
 const countryContentReady = (async function () {
+  let selectedCountry = 'UK';
+
   try {
     let test = new URLSearchParams(location.search).get('test-country')?.toUpperCase();
 
@@ -29,6 +31,7 @@ const countryContentReady = (async function () {
 
     const country = test || (await $.getJSON('https://ipapi.co/json/')).country_code;
     const isIreland = country === 'IE';
+    selectedCountry = isIreland ? 'IE' : 'UK';
 
     $('[data-country="' + (isIreland ? 'UK' : 'IE') + '"]').remove();
     $('[data-country="' + (isIreland ? 'IE' : 'UK') + '"]').show();
@@ -45,6 +48,8 @@ const countryContentReady = (async function () {
   script.src = 'https://cdn.jsdelivr.net/npm/@finsweet/attributes@2/attributes.js';
   script.setAttribute('fs-list', '');
   document.body.appendChild(script);
+
+  return selectedCountry;
 })();
 
 // TESTING IP
