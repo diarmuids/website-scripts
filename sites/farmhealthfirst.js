@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 14:19:12
+// Last updated: 2026-07-23 14:23:54
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -26,101 +26,6 @@ const WEBFLOW_PAGE_IDS = {
 };
 
 const SCHEMA_SITE_URL = 'https://www.farmhealthfirst.com/';
-
-// NORMALISE SUBSCRIBE PAGE FIELDS TO MAILCHIMP'S HOSTED FORM NAMES
-function normaliseSubscribeMailchimpFields() {
-  if (location.pathname.replace(/\/+$/, '') !== '/subscribe') return;
-
-  const form = document.querySelector('.section_subscribe-page form');
-  if (!form) return;
-
-  [
-    ['EMAIL', 'MERGE0'],
-    ['FNAME', 'MERGE1'],
-    ['LNAME', 'MERGE2']
-  ].forEach(function ([audienceTag, hostedFormName]) {
-    const field = form.querySelector(
-      `[name="${audienceTag}"], [name="${hostedFormName}"]`
-    );
-    if (!field) return;
-
-    field.name = hostedFormName;
-    field.id = hostedFormName;
-    field.setAttribute('data-name', hostedFormName);
-  });
-}
-
-// SUBSCRIBE FORM DEBUGGER
-// Visit /subscribe?debug-subscribe=1 to inspect the exact Mailchimp payload
-// before allowing the browser to submit it.
-function initSubscribeDebugger() {
-  if (
-    location.pathname.replace(/\/+$/, '') !== '/subscribe' ||
-    new URLSearchParams(location.search).get('debug-subscribe') !== '1'
-  ) {
-    return;
-  }
-
-  const form = document.querySelector('.section_subscribe-page form');
-  if (!form) return;
-
-  form.addEventListener('submit', function debugSubscribeSubmission(event) {
-    event.preventDefault();
-    event.stopImmediatePropagation();
-
-    const payload = {};
-    new FormData(form).forEach(function (value, key) {
-      payload[key] = value;
-    });
-
-    console.log('[Subscribe debug]', {
-      action: form.action,
-      method: form.method,
-      payload: payload
-    });
-
-    document.querySelector('.subscribe-debug-panel')?.remove();
-
-    const panel = document.createElement('div');
-    panel.className = 'subscribe-debug-panel';
-    panel.style.cssText =
-      'margin-top:1rem;padding:1rem;background:#fff;color:#111;border:2px solid #111;border-radius:8px;font:14px/1.5 monospace;white-space:pre-wrap;overflow-wrap:anywhere;';
-
-    const output = document.createElement('pre');
-    output.style.cssText = 'margin:0 0 1rem;white-space:pre-wrap;';
-    output.textContent = JSON.stringify(
-      {
-        action: form.action,
-        method: form.method.toUpperCase(),
-        payload: payload
-      },
-      null,
-      2
-    );
-
-    const continueButton = document.createElement('button');
-    continueButton.type = 'button';
-    continueButton.textContent = 'Continue and submit this payload';
-    continueButton.style.cssText =
-      'padding:.75rem 1rem;border:0;border-radius:999px;background:#111;color:#fff;cursor:pointer;';
-    continueButton.addEventListener('click', function () {
-      form.submit();
-    });
-
-    panel.append(output, continueButton);
-    form.insertAdjacentElement('afterend', panel);
-  }, true);
-}
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', function () {
-    normaliseSubscribeMailchimpFields();
-    initSubscribeDebugger();
-  });
-} else {
-  normaliseSubscribeMailchimpFields();
-  initSubscribeDebugger();
-}
 
 function getSchemaPageUrl() {
   const canonical = document.querySelector('link[rel="canonical"]');
