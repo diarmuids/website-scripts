@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 11:15:56
+// Last updated: 2026-07-23 11:16:25
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -1344,6 +1344,257 @@ function generateRetailersCollectionSchema() {
       numberOfItems: itemListElement.length,
       itemListElement: itemListElement
     }
+  });
+  document.head.appendChild(schema);
+}
+
+// HOME PAGE SCHEMA
+function generateHomePageSchema() {
+  if (document.documentElement.dataset.wfPage !== WEBFLOW_PAGE_IDS.home) return;
+
+  const canonical = document.querySelector('link[rel="canonical"]');
+  const pageUrl = canonical ? canonical.href : location.href.split('#')[0];
+  const siteUrl = new URL('/', pageUrl).href;
+  const organizationId = siteUrl + '#organization';
+  const websiteId = siteUrl + '#website';
+  const webpageId = siteUrl + '#webpage';
+  const diseasesId = siteUrl + '#disease-guides';
+  const articlesId = siteUrl + '#featured-articles';
+  const videosId = siteUrl + '#latest-videos';
+  const siteName = document.title.split(/\s*\u00b7\s*/)[0].trim();
+  const headline = document.querySelector('.section_home-hero h1')
+    ?.textContent.replace(/\s+/g, ' ').trim();
+  const heroDescription = document.querySelector(
+    '.section_home-hero .text-size-medium.is-home-header'
+  )?.textContent.replace(/\s+/g, ' ').trim();
+  const description = document.querySelector('meta[name="description"]')?.content.trim() ||
+    heroDescription;
+  const logo = document.querySelector('.footer_logo[src]');
+  const primaryImage = document.querySelector('meta[property="og:image"]')?.content;
+  const copyrightText = document.querySelector('.footer_copyright')
+    ?.textContent.replace(/\s+/g, ' ').trim() || '';
+  const legalNameMatch = copyrightText.match(/\u00a9\s*\d{4}\s+(.+?)\s+All Rights/i);
+  const servedCountryCodes = Array.from(document.querySelectorAll('[data-test-country]'))
+    .map(function (trigger) {
+      const country = trigger.getAttribute('data-test-country')?.toUpperCase();
+      return country === 'UK' ? 'GB' : country;
+    })
+    .filter(function (country, index, countries) {
+      return country && countries.indexOf(country) === index;
+    });
+  const socialUrls = Array.from(document.querySelectorAll(
+    '.section_socials-cta a[href^="http"], .section_social-feed .social_link[href^="http"]'
+  ))
+    .map(function (link) {
+      const url = new URL(link.href, location.href);
+      url.search = '';
+      return url.href;
+    })
+    .filter(function (url, index, urls) {
+      return urls.indexOf(url) === index;
+    });
+  const organization = {
+    '@type': 'Organization',
+    '@id': organizationId,
+    name: siteName,
+    url: siteUrl
+  };
+
+  if (legalNameMatch) organization.legalName = legalNameMatch[1].trim();
+  if (description) organization.description = description;
+
+  if (logo) {
+    organization.logo = {
+      '@type': 'ImageObject',
+      '@id': siteUrl + '#logo',
+      url: new URL(logo.src, location.href).href,
+      contentUrl: new URL(logo.src, location.href).href,
+      caption: siteName
+    };
+    organization.image = { '@id': siteUrl + '#logo' };
+  }
+
+  if (servedCountryCodes.length) {
+    organization.areaServed = servedCountryCodes.map(function (country) {
+      return {
+        '@type': 'Country',
+        identifier: country
+      };
+    });
+  }
+
+  if (socialUrls.length) organization.sameAs = socialUrls;
+
+  function createItemList(selector, listId, name, getItem) {
+    const itemListElement = [];
+    const usedUrls = new Set();
+
+    document.querySelectorAll(selector).forEach(function (element) {
+      if (!isIncludedInUkSchema(element)) return;
+
+      const item = getItem(element);
+
+      if (!item?.url || !item.name || usedUrls.has(item.url)) return;
+
+      usedUrls.add(item.url);
+      itemListElement.push({
+        '@type': 'ListItem',
+        position: itemListElement.length + 1,
+        item: item
+      });
+    });
+
+    if (!itemListElement.length) return null;
+
+    return {
+      '@type': 'ItemList',
+      '@id': listId,
+      name: name,
+      itemListOrder: 'https://schema.org/ItemListOrderAscending',
+      numberOfItems: itemListElement.length,
+      itemListElement: itemListElement
+    };
+  }
+
+  const diseaseList = createItemList(
+    '.section_diseases-more .disease-list_item',
+    diseasesId,
+    'Animal disease guides',
+    function (item) {
+      const link = item.querySelector('a.disease-list_link[href]');
+      const category = item.closest('.layout_col')?.querySelector('.heading-style-h3')
+        ?.textContent.replace(/\s+/g, ' ').trim();
+      const name = link?.textContent.replace(/\s+/g, ' ').trim();
+
+      if (!link || !name) return null;
+
+      const page = {
+        '@type': 'WebPage',
+        name: name,
+        url: new URL(link.getAttribute('href'), pageUrl).href
+      };
+
+      if (category) page.about = category;
+      return page;
+    }
+  );
+  const articleList = createItemList(
+    '.section_blog-featured .blog-list_item',
+    articlesId,
+    'Featured animal health articles',
+    function (item) {
+      const link = item.querySelector('a.blog-list_link[href]');
+      const title = item.querySelector('.blog-list_title');
+      const image = item.querySelector('.blog-list_img[src]');
+      const categories = Array.from(item.querySelectorAll('.category_tag'))
+        .map(function (category) {
+          return category.textContent.replace(/\s+/g, ' ').trim();
+        })
+        .filter(Boolean);
+
+      if (!link || !title) return null;
+
+      const article = {
+        '@type': 'BlogPosting',
+        name: title.textContent.replace(/\s+/g, ' ').trim(),
+        headline: title.textContent.replace(/\s+/g, ' ').trim(),
+        url: new URL(link.getAttribute('href'), pageUrl).href
+      };
+
+      if (image) article.image = new URL(image.src, pageUrl).href;
+      if (categories.length) article.about = categories;
+      return article;
+    }
+  );
+  const videoList = createItemList(
+    '.section_video-slider .video-list_item.is-slider',
+    videosId,
+    'Latest animal health videos',
+    function (item) {
+      const link = item.querySelector('a.video-list_link[href]');
+      const title = item.querySelector('.blog-list_title.is-video-list');
+      const image = item.querySelector('.video-list_img-wrap img[src]');
+      const categories = Array.from(item.querySelectorAll('.category_tag'))
+        .map(function (category) {
+          return category.textContent.replace(/\s+/g, ' ').trim();
+        })
+        .filter(Boolean);
+
+      if (!link || !title) return null;
+
+      const videoPage = {
+        '@type': 'WebPage',
+        name: title.textContent.replace(/\s+/g, ' ').trim(),
+        url: new URL(link.getAttribute('href'), pageUrl).href
+      };
+
+      if (image) videoPage.image = new URL(image.src, pageUrl).href;
+      if (categories.length) videoPage.about = categories;
+      return videoPage;
+    }
+  );
+  const contentLists = [diseaseList, articleList, videoList].filter(Boolean);
+  const homePage = {
+    '@type': 'WebPage',
+    '@id': webpageId,
+    url: pageUrl,
+    name: document.title,
+    headline: headline || document.title,
+    isPartOf: { '@id': websiteId },
+    about: { '@id': organizationId },
+    mainEntity: { '@id': organizationId },
+    publisher: { '@id': organizationId },
+    inLanguage: document.documentElement.lang || 'en'
+  };
+
+  if (description) homePage.description = description;
+  if (primaryImage) {
+    homePage.primaryImageOfPage = {
+      '@type': 'ImageObject',
+      url: new URL(primaryImage, pageUrl).href
+    };
+  }
+  if (contentLists.length) {
+    homePage.hasPart = contentLists.map(function (list) {
+      return { '@id': list['@id'] };
+    });
+  }
+
+  document.querySelectorAll('script[type="application/ld+json"]').forEach(function (script) {
+    try {
+      const existingSchema = JSON.parse(script.textContent);
+      const graph = Array.isArray(existingSchema['@graph'])
+        ? existingSchema['@graph']
+        : [existingSchema];
+
+      if (graph.some(function (item) {
+        return item && item['@id'] === webpageId;
+      })) {
+        script.remove();
+      }
+    } catch (error) {
+      // Leave unrelated invalid JSON-LD untouched.
+    }
+  });
+
+  const schema = document.createElement('script');
+  schema.id = 'home-page-schema';
+  schema.type = 'application/ld+json';
+  schema.textContent = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@graph': [
+      organization,
+      {
+        '@type': 'WebSite',
+        '@id': websiteId,
+        url: siteUrl,
+        name: siteName,
+        description: description || undefined,
+        publisher: { '@id': organizationId },
+        inLanguage: document.documentElement.lang || 'en'
+      },
+      homePage
+    ].concat(contentLists)
   });
   document.head.appendChild(schema);
 }
