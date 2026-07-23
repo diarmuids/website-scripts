@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 11:54:59
+// Last updated: 2026-07-23 11:59:18
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -983,7 +983,8 @@ function generateDiseaseDetailSchema() {
   const diseaseName = getFactValue('disease') || heading;
   const otherNames = getFactValue('other names');
   const cause = getFactValue('caused by');
-  const risk = getFactValue('most at risk');
+  const mostAtRisk = getFactValue('most at risk');
+  const riskFactors = getFactValue('risk factors');
   const spread = getFactValue('spread');
   const signs = getFactValue('key signs');
   const monitoring = getFactValue('monitoring tools');
@@ -1041,11 +1042,20 @@ function generateDiseaseDetailSchema() {
       name: cause
     };
   }
-  if (risk) {
-    condition.riskFactor = {
-      '@type': 'MedicalRiskFactor',
-      name: risk
-    };
+  const conditionRiskFactors = [mostAtRisk, riskFactors]
+    .filter(Boolean)
+    .filter(function (value, index, values) {
+      return values.indexOf(value) === index;
+    })
+    .map(function (value) {
+      return {
+        '@type': 'MedicalRiskFactor',
+        name: value
+      };
+    });
+
+  if (conditionRiskFactors.length) {
+    condition.riskFactor = conditionRiskFactors;
   }
   if (spread) condition.epidemiology = spread;
   if (signs) {
