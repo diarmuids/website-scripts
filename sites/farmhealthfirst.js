@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 10:41:29
+// Last updated: 2026-07-23 10:41:36
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -84,7 +84,9 @@ const countryContentReady = (async function () {
 
 // TESTING IP
 document.addEventListener('click', function (event) {
-  const trigger = event.target.closest('[data-test-country]');
+  const trigger = event.target instanceof Element
+    ? event.target.closest('[data-test-country]')
+    : null;
 
   if (!trigger) return;
 
