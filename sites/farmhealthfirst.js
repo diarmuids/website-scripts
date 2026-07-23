@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 10:51:46
+// Last updated: 2026-07-23 11:04:00
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -16,7 +16,8 @@ const WEBFLOW_PAGE_IDS = {
   blog: '6a29b80bed0ef116784e6870',
   products: '6a5512935c6e71d87c982ec7',
   learnCpd: '6a292536d120dc8df39722ce',
-  retailers: '6a57bce442180c02d24933e7'
+  retailers: '6a57bce442180c02d24933e7',
+  contact: '6a293da118e494568ea9bc54'
 };
 
 function isIncludedInUkSchema(element) {
@@ -35,6 +36,7 @@ generateBlogCollectionSchema();
 generateProductsCollectionSchema();
 generateLearnCpdCollectionSchema();
 generateRetailersCollectionSchema();
+generateContactPageSchema();
 
 // COUNTRY LOGIC, THEN LOAD FINSWEET
 const countryContentReady = (async function () {
@@ -1340,6 +1342,244 @@ function generateRetailersCollectionSchema() {
       numberOfItems: itemListElement.length,
       itemListElement: itemListElement
     }
+  });
+  document.head.appendChild(schema);
+}
+
+// CONTACT PAGE SCHEMA
+function generateContactPageSchema() {
+  if (document.documentElement.dataset.wfPage !== WEBFLOW_PAGE_IDS.contact) return;
+
+  const contactSection = document.querySelector('.section_contact');
+
+  if (!contactSection) return;
+
+  const canonical = document.querySelector('link[rel="canonical"]');
+  const pageUrl = canonical ? canonical.href : location.href.split('#')[0];
+  const siteUrl = new URL('/', pageUrl).href;
+  const organizationId = siteUrl + '#organization';
+  const websiteId = siteUrl + '#website';
+  const pageId = pageUrl + '#webpage';
+  const breadcrumbId = pageUrl + '#breadcrumb';
+  const description = document.querySelector('meta[name="description"]')?.content || '';
+  const headline = contactSection.querySelector('h1')?.textContent.replace(/\s+/g, ' ').trim();
+  const siteName = document.title.split('·').pop().trim();
+  const companyName = contactSection.querySelector('.contact_wrapper .heading-style-h5')
+    ?.textContent.replace(/\s+/g, ' ').trim();
+  const emailLink = contactSection.querySelector('a[href^="mailto:"]');
+  const phoneLink = contactSection.querySelector('a[href^="tel:"]');
+  const mapLink = contactSection.querySelector('a.contact_item[href*="google.com/maps"]');
+  const companyLink = Array.from(contactSection.querySelectorAll('a.contact_item[href^="http"]'))
+    .find(function (link) {
+      return !link.href.includes('google.com/maps');
+    });
+  const logo = document.querySelector('.footer_logo[src]');
+  const primaryImage = document.querySelector('meta[property="og:image"]')?.content;
+  const copyrightText = document.querySelector('.footer_copyright')
+    ?.textContent.replace(/\s+/g, ' ').trim() || '';
+  const legalNameMatch = copyrightText.match(/©\s*\d{4}\s+(.+?)\s+All Rights/i);
+  const email = emailLink
+    ? decodeURIComponent(emailLink.href.replace(/^mailto:/i, '').split('?')[0])
+    : '';
+  const telephone = phoneLink
+    ? phoneLink.href.replace(/^tel:/i, '').replace(/\s+/g, '')
+    : '';
+  const addressText = mapLink
+    ? mapLink.textContent.replace(/\s+/g, ' ').trim()
+    : '';
+  const addressParts = addressText
+    .split(',')
+    .map(function (part) {
+      return part.trim();
+    })
+    .filter(Boolean);
+  const socialUrls = Array.from(contactSection.querySelectorAll('.social_link[href^="http"]'))
+    .map(function (link) {
+      const url = new URL(link.href, location.href);
+      url.search = '';
+      return url.href;
+    })
+    .filter(function (url, index, urls) {
+      return urls.indexOf(url) === index;
+    });
+  const language = document.documentElement.lang || 'en';
+  const organization = {
+    '@type': 'Organization',
+    '@id': organizationId,
+    name: siteName,
+    url: siteUrl
+  };
+
+  if (legalNameMatch) organization.legalName = legalNameMatch[1].trim();
+  if (description) organization.description = description;
+  if (email) organization.email = email;
+  if (telephone) organization.telephone = telephone;
+  if (logo) {
+    organization.logo = {
+      '@type': 'ImageObject',
+      '@id': siteUrl + '#logo',
+      url: new URL(logo.src, location.href).href,
+      contentUrl: new URL(logo.src, location.href).href,
+      caption: siteName
+    };
+    organization.image = { '@id': siteUrl + '#logo' };
+  }
+  if (companyLink || companyName) {
+    organization.parentOrganization = {
+      '@type': 'Organization',
+      name: companyName || companyLink.textContent.replace(/\s+/g, ' ').trim()
+    };
+    if (companyLink) organization.parentOrganization.url = companyLink.href;
+  }
+  if (addressParts.length) {
+    organization.address = {
+      '@type': 'PostalAddress',
+      streetAddress: addressParts.slice(0, 2).join(', '),
+      addressLocality: addressParts[2] || undefined,
+      addressRegion: addressParts[3] || undefined,
+      addressCountry: addressParts.some(function (part) {
+        return /ireland/i.test(part);
+      }) ? 'IE' : undefined
+    };
+  }
+  if (mapLink) {
+    organization.hasMap = mapLink.href;
+
+    const coordinates = mapLink.href.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/);
+
+    if (coordinates) {
+      organization.geo = {
+        '@type': 'GeoCoordinates',
+        latitude: Number(coordinates[1]),
+        longitude: Number(coordinates[2])
+      };
+    }
+  }
+  organization.areaServed = [
+    { '@type': 'Country', name: 'Ireland' },
+    { '@type': 'Country', name: 'United Kingdom' }
+  ];
+  if (email || telephone) {
+    organization.contactPoint = {
+      '@type': 'ContactPoint',
+      contactType: 'customer service',
+      email: email || undefined,
+      telephone: telephone || undefined,
+      areaServed: ['IE', 'GB'],
+      availableLanguage: [language]
+    };
+  }
+  if (socialUrls.length || companyLink) {
+    organization.sameAs = socialUrls.concat(companyLink ? [companyLink.href] : [])
+      .filter(function (url, index, urls) {
+        return urls.indexOf(url) === index;
+      });
+  }
+
+  const contactPage = {
+    '@type': 'ContactPage',
+    '@id': pageId,
+    url: pageUrl,
+    name: document.title,
+    headline: headline || document.title,
+    description: description || undefined,
+    isPartOf: { '@id': websiteId },
+    about: { '@id': organizationId },
+    mainEntity: { '@id': organizationId },
+    publisher: { '@id': organizationId },
+    inLanguage: language,
+    breadcrumb: { '@id': breadcrumbId }
+  };
+  const significantLinks = [
+    email ? 'mailto:' + email : '',
+    telephone ? 'tel:' + telephone : '',
+    companyLink ? companyLink.href : ''
+  ].filter(Boolean);
+  const potentialActions = [];
+
+  if (primaryImage) {
+    contactPage.primaryImageOfPage = {
+      '@type': 'ImageObject',
+      url: new URL(primaryImage, location.href).href
+    };
+  }
+  if (significantLinks.length) contactPage.significantLink = significantLinks;
+  if (document.getElementById('message')) {
+    potentialActions.push({
+      '@type': 'CommunicateAction',
+      name: 'Message Us',
+      target: pageUrl + '#message'
+    });
+  }
+  if (email) {
+    potentialActions.push({
+      '@type': 'CommunicateAction',
+      name: 'Email Us',
+      target: 'mailto:' + email
+    });
+  }
+  if (telephone) {
+    potentialActions.push({
+      '@type': 'CommunicateAction',
+      name: 'Call Us',
+      target: 'tel:' + telephone
+    });
+  }
+  if (potentialActions.length) contactPage.potentialAction = potentialActions;
+
+  document.querySelectorAll('script[type="application/ld+json"]').forEach(function (script) {
+    try {
+      const existingSchema = JSON.parse(script.textContent);
+      const graph = Array.isArray(existingSchema['@graph'])
+        ? existingSchema['@graph']
+        : [existingSchema];
+
+      if (graph.some(function (item) {
+        return item && item['@type'] === 'ContactPage';
+      })) {
+        script.remove();
+      }
+    } catch (error) {
+      // Leave unrelated invalid JSON-LD untouched.
+    }
+  });
+
+  const schema = document.createElement('script');
+  schema.id = 'contact-page-schema';
+  schema.type = 'application/ld+json';
+  schema.textContent = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@graph': [
+      organization,
+      {
+        '@type': 'WebSite',
+        '@id': websiteId,
+        url: siteUrl,
+        name: siteName,
+        description: description || undefined,
+        publisher: { '@id': organizationId },
+        inLanguage: language
+      },
+      contactPage,
+      {
+        '@type': 'BreadcrumbList',
+        '@id': breadcrumbId,
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Home',
+            item: siteUrl
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: headline || 'Contact',
+            item: pageUrl
+          }
+        ]
+      }
+    ]
   });
   document.head.appendChild(schema);
 }
