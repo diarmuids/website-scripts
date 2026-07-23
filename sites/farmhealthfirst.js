@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 10:31:56
+// Last updated: 2026-07-23 10:32:51
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -1191,6 +1191,35 @@ function generateLearnCpdCollectionSchema() {
 
     itemListElement.push(listItem);
   });
+
+  const cpdSection = document.querySelector('.section_cpd');
+  const cpdLink = cpdSection?.querySelector('a.button[href^="http"]');
+
+  if (cpdSection && cpdLink && isIncludedInUkSchema(cpdLink)) {
+    const url = new URL(cpdLink.href, location.href).href;
+    const heading = cpdSection.querySelector('.heading-style-h2');
+    const description = cpdSection.querySelector('p');
+    const name = heading
+      ? heading.textContent.replace(/\s+/g, ' ').trim()
+      : cpdLink.textContent.replace(/\s+/g, ' ').trim();
+
+    if (name && !usedUrls.has(url)) {
+      const listItem = {
+        '@type': 'ListItem',
+        position: itemListElement.length + 1,
+        name: name,
+        url: url
+      };
+
+      if (description) {
+        const descriptionText = description.textContent.replace(/\s+/g, ' ').trim();
+        if (descriptionText) listItem.description = descriptionText;
+      }
+
+      usedUrls.add(url);
+      itemListElement.push(listItem);
+    }
+  }
 
   if (!itemListElement.length) return;
 
