@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 10:31:14
+// Last updated: 2026-07-23 10:31:56
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -17,6 +17,13 @@ const WEBFLOW_PAGE_IDS = {
   products: '6a5512935c6e71d87c982ec7',
   learnCpd: '6a292536d120dc8df39722ce'
 };
+
+function isIncludedInUkSchema(element) {
+  const countryElement = element.closest('[data-country]');
+  const country = countryElement?.getAttribute('data-country')?.toUpperCase();
+
+  return !country || country === 'UK' || country === 'GB' || country === 'BOTH';
+}
 
 // COUNTRY LOGIC, THEN LOAD FINSWEET
 const countryContentReady = (async function () {
@@ -803,6 +810,8 @@ function generateFaqPageSchema() {
   const questions = new Map();
 
   document.querySelectorAll('.faq_item').forEach(function (item) {
+    if (!isIncludedInUkSchema(item)) return;
+
     const questionElement = item.querySelector('.faq_question-text');
     const answer = item.querySelector('.faq_answer');
 
@@ -814,12 +823,16 @@ function generateFaqPageSchema() {
 
     if (!questions.has(question)) questions.set(question, new Set());
 
-    answer.querySelectorAll(
-      '.text-rich-text.is-faq:not(.is-faq-buttons)'
-    ).forEach(function (countryAnswer) {
-      const answerText = countryAnswer.textContent.replace(/\s+/g, ' ').trim();
-      if (answerText) questions.get(question).add(answerText);
-    });
+    const countryAnswer = answer.querySelector(
+      '.text-rich-text.is-faq[data-country="UK"]:not(.is-faq-buttons)'
+    ) || answer.querySelector(
+      '.text-rich-text.is-faq:not([data-country]):not(.is-faq-buttons)'
+    );
+
+    if (!countryAnswer) return;
+
+    const answerText = countryAnswer.textContent.replace(/\s+/g, ' ').trim();
+    if (answerText) questions.get(question).add(answerText);
   });
 
   const mainEntity = Array.from(questions, function ([question, answerTexts]) {
@@ -866,8 +879,14 @@ function generateDosingGuideSchema() {
   const steps = [];
 
   document.querySelectorAll('.dosing_item').forEach(function (item, index) {
+    if (!isIncludedInUkSchema(item)) return;
+
     const title = item.querySelector('.dosing_title');
-    const content = item.querySelector('.dosing_content .text-rich-text:not(.is-blog-buttons)');
+    const content = item.querySelector(
+      '.dosing_content .text-rich-text[data-country="UK"]:not(.is-blog-buttons)'
+    ) || item.querySelector(
+      '.dosing_content .text-rich-text:not([data-country]):not(.is-blog-buttons)'
+    );
     const anchor = item.querySelector('.anchor-link.is-dosing-guide[id]');
     const image = item.querySelector('.dosing_img[src]');
 
@@ -923,6 +942,8 @@ function generateVideosCollectionSchema() {
   const usedUrls = new Set();
 
   document.querySelectorAll('.section_video-list .video-list_item.is-wrap').forEach(function (card) {
+    if (!isIncludedInUkSchema(card)) return;
+
     const link = card.querySelector('a.video-list_link[href]');
     const title = card.querySelector('.blog-list_title.is-video-list');
 
@@ -991,6 +1012,8 @@ function generateBlogCollectionSchema() {
   document.querySelectorAll(
     '.section_blog-list-featured .blog-list_item, .section_blog-list .blog-list_item'
   ).forEach(function (card) {
+    if (!isIncludedInUkSchema(card)) return;
+
     const link = card.querySelector('a.blog-list_link[href]');
     const title = card.querySelector('.blog-list_title');
 
@@ -1057,21 +1080,18 @@ function generateProductsCollectionSchema() {
   const usedUrls = new Set();
 
   document.querySelectorAll('.section_product-list .product-list_item').forEach(function (card) {
-    const link = card.querySelector('a.product-list_link[href]');
-    const titles = Array.from(card.querySelectorAll('.product-list_title'))
-      .map(function (title) {
-        return title.textContent.replace(/\s+/g, ' ').trim();
-      })
-      .filter(function (title, index, allTitles) {
-        return title && title.toLowerCase() !== 'n/a' && allTitles.indexOf(title) === index;
-      });
+    if (!isIncludedInUkSchema(card)) return;
 
-    if (!link || !titles.length) return;
+    const link = card.querySelector('a.product-list_link[href]');
+    const title = card.querySelector('.product-list_title[data-country="UK"]') ||
+      card.querySelector('.product-list_title:not([data-country])');
+
+    if (!link || !title) return;
 
     const url = new URL(link.getAttribute('href'), location.origin).href;
-    const name = titles[0];
+    const name = title.textContent.replace(/\s+/g, ' ').trim();
 
-    if (usedUrls.has(url)) return;
+    if (!name || name.toLowerCase() === 'n/a' || usedUrls.has(url)) return;
 
     usedUrls.add(url);
 
@@ -1081,25 +1101,18 @@ function generateProductsCollectionSchema() {
       name: name,
       url: url
     };
-    const images = Array.from(card.querySelectorAll('.product-list_img[src]'))
-      .filter(function (image) {
-        return image.alt.trim().toLowerCase() !== 'n/a';
-      })
-      .map(function (image) {
-        return new URL(image.src, location.href).href;
-      })
-      .filter(function (imageUrl, index, allImageUrls) {
-        return allImageUrls.indexOf(imageUrl) === index;
-      });
+    const image = card.querySelector('.product-list_img[data-country="UK"][src]') ||
+      card.querySelector('.product-list_img:not([data-country])[src]');
     const details = Array.from(card.querySelectorAll('.product-list_detail'))
       .map(function (detail) {
         return detail.textContent.replace(/\s+/g, ' ').trim();
       })
       .filter(Boolean);
 
-    if (titles.length > 1) listItem.alternateName = titles.slice(1);
     if (details.length) listItem.description = details.join(' — ');
-    if (images.length) listItem.image = images.length === 1 ? images[0] : images;
+    if (image && image.alt.trim().toLowerCase() !== 'n/a') {
+      listItem.image = new URL(image.src, location.href).href;
+    }
 
     itemListElement.push(listItem);
   });
@@ -1139,6 +1152,8 @@ function generateLearnCpdCollectionSchema() {
   const usedUrls = new Set();
 
   document.querySelectorAll('.section_learn-video .learn-video_card[data-video-url]').forEach(function (card) {
+    if (!isIncludedInUkSchema(card)) return;
+
     const videoUrl = card.getAttribute('data-video-url');
     const title = card.querySelector('.heading-style-h3');
 
@@ -1269,7 +1284,7 @@ function initFaqLinkButtons() {
   });
 }
 
-// Generate schema synchronously from the complete Webflow DOM, before the
+// Generate UK schema synchronously from the complete Webflow DOM, before the
 // asynchronous country lookup removes either the UK or Ireland content.
 generateFaqPageSchema();
 generateDosingGuideSchema();
