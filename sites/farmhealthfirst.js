@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 11:49:35
+// Last updated: 2026-07-23 11:50:45
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -1183,6 +1183,18 @@ function generateBlogArticleSchema() {
       monthNumbers[dateMatch[1].toLowerCase()] + '-' +
       dateMatch[2].padStart(2, '0')
     : '';
+  const videoIframe = document.querySelector('.section_blog-header .blog_video-embed iframe') ||
+    articleContent?.querySelector(
+      '.w-richtext-figure-type-video iframe, figure[data-rt-type="video"] iframe'
+    );
+  const videoEmbedUrl = videoIframe?.getAttribute('src')
+    ? new URL(videoIframe.getAttribute('src'), pageUrl).href
+    : '';
+  const youtubeVideoMatch = videoEmbedUrl.match(
+    /(?:youtube(?:-nocookie)?\.com\/embed\/|youtu\.be\/)([^?&/]+)/
+  );
+  const videoId = youtubeVideoMatch ? youtubeVideoMatch[1] : '';
+  const videoSchemaId = pageUrl + '#video';
   const logo = document.querySelector('.footer_logo[src]');
   const copyrightText = document.querySelector('.footer_copyright')
     ?.textContent.replace(/\s+/g, ' ').trim() || '';
@@ -1261,6 +1273,29 @@ function generateBlogArticleSchema() {
     article.wordCount = articleBody.split(/\s+/).filter(Boolean).length;
   }
 
+  let videoObject = null;
+
+  if (videoEmbedUrl) {
+    videoObject = {
+      '@type': 'VideoObject',
+      '@id': videoSchemaId,
+      name: videoIframe.title?.trim() || headline || document.title,
+      description: description || headline || document.title,
+      embedUrl: videoEmbedUrl,
+      isFamilyFriendly: true,
+      inLanguage: document.documentElement.lang || 'en'
+    };
+
+    if (videoId) {
+      videoObject.thumbnailUrl = 'https://img.youtube.com/vi/' + videoId + '/hqdefault.jpg';
+    } else if (imageUrl) {
+      videoObject.thumbnailUrl = imageUrl;
+    }
+    if (datePublished) videoObject.uploadDate = datePublished;
+
+    article.video = { '@id': videoSchemaId };
+  }
+
   const webPage = {
     '@type': 'WebPage',
     '@id': webpageId,
@@ -1313,45 +1348,50 @@ function generateBlogArticleSchema() {
   const schema = document.createElement('script');
   schema.id = 'blog-article-schema';
   schema.type = 'application/ld+json';
-  schema.textContent = JSON.stringify({
-    '@context': 'https://schema.org',
-    '@graph': [
-      organization,
+  const graph = [
+    organization,
+    {
+      '@type': 'WebSite',
+      '@id': websiteId,
+      url: siteUrl,
+      name: siteName,
+      publisher: { '@id': organizationId },
+      inLanguage: document.documentElement.lang || 'en'
+    },
+    webPage,
+    article
+  ];
+
+  if (videoObject) graph.push(videoObject);
+
+  graph.push({
+    '@type': 'BreadcrumbList',
+    '@id': breadcrumbId,
+    itemListElement: [
       {
-        '@type': 'WebSite',
-        '@id': websiteId,
-        url: siteUrl,
-        name: siteName,
-        publisher: { '@id': organizationId },
-        inLanguage: document.documentElement.lang || 'en'
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: siteUrl
       },
-      webPage,
-      article,
       {
-        '@type': 'BreadcrumbList',
-        '@id': breadcrumbId,
-        itemListElement: [
-          {
-            '@type': 'ListItem',
-            position: 1,
-            name: 'Home',
-            item: siteUrl
-          },
-          {
-            '@type': 'ListItem',
-            position: 2,
-            name: 'Blog',
-            item: new URL('/blog', siteUrl).href
-          },
-          {
-            '@type': 'ListItem',
-            position: 3,
-            name: headline || document.title,
-            item: pageUrl
-          }
-        ]
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Blog',
+        item: new URL('/blog', siteUrl).href
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: headline || document.title,
+        item: pageUrl
       }
     ]
+  });
+
+  schema.textContent = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@graph': graph
   });
   document.head.appendChild(schema);
 }
