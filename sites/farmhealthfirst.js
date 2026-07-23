@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 09:08:43
+// Last updated: 2026-07-23 09:09:01
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -266,33 +266,6 @@ function initDiseaseHeadingLinks() {
     }));
     const sectionLinks = [];
 
-    if (headings[0] !== richText.firstElementChild) {
-      let introId = richText.id || 'blog-intro';
-      let introSuffix = 2;
-
-      while (!richText.id && usedIds.has(introId)) {
-        introId = 'blog-intro-' + introSuffix;
-        introSuffix += 1;
-      }
-
-      if (!richText.id) {
-        richText.id = introId;
-        usedIds.add(introId);
-      }
-
-      richText.style.scrollMarginTop = '70px';
-
-      const introLink = template.cloneNode(true);
-      const introLinkText = introLink.querySelector('.blog_sidebar-link-text');
-
-      if (introLinkText) {
-        introLink.href = '#' + richText.id;
-        introLinkText.textContent = 'Intro';
-        sidebar.insertBefore(introLink, template);
-        sectionLinks.push({ heading: richText, link: introLink });
-      }
-    }
-
     headings.forEach(function (heading, index) {
       const isFirstRichTextElement = heading === richText.firstElementChild;
       const baseId = heading.textContent.trim().toLowerCase()
@@ -400,6 +373,33 @@ function initBlogHeadingLinks() {
       return element.id;
     }));
     const sectionLinks = [];
+
+    if (headings[0] !== richText.firstElementChild) {
+      let introId = richText.id || 'blog-intro';
+      let introSuffix = 2;
+
+      while (!richText.id && usedIds.has(introId)) {
+        introId = 'blog-intro-' + introSuffix;
+        introSuffix += 1;
+      }
+
+      if (!richText.id) {
+        richText.id = introId;
+        usedIds.add(introId);
+      }
+
+      richText.style.scrollMarginTop = '70px';
+
+      const introLink = template.cloneNode(true);
+      const introLinkText = introLink.querySelector('.blog_sidebar-link-text');
+
+      if (introLinkText) {
+        introLink.href = '#' + richText.id;
+        introLinkText.textContent = 'Intro';
+        sidebar.insertBefore(introLink, template);
+        sectionLinks.push({ heading: richText, link: introLink });
+      }
+    }
 
     headings.forEach(function (heading, index) {
       const isFirstRichTextElement = heading === richText.firstElementChild;
