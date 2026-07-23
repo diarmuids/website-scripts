@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 11:16:25
+// Last updated: 2026-07-23 11:16:36
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -1474,7 +1474,12 @@ function generateHomePageSchema() {
         url: new URL(link.getAttribute('href'), pageUrl).href
       };
 
-      if (category) page.about = category;
+      if (category) {
+        page.about = {
+          '@type': 'Thing',
+          name: category
+        };
+      }
       return page;
     }
   );
@@ -1502,7 +1507,14 @@ function generateHomePageSchema() {
       };
 
       if (image) article.image = new URL(image.src, pageUrl).href;
-      if (categories.length) article.about = categories;
+      if (categories.length) {
+        article.about = categories.map(function (category) {
+          return {
+            '@type': 'Thing',
+            name: category
+          };
+        });
+      }
       return article;
     }
   );
@@ -1529,7 +1541,14 @@ function generateHomePageSchema() {
       };
 
       if (image) videoPage.image = new URL(image.src, pageUrl).href;
-      if (categories.length) videoPage.about = categories;
+      if (categories.length) {
+        videoPage.about = categories.map(function (category) {
+          return {
+            '@type': 'Thing',
+            name: category
+          };
+        });
+      }
       return videoPage;
     }
   );
