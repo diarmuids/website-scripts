@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 11:50:45
+// Last updated: 2026-07-23 11:52:21
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -14,6 +14,7 @@ const WEBFLOW_PAGE_IDS = {
   faq: '6a298df45cd69f1a53c202a7',
   dosingGuide: '6a292541aac8585a2a153456',
   videos: '6a29b82a83695807b19eda76',
+  videoDetail: '6a31681be502b04dd0cceeb3',
   blog: '6a29b80bed0ef116784e6870',
   blogArticle: '6a29b38982b15a3fd705423b',
   products: '6a5512935c6e71d87c982ec7',
@@ -47,6 +48,7 @@ generateHomePageSchema();
 generateFaqPageSchema();
 generateDosingGuideSchema();
 generateVideosCollectionSchema();
+generateVideoDetailSchema();
 generateBlogCollectionSchema();
 generateBlogArticleSchema();
 generateProductsCollectionSchema();
@@ -1047,6 +1049,231 @@ function generateVideosCollectionSchema() {
       numberOfItems: itemListElement.length,
       itemListElement: itemListElement
     }
+  });
+  document.head.appendChild(schema);
+}
+
+// VIDEO DETAIL SCHEMA
+function generateVideoDetailSchema() {
+  if (document.documentElement.dataset.wfPage !== WEBFLOW_PAGE_IDS.videoDetail) return;
+
+  const pageUrl = getSchemaPageUrl();
+  const siteUrl = new URL('/', pageUrl).href;
+  const organizationId = siteUrl + '#organization';
+  const websiteId = siteUrl + '#website';
+  const webpageId = pageUrl + '#webpage';
+  const videoId = pageUrl + '#video';
+  const breadcrumbId = pageUrl + '#breadcrumb';
+  const heading = document.querySelector('.section_header h1')
+    ?.textContent.replace(/\s+/g, ' ').trim();
+  const description = (
+    document.querySelector('.section_video-descr [data-country="UK"]') ||
+    document.querySelector('.section_video-descr .blog_text-rich-text:not([data-country])')
+  )?.textContent.replace(/\s+/g, ' ').trim() ||
+    document.querySelector('meta[name="description"]')?.content.trim() ||
+    '';
+  const iframe = document.querySelector('.section_header .blog_video-embed iframe');
+  const embedUrl = iframe?.getAttribute('src')
+    ? new URL(iframe.getAttribute('src'), pageUrl).href
+    : '';
+
+  if (!heading || !embedUrl) return;
+
+  const youtubeMatch = embedUrl.match(
+    /(?:youtube(?:-nocookie)?\.com\/embed\/|youtu\.be\/)([^?&/]+)/
+  );
+  const youtubeId = youtubeMatch ? youtubeMatch[1] : '';
+  const dateText = document.querySelector('.section_header .blog_date')
+    ?.textContent.replace(/\s+/g, ' ').trim() || '';
+  const monthNumbers = {
+    january: '01',
+    february: '02',
+    march: '03',
+    april: '04',
+    may: '05',
+    june: '06',
+    july: '07',
+    august: '08',
+    september: '09',
+    october: '10',
+    november: '11',
+    december: '12'
+  };
+  const dateMatch = dateText.match(/^([A-Za-z]+)\s+(\d{1,2}),\s+(\d{4})$/);
+  const uploadDate = dateMatch && monthNumbers[dateMatch[1].toLowerCase()]
+    ? dateMatch[3] + '-' +
+      monthNumbers[dateMatch[1].toLowerCase()] + '-' +
+      dateMatch[2].padStart(2, '0')
+    : '';
+  const authorRow = document.querySelector('.section_header .blog_detail-row.is-author');
+  const authorName = authorRow
+    ? authorRow.textContent.replace(/\s+/g, ' ').replace(/^By\s+/i, '').trim()
+    : '';
+  const categories = Array.from(document.querySelectorAll(
+    '.section_header .category_tag'
+  ))
+    .map(function (category) {
+      return category.textContent.replace(/\s+/g, ' ').trim();
+    })
+    .filter(function (category, index, categoryNames) {
+      return category && categoryNames.indexOf(category) === index;
+    });
+  const logo = document.querySelector('.footer_logo[src]');
+  const copyrightText = document.querySelector('.footer_copyright')
+    ?.textContent.replace(/\s+/g, ' ').trim() || '';
+  const legalNameMatch = copyrightText.match(/\u00a9\s*\d{4}\s+(.+?)\s+All Rights/i);
+  const siteName = document.title.split(/\s*\u00b7\s*/).pop().trim();
+  const socialUrls = Array.from(document.querySelectorAll(
+    '.section_socials-cta a[href^="http"], .footer_component .social_link[href^="http"]'
+  ))
+    .map(function (link) {
+      const url = new URL(link.getAttribute('href'), pageUrl);
+      url.search = '';
+      return url.href;
+    })
+    .filter(function (url, index, urls) {
+      return urls.indexOf(url) === index;
+    });
+  const organization = {
+    '@type': 'Organization',
+    '@id': organizationId,
+    name: siteName,
+    url: siteUrl
+  };
+
+  if (legalNameMatch) organization.legalName = legalNameMatch[1].trim();
+  if (logo) {
+    const logoUrl = new URL(logo.getAttribute('src'), pageUrl).href;
+
+    organization.logo = {
+      '@type': 'ImageObject',
+      '@id': siteUrl + '#logo',
+      url: logoUrl,
+      contentUrl: logoUrl,
+      caption: siteName
+    };
+    organization.image = { '@id': siteUrl + '#logo' };
+  }
+  if (socialUrls.length) organization.sameAs = socialUrls;
+
+  const video = {
+    '@type': 'VideoObject',
+    '@id': videoId,
+    url: pageUrl,
+    name: heading,
+    description: description || heading,
+    embedUrl: embedUrl,
+    mainEntityOfPage: { '@id': webpageId },
+    publisher: { '@id': organizationId },
+    isFamilyFriendly: true,
+    inLanguage: document.documentElement.lang || 'en'
+  };
+
+  if (youtubeId) {
+    video.thumbnailUrl = 'https://img.youtube.com/vi/' + youtubeId + '/hqdefault.jpg';
+  }
+  if (uploadDate) video.uploadDate = uploadDate;
+  if (authorName) {
+    video.creator = {
+      '@type': 'Person',
+      name: authorName
+    };
+  }
+  if (categories.length) {
+    video.keywords = categories;
+    video.about = categories.map(function (category) {
+      return {
+        '@type': 'Thing',
+        name: category
+      };
+    });
+  }
+
+  const webPage = {
+    '@type': 'WebPage',
+    '@id': webpageId,
+    url: pageUrl,
+    name: document.title,
+    headline: heading,
+    description: description || heading,
+    isPartOf: { '@id': websiteId },
+    mainEntity: { '@id': videoId },
+    publisher: { '@id': organizationId },
+    breadcrumb: { '@id': breadcrumbId },
+    inLanguage: document.documentElement.lang || 'en'
+  };
+
+  if (youtubeId) {
+    webPage.primaryImageOfPage = {
+      '@type': 'ImageObject',
+      url: 'https://img.youtube.com/vi/' + youtubeId + '/hqdefault.jpg'
+    };
+  }
+
+  document.querySelectorAll('script[type="application/ld+json"]').forEach(function (script) {
+    try {
+      const existingSchema = JSON.parse(script.textContent);
+      const graph = Array.isArray(existingSchema['@graph'])
+        ? existingSchema['@graph']
+        : [existingSchema];
+
+      if (graph.some(function (item) {
+        const types = Array.isArray(item?.['@type']) ? item['@type'] : [item?.['@type']];
+
+        return item && (
+          types.includes('VideoObject') ||
+          item['@id'] === videoId
+        );
+      })) {
+        script.remove();
+      }
+    } catch (error) {
+      // Leave unrelated invalid JSON-LD untouched.
+    }
+  });
+
+  const schema = document.createElement('script');
+  schema.id = 'video-detail-schema';
+  schema.type = 'application/ld+json';
+  schema.textContent = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@graph': [
+      organization,
+      {
+        '@type': 'WebSite',
+        '@id': websiteId,
+        url: siteUrl,
+        name: siteName,
+        publisher: { '@id': organizationId },
+        inLanguage: document.documentElement.lang || 'en'
+      },
+      webPage,
+      video,
+      {
+        '@type': 'BreadcrumbList',
+        '@id': breadcrumbId,
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Home',
+            item: siteUrl
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Videos',
+            item: new URL('/videos', siteUrl).href
+          },
+          {
+            '@type': 'ListItem',
+            position: 3,
+            name: heading,
+            item: pageUrl
+          }
+        ]
+      }
+    ]
   });
   document.head.appendChild(schema);
 }
