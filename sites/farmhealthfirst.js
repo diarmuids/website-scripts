@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 11:18:03
+// Last updated: 2026-07-23 11:44:56
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -15,6 +15,7 @@ const WEBFLOW_PAGE_IDS = {
   dosingGuide: '6a292541aac8585a2a153456',
   videos: '6a29b82a83695807b19eda76',
   blog: '6a29b80bed0ef116784e6870',
+  blogArticle: '6a29b38982b15a3fd705423b',
   products: '6a5512935c6e71d87c982ec7',
   learnCpd: '6a292536d120dc8df39722ce',
   retailers: '6a57bce442180c02d24933e7',
@@ -46,6 +47,7 @@ generateFaqPageSchema();
 generateDosingGuideSchema();
 generateVideosCollectionSchema();
 generateBlogCollectionSchema();
+generateBlogArticleSchema();
 generateProductsCollectionSchema();
 generateLearnCpdCollectionSchema();
 generateRetailersCollectionSchema();
