@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 10:33:48
+// Last updated: 2026-07-23 10:40:24
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -31,16 +31,29 @@ const countryContentReady = (async function () {
   let selectedCountry = 'UK';
 
   try {
-    let test = new URLSearchParams(location.search).get('test-country')?.toUpperCase();
+    const searchParams = new URLSearchParams(location.search);
+    const queryFlags = location.search
+      .slice(1)
+      .split('&')
+      .map(function (part) {
+        return decodeURIComponent(part.split('=')[0] || '').toUpperCase();
+      });
+    let test = queryFlags.includes('UK')
+      ? 'UK'
+      : queryFlags.includes('IE')
+        ? 'IE'
+        : searchParams.get('test-country')?.toUpperCase();
 
     if (test === 'UK') test = 'GB';
 
     if (test) {
+      const testFlag = test === 'IE' ? 'IE' : 'UK';
+
       $(document).on('click', 'a[href]', function () {
         const url = new URL(this.href, location.origin);
 
         if (url.origin === location.origin) {
-          url.searchParams.set('test-country', test);
+          url.search = '?' + testFlag;
           this.href = url;
         }
       });
@@ -73,7 +86,9 @@ const countryContentReady = (async function () {
 $(document).on('click', '[data-test-country]', function (event) {
   event.preventDefault();
   const url = new URL(location.href);
-  url.searchParams.set('test-country', $(this).data('test-country'));
+  const country = String($(this).data('test-country') || '').toUpperCase();
+
+  url.search = '?' + (country === 'IE' ? 'IE' : 'UK');
   location.href = url;
 });
 
