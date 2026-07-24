@@ -1,4 +1,4 @@
-// Last updated: 2026-07-24 10:42:17
+// Last updated: 2026-07-24 10:44:47
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -150,11 +150,13 @@ function initCuratorFeedLayout() {
     const style = document.createElement('style');
     style.id = 'curator-feed-overrides';
     style.textContent =
-      '.crt-feed .crt-post {' +
+      '.crt-feed .crt-post,' +
+      '.crt-feed .crt-grid-post {' +
       'cursor: pointer;' +
       'transition: opacity 300ms ease;' +
       '}' +
-      '.crt-feed .crt-post:hover {' +
+      '.crt-feed .crt-post:hover,' +
+      '.crt-feed .crt-grid-post:hover {' +
       'opacity: 0.8;' +
       '}' +
       '@media (max-width: 767px) {' +
@@ -167,7 +169,8 @@ function initCuratorFeedLayout() {
       'width: auto !important;' +
       'float: none !important;' +
       '}' +
-      '.crt-feed .crt-post {' +
+      '.crt-feed .crt-post,' +
+      '.crt-feed .crt-grid-post {' +
       'width: auto !important;' +
       'min-width: 0 !important;' +
       'display: none !important;' +
@@ -175,7 +178,11 @@ function initCuratorFeedLayout() {
       '.crt-feed .crt-post[data-position="1"],' +
       '.crt-feed .crt-post[data-position="2"],' +
       '.crt-feed .crt-post[data-position="3"],' +
-      '.crt-feed .crt-post[data-position="4"] {' +
+      '.crt-feed .crt-post[data-position="4"],' +
+      '.crt-feed .crt-grid-post[data-position="1"],' +
+      '.crt-feed .crt-grid-post[data-position="2"],' +
+      '.crt-feed .crt-grid-post[data-position="3"],' +
+      '.crt-feed .crt-grid-post[data-position="4"] {' +
       'display: block !important;' +
       '}' +
       '}';
@@ -215,7 +222,7 @@ function initCuratorFeedLayout() {
         feedResizeObserver.observe(feed);
       }
 
-      const posts = Array.from(feed.querySelectorAll('.crt-post')).sort(function (a, b) {
+      const posts = Array.from(feed.querySelectorAll('.crt-post, .crt-grid-post')).sort(function (a, b) {
         return Number(a.dataset.position || Infinity) - Number(b.dataset.position || Infinity);
       });
       const curatorColumnCount = getCuratorColumnCount(feed);
