@@ -1,4 +1,4 @@
-// Last updated: 2026-07-24 10:41:23
+// Last updated: 2026-07-24 10:42:17
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -170,6 +170,13 @@ function initCuratorFeedLayout() {
       '.crt-feed .crt-post {' +
       'width: auto !important;' +
       'min-width: 0 !important;' +
+      'display: none !important;' +
+      '}' +
+      '.crt-feed .crt-post[data-position="1"],' +
+      '.crt-feed .crt-post[data-position="2"],' +
+      '.crt-feed .crt-post[data-position="3"],' +
+      '.crt-feed .crt-post[data-position="4"] {' +
+      'display: block !important;' +
       '}' +
       '}';
     document.head.appendChild(style);
