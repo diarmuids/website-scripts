@@ -1,4 +1,4 @@
-// Last updated: 2026-07-24 13:40:05
+// Last updated: 2026-07-24 13:41:26
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -155,6 +155,11 @@ document.addEventListener('click', function (event) {
 
   function setSubmitState(form, submitting) {
     const button = form.querySelector('[type="submit"]');
+    const wrapper = form.closest('.w-form');
+
+    if (wrapper) {
+      wrapper.classList.toggle('is-basin-submitting', submitting);
+    }
 
     if (!button) return;
 
@@ -234,6 +239,17 @@ document.addEventListener('click', function (event) {
     const form = getForm();
 
     if (!form || form.dataset.recaptchaV3Ready === 'true') return;
+
+    if (!document.getElementById('fhf-basin-form-styles')) {
+      const style = document.createElement('style');
+
+      style.id = 'fhf-basin-form-styles';
+      style.textContent =
+        '.w-form.is-basin-submitting .w-form-fail {' +
+        'display: none !important;' +
+        '}';
+      document.head.appendChild(style);
+    }
 
     form.dataset.recaptchaV3Ready = 'true';
     form.addEventListener('submit', function (event) {
