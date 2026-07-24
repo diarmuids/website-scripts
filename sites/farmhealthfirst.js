@@ -1,4 +1,4 @@
-// Last updated: 2026-07-24 10:47:06
+// Last updated: 2026-07-24 13:19:38
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -3078,7 +3078,10 @@ if (document.readyState === 'loading') {
   const cardSelector = '.learn-video_card[data-video-url]';
   const triggerSelector =
     `${cardSelector} .button, ${cardSelector} .learn-video_image-wrapper`;
-  const formSelector = '.learn_email-gate-popup form, .learn-video_email-gate-popup form';
+  const gateFormSelector =
+    '.learn_email-gate-popup form, .learn-video_email-gate-popup form';
+  const subscriptionFormSelector =
+    'form[data-name="Subscribe"], form[name="wf-form-Subscribe"], #wf-form-Subscribe';
   const emailSelector = 'input[type="email"], input[name="EMAIL"]';
   const successSelector = '.w-form-done';
   const failSelector = '.w-form-fail';
@@ -3113,10 +3116,10 @@ if (document.readyState === 'loading') {
   function storeEmail(email) {
     try {
       localStorage.setItem(storageKey, email);
-    } catch (error) {
-      document.cookie = storageKey + '=' + encodeURIComponent(email) +
-        '; max-age=315360000; path=/; SameSite=Lax';
-    }
+    } catch (error) {}
+
+    document.cookie = storageKey + '=' + encodeURIComponent(email) +
+      '; max-age=315360000; path=/; SameSite=Lax';
   }
 
   function getPendingVideoUrl() {
@@ -3420,6 +3423,28 @@ if (document.readyState === 'loading') {
     }, 100);
   }
 
+  function completeSubscription(form) {
+    const emailInput = form && form.querySelector(emailSelector);
+    const email = emailInput && emailInput.value.trim();
+
+    if (!email) {
+      debug('subscription email missing at completion');
+      return false;
+    }
+
+    storeEmail(email);
+    debug('site-wide subscriber access stored');
+    return true;
+  }
+
+  function completeSuccessfulSubscription(form) {
+    if (!completeSubscription(form)) return;
+
+    if (form.matches(gateFormSelector) && getPendingVideoUrl()) {
+      completeGate(form);
+    }
+  }
+
   function successIsVisibleForForm(form) {
     const formWrap = form && form.closest('.w-form');
     const success = formWrap && formWrap.querySelector(successSelector);
@@ -3434,7 +3459,7 @@ if (document.readyState === 'loading') {
     return isVisible(failure);
   }
 
-  function watchForSuccess(form) {
+  function watchForSuccess(form, onSuccess) {
     const formWrap = form && form.closest('.w-form');
     const success = formWrap && formWrap.querySelector(successSelector);
 
@@ -3448,7 +3473,7 @@ if (document.readyState === 'loading') {
 
     if (successIsVisibleForForm(form)) {
       debug('success already visible');
-      completeGate(form);
+      onSuccess(form);
       return;
     }
 
@@ -3462,7 +3487,7 @@ if (document.readyState === 'loading') {
 
       observer.disconnect();
       debug('success became visible');
-      completeGate(form);
+      onSuccess(form);
     });
 
     observer.observe(formWrap, {
@@ -3504,7 +3529,7 @@ if (document.readyState === 'loading') {
   document.addEventListener('submit', function (event) {
     const form = event.target;
 
-    if (!form.matches(formSelector)) return;
+    if (!form.matches(subscriptionFormSelector)) return;
 
     const emailInput = form.querySelector(emailSelector);
     const email = emailInput && emailInput.value.trim();
@@ -3516,9 +3541,9 @@ if (document.readyState === 'loading') {
       valid: form.checkValidity()
     });
 
-    if (!email || !videoUrl || !form.checkValidity()) return;
+    if (!email || !form.checkValidity()) return;
 
-    watchForSuccess(form);
+    watchForSuccess(form, completeSuccessfulSubscription);
 
     setTimeout(function () {
       debug('500ms success check', {
@@ -3526,8 +3551,10 @@ if (document.readyState === 'loading') {
         failureVisible: failureIsVisibleForForm(form)
       });
 
-      if (successIsVisibleForForm(form)) completeGate(form);
+      if (successIsVisibleForForm(form)) completeSuccessfulSubscription(form);
     }, 500);
+
+    if (!form.matches(gateFormSelector) || !videoUrl) return;
 
     setTimeout(function () {
       debug('2500ms fallback check', {
@@ -3538,19 +3565,21 @@ if (document.readyState === 'loading') {
       if (successIsVisibleForForm(form) || failureIsVisibleForForm(form)) return;
 
       debug('no success or failure visible, using fallback completion');
-      completeGate(form);
+      completeSuccessfulSubscription(form);
     }, 2500);
   }, true);
 
   document.addEventListener('DOMContentLoaded', function () {
     debug('DOMContentLoaded setup', {
-      formCount: document.querySelectorAll(formSelector).length,
+      formCount: document.querySelectorAll(subscriptionFormSelector).length,
       cardCount: document.querySelectorAll(cardSelector).length,
       fancyboxAvailable: !!(window.jQuery && jQuery.fancybox),
       storedEmailPresent: !!getStoredEmail()
     });
 
-    document.querySelectorAll(formSelector).forEach(watchForSuccess);
+    document.querySelectorAll(subscriptionFormSelector).forEach(function (form) {
+      watchForSuccess(form, completeSuccessfulSubscription);
+    });
   });
 })();
 
