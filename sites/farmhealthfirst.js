@@ -1,4 +1,4 @@
-// Last updated: 2026-07-23 14:23:54
+// Last updated: 2026-07-24 10:33:12
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -3537,6 +3537,12 @@ $(function () {
     setTimeout(toggleClear, 0);
   });
 
+  $search.on('keydown', function (event) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+    }
+  });
+
   $('.search-clear').on('click', function () {
     const input = $search[0];
 
@@ -3752,6 +3758,12 @@ $(function () {
   }
 
   $search.on('input search', searchFaqs);
+
+  $search.on('keydown', function (event) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+    }
+  });
 
   $clear.on('click', function () {
     $search.val('').trigger('input').focus();
