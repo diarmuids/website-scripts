@@ -1,4 +1,4 @@
-// Last updated: 2026-07-24 13:34:10
+// Last updated: 2026-07-24 13:38:07
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -133,12 +133,11 @@ document.addEventListener('click', function (event) {
   location.assign(url.href);
 }, true);
 
-// USEBASIN MESSAGE FORM - INVISIBLE RECAPTCHA V2
+// USEBASIN MESSAGE FORM - RECAPTCHA V3
 (function () {
   const formSelector =
     '#wf-form-Message-Form[action*="usebasin.com/f/"]';
-  const siteKey = '6Lew3SMUAAAAAJ82QoS7gqOTkRI_dhYrFy1f7Sqy';
-  let widgetId = null;
+  const siteKey = '6Les66kUAAAAANyLrgkl7iuN4JUpNlB5upaMovI4';
   let isSubmitting = false;
 
   function getForm() {
@@ -203,14 +202,12 @@ document.addEventListener('click', function (event) {
   async function submitToBasin(token) {
     const form = getForm();
 
-    if (!form || isSubmitting) return;
-
-    isSubmitting = true;
-    setSubmitState(form, true);
+    if (!form) return;
 
     try {
       const formData = new FormData(form);
       formData.set('g-recaptcha-response', token);
+      formData.set('g-recaptcha-version', 'v3');
 
       const response = await fetch(form.action.replace(/\/$/, '') + '.json', {
         method: 'POST',
@@ -230,81 +227,44 @@ document.addEventListener('click', function (event) {
     } finally {
       isSubmitting = false;
       setSubmitState(form, false);
-
-      if (widgetId !== null && window.grecaptcha) {
-        window.grecaptcha.reset(widgetId);
-      }
     }
-  }
-
-  function renderRecaptcha() {
-    const form = getForm();
-
-    if (
-      !form ||
-      widgetId !== null ||
-      !window.grecaptcha ||
-      typeof window.grecaptcha.render !== 'function'
-    ) {
-      return;
-    }
-
-    const container = document.createElement('div');
-    container.className = 'fhf-invisible-recaptcha';
-    form.appendChild(container);
-
-    widgetId = window.grecaptcha.render(container, {
-      sitekey: siteKey,
-      size: 'invisible',
-      badge: 'bottomright',
-      callback: submitToBasin,
-      'error-callback': function () {
-        isSubmitting = false;
-        setSubmitState(form, false);
-        showFormResult(form, false);
-      },
-      'expired-callback': function () {
-        isSubmitting = false;
-        setSubmitState(form, false);
-      }
-    });
   }
 
   function init() {
     const form = getForm();
 
-    if (!form || form.dataset.invisibleRecaptchaReady === 'true') return;
+    if (!form || form.dataset.recaptchaV3Ready === 'true') return;
 
-    form.dataset.invisibleRecaptchaReady = 'true';
+    form.dataset.recaptchaV3Ready = 'true';
     form.addEventListener('submit', function (event) {
       event.preventDefault();
 
       if (isSubmitting || !form.reportValidity()) return;
 
-      renderRecaptcha();
-
-      if (widgetId === null) {
-        console.error('[FHF message form] Google reCAPTCHA has not loaded');
+      if (
+        !window.grecaptcha ||
+        typeof window.grecaptcha.ready !== 'function' ||
+        typeof window.grecaptcha.execute !== 'function'
+      ) {
+        console.error('[FHF message form] Google reCAPTCHA v3 has not loaded');
         showFormResult(form, false);
         return;
       }
 
-      window.grecaptcha.execute(widgetId);
+      isSubmitting = true;
+      setSubmitState(form, true);
+
+      window.grecaptcha.ready(function () {
+        window.grecaptcha.execute(siteKey, {
+          action: 'message_form'
+        }).then(submitToBasin).catch(function (error) {
+          console.error('[FHF message form]', error);
+          isSubmitting = false;
+          setSubmitState(form, false);
+          showFormResult(form, false);
+        });
+      });
     });
-
-    renderRecaptcha();
-
-    if (widgetId === null) {
-      const recaptchaReadyTimer = window.setInterval(function () {
-        renderRecaptcha();
-
-        if (widgetId !== null) window.clearInterval(recaptchaReadyTimer);
-      }, 250);
-
-      window.setTimeout(function () {
-        window.clearInterval(recaptchaReadyTimer);
-      }, 15000);
-    }
   }
 
   if (document.readyState === 'loading') {
