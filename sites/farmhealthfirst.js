@@ -1,4 +1,4 @@
-// Last updated: 2026-07-24 13:41:26
+// Last updated: 2026-07-24 13:48:48
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -285,6 +285,190 @@ document.addEventListener('click', function (event) {
           showFormResult(form, false);
         });
       });
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+
+// SUBSCRIBE FORMS - USEBASIN, MAILCHIMP AND RECAPTCHA V3
+(function () {
+  const formSelector =
+    'form[data-name="Subscribe"], form[name="wf-form-Subscribe"], #wf-form-Subscribe';
+  const basinEndpoint = 'https://usebasin.com/f/cf9912257375';
+  const siteKey = '6Les66kUAAAAANyLrgkl7iuN4JUpNlB5upaMovI4';
+  const gatePopupSelector =
+    '.learn_email-gate-popup, .learn-video_email-gate-popup';
+
+  function getFormUi(form) {
+    const wrapper = form.closest('.w-form');
+
+    return {
+      wrapper: wrapper,
+      success: wrapper && wrapper.querySelector('.w-form-done'),
+      error: wrapper && wrapper.querySelector('.w-form-fail')
+    };
+  }
+
+  function setSubmitState(form, submitting) {
+    const ui = getFormUi(form);
+    const button = form.querySelector('[type="submit"]');
+
+    if (ui.wrapper) {
+      ui.wrapper.classList.toggle('is-basin-submitting', submitting);
+    }
+
+    if (!button) return;
+
+    if (submitting) {
+      button.dataset.recaptchaOriginalValue =
+        button.value || button.textContent || '';
+
+      if (button.matches('input')) {
+        button.value = button.getAttribute('data-wait') || 'One moment...';
+      } else {
+        button.textContent =
+          button.getAttribute('data-wait') || 'One moment...';
+      }
+    } else {
+      const originalValue = button.dataset.recaptchaOriginalValue;
+
+      if (originalValue !== undefined) {
+        if (button.matches('input')) {
+          button.value = originalValue;
+        } else {
+          button.textContent = originalValue;
+        }
+      }
+    }
+
+    button.disabled = submitting;
+  }
+
+  function showFormResult(form, succeeded) {
+    const ui = getFormUi(form);
+
+    form.style.display = succeeded ? 'none' : '';
+
+    if (ui.success) {
+      ui.success.style.display = succeeded ? 'block' : 'none';
+      if (succeeded) ui.success.focus();
+    }
+
+    if (ui.error) {
+      ui.error.style.display = succeeded ? 'none' : 'block';
+      if (!succeeded) ui.error.focus();
+    }
+  }
+
+  async function submitToBasin(form, token, email) {
+    try {
+      const formData = new FormData(form);
+
+      formData.set('g-recaptcha-response', token);
+      formData.set('g-recaptcha-version', 'v3');
+
+      const response = await fetch(basinEndpoint + '.json', {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json'
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error('Basin rejected the subscription');
+      }
+
+      showFormResult(form, true);
+      document.dispatchEvent(new CustomEvent('fhf:subscription-success', {
+        detail: {
+          form: form,
+          email: email
+        }
+      }));
+
+      window.setTimeout(function () {
+        form.reset();
+      }, 0);
+    } catch (error) {
+      console.error('[FHF subscribe form]', error);
+      showFormResult(form, false);
+    } finally {
+      form.dataset.basinSubmitting = 'false';
+      setSubmitState(form, false);
+    }
+  }
+
+  function initForm(form) {
+    if (form.dataset.basinSubscribeReady === 'true') return;
+
+    form.dataset.basinSubscribeReady = 'true';
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (
+        form.dataset.basinSubmitting === 'true' ||
+        !form.reportValidity()
+      ) {
+        return;
+      }
+
+      const emailInput =
+        form.querySelector('input[type="email"], input[name="EMAIL"]');
+      const email = emailInput && emailInput.value.trim();
+
+      if (!email) return;
+
+      if (typeof window.plausible === 'function') {
+        window.plausible(
+          form.closest(gatePopupSelector)
+            ? 'Subscribe to watch CPD video'
+            : 'Subscribe'
+        );
+      }
+
+      if (
+        !window.grecaptcha ||
+        typeof window.grecaptcha.ready !== 'function' ||
+        typeof window.grecaptcha.execute !== 'function'
+      ) {
+        console.error('[FHF subscribe form] Google reCAPTCHA v3 has not loaded');
+        showFormResult(form, false);
+        return;
+      }
+
+      form.dataset.basinSubmitting = 'true';
+      setSubmitState(form, true);
+
+      window.grecaptcha.ready(function () {
+        window.grecaptcha.execute(siteKey, {
+          action: 'subscribe'
+        }).then(function (token) {
+          return submitToBasin(form, token, email);
+        }).catch(function (error) {
+          console.error('[FHF subscribe form]', error);
+          form.dataset.basinSubmitting = 'false';
+          setSubmitState(form, false);
+          showFormResult(form, false);
+        });
+      });
+    });
+  }
+
+  function init() {
+    document.querySelectorAll(formSelector).forEach(initForm);
+
+    new MutationObserver(function () {
+      document.querySelectorAll(formSelector).forEach(initForm);
+    }).observe(document.body, {
+      childList: true,
+      subtree: true
     });
   }
 
