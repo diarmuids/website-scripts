@@ -1,4 +1,4 @@
-// Last updated: 2026-07-24 10:37:22
+// Last updated: 2026-07-24 10:39:58
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -156,6 +156,20 @@ function initCuratorFeedLayout() {
       '}' +
       '.crt-feed .crt-post:hover {' +
       'opacity: 0.8;' +
+      '}' +
+      '@media (max-width: 767px) {' +
+      '.crt-feed {' +
+      'display: grid !important;' +
+      'grid-template-columns: repeat(2, minmax(0, 1fr)) !important;' +
+      '}' +
+      '.crt-feed > [class*="crt-col-"] {' +
+      'display: contents !important;' +
+      'width: auto !important;' +
+      'float: none !important;' +
+      '}' +
+      '.crt-feed .crt-post {' +
+      'width: auto !important;' +
+      'min-width: 0 !important;' +
       '}';
     document.head.appendChild(style);
   }
@@ -213,7 +227,7 @@ function initCuratorFeedLayout() {
 
       posts.forEach(function (post) {
         post.style.order = forceTwoColumns ? String(Number(post.dataset.position || 0)) : '';
-        post.style.width = forceTwoColumns ? '100%' : '';
+        post.style.width = forceTwoColumns ? 'auto' : '';
         post.style.minWidth = forceTwoColumns ? '0' : '';
       });
 
