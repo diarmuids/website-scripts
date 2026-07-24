@@ -1,4 +1,4 @@
-// Last updated: 2026-07-24 15:40:57
+// Last updated: 2026-07-24 15:41:07
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -1239,9 +1239,15 @@ function initContentSwipers() {
       var styles = getComputedStyle(list);
       var gap = parseFloat(styles.columnGap || styles.gap) || 0;
       var width = items[0].getBoundingClientRect().width;
-      var itemMarginRight = isProductSlider || isBlogSlider
-        ? 0
-        : parseFloat(getComputedStyle(items[0]).marginRight) || 0;
+      var itemMarginRight = 0;
+
+      if (!isProductSlider && !isBlogSlider) {
+        var inlineMarginRight = items[0].style.marginRight;
+
+        items[0].style.marginRight = '';
+        itemMarginRight = parseFloat(getComputedStyle(items[0]).marginRight) || 0;
+        items[0].style.marginRight = inlineMarginRight;
+      }
 
       list.style.gap = '0px';
 
