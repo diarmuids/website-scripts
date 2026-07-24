@@ -1,4 +1,4 @@
-// Last updated: 2026-07-24 10:44:47
+// Last updated: 2026-07-24 10:47:06
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -163,6 +163,7 @@ function initCuratorFeedLayout() {
       '.crt-feed {' +
       'display: grid !important;' +
       'grid-template-columns: repeat(2, minmax(0, 1fr)) !important;' +
+      'gap: 1rem !important;' +
       '}' +
       '.crt-feed > [class*="crt-col-"] {' +
       'display: contents !important;' +
@@ -173,6 +174,7 @@ function initCuratorFeedLayout() {
       '.crt-feed .crt-grid-post {' +
       'width: auto !important;' +
       'min-width: 0 !important;' +
+      'margin: 0 !important;' +
       'display: none !important;' +
       '}' +
       '.crt-feed .crt-post[data-position="1"],' +
@@ -213,6 +215,41 @@ function initCuratorFeedLayout() {
     return 2;
   }
 
+  function preserveCuratorGridPostAspectRatio(post) {
+    if (!post.classList.contains('crt-grid-post')) return;
+
+    const postContent = post.querySelector('.crt-grid-post-content');
+    const postImage = post.querySelector('.crt-grid-post-image');
+
+    if (!postContent || !postImage) return;
+
+    const backgroundImage =
+      postImage.style.backgroundImage ||
+      window.getComputedStyle(postImage).backgroundImage;
+    const imageUrlMatch = backgroundImage.match(/^url\(["']?(.*?)["']?\)$/);
+
+    if (!imageUrlMatch || !imageUrlMatch[1]) return;
+
+    const imageUrl = imageUrlMatch[1];
+
+    if (post.dataset.curatorAspectRatioSource === imageUrl) return;
+    post.dataset.curatorAspectRatioSource = imageUrl;
+
+    const image = new Image();
+
+    image.onload = function () {
+      if (!image.naturalWidth || !image.naturalHeight) return;
+
+      postContent.style.setProperty(
+        'padding-bottom',
+        (image.naturalHeight / image.naturalWidth * 100) + '%',
+        'important'
+      );
+    };
+
+    image.src = imageUrl;
+  }
+
   function updateCuratorFeeds() {
     updateFrame = null;
 
@@ -244,6 +281,7 @@ function initCuratorFeedLayout() {
         post.style.order = forceTwoColumns ? String(Number(post.dataset.position || 0)) : '';
         post.style.width = forceTwoColumns ? 'auto' : '';
         post.style.minWidth = forceTwoColumns ? '0' : '';
+        preserveCuratorGridPostAspectRatio(post);
       });
 
       const postLimit = getCuratorPostLimit(Math.max(2, curatorColumnCount));
