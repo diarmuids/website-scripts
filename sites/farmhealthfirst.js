@@ -1,4 +1,4 @@
-// Last updated: 2026-07-24 13:19:38
+// Last updated: 2026-07-24 13:19:50
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -3102,15 +3102,19 @@ if (document.readyState === 'loading') {
   }
 
   function getStoredEmail() {
-    try {
-      return localStorage.getItem(storageKey) || '';
-    } catch (error) {
-      const match = document.cookie.match(
-        new RegExp('(?:^|; )' + storageKey + '=([^;]*)')
-      );
+    let storedEmail = '';
 
-      return match ? decodeURIComponent(match[1]) : '';
-    }
+    try {
+      storedEmail = localStorage.getItem(storageKey) || '';
+    } catch (error) {}
+
+    if (storedEmail) return storedEmail;
+
+    const match = document.cookie.match(
+      new RegExp('(?:^|; )' + storageKey + '=([^;]*)')
+    );
+
+    return match ? decodeURIComponent(match[1]) : '';
   }
 
   function storeEmail(email) {
@@ -3402,16 +3406,6 @@ if (document.readyState === 'loading') {
     });
 
     if (!form || !videoUrl || openedAfterSuccess) return;
-
-    const emailInput = form.querySelector(emailSelector);
-    const email = emailInput && emailInput.value.trim();
-
-    if (email) {
-      storeEmail(email);
-      debug('email stored');
-    } else {
-      debug('email missing at completion');
-    }
 
     openedAfterSuccess = true;
     clearPendingVideoUrl();
