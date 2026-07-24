@@ -1,4 +1,4 @@
-// Last updated: 2026-07-24 15:38:29
+// Last updated: 2026-07-24 15:40:57
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -1239,6 +1239,9 @@ function initContentSwipers() {
       var styles = getComputedStyle(list);
       var gap = parseFloat(styles.columnGap || styles.gap) || 0;
       var width = items[0].getBoundingClientRect().width;
+      var itemMarginRight = isProductSlider || isBlogSlider
+        ? 0
+        : parseFloat(getComputedStyle(items[0]).marginRight) || 0;
 
       list.style.gap = '0px';
 
@@ -1248,6 +1251,7 @@ function initContentSwipers() {
 
       return {
         gap: gap,
+        swiperGap: Math.max(0, gap - itemMarginRight),
         width: width
       };
     }
@@ -1264,7 +1268,7 @@ function initContentSwipers() {
 
     var swiper = new Swiper(wrapper, {
       slidesPerView: 'auto',
-      spaceBetween: setup.gap,
+      spaceBetween: setup.swiperGap,
       loop: false,
       speed: 500,
       watchOverflow: true,
@@ -1301,7 +1305,7 @@ function initContentSwipers() {
 
     window.addEventListener('resize', function () {
       setup = getSetup();
-      swiper.params.spaceBetween = setup.gap;
+      swiper.params.spaceBetween = setup.swiperGap;
       swiper.update();
       swiper.navigation.update();
       updateSliderArrowStates();
