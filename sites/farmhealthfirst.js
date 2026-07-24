@@ -1,4 +1,4 @@
-// Last updated: 2026-07-24 10:33:12
+// Last updated: 2026-07-24 10:37:22
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -197,7 +197,9 @@ function initCuratorFeedLayout() {
         return Number(a.dataset.position || Infinity) - Number(b.dataset.position || Infinity);
       });
       const curatorColumnCount = getCuratorColumnCount(feed);
-      const forceTwoColumns = curatorColumnCount < 2;
+      const forceTwoColumns =
+        window.matchMedia('(max-width: 767px)').matches ||
+        curatorColumnCount < 2;
       const columns = Array.from(feed.children).filter(function (element) {
         return /(^|\s)crt-col-\d+(\s|$)/.test(element.className);
       });
@@ -211,6 +213,8 @@ function initCuratorFeedLayout() {
 
       posts.forEach(function (post) {
         post.style.order = forceTwoColumns ? String(Number(post.dataset.position || 0)) : '';
+        post.style.width = forceTwoColumns ? '100%' : '';
+        post.style.minWidth = forceTwoColumns ? '0' : '';
       });
 
       const postLimit = getCuratorPostLimit(Math.max(2, curatorColumnCount));
