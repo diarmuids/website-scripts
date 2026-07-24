@@ -1,4 +1,4 @@
-// Last updated: 2026-07-24 10:39:58
+// Last updated: 2026-07-24 10:41:23
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -170,6 +170,7 @@ function initCuratorFeedLayout() {
       '.crt-feed .crt-post {' +
       'width: auto !important;' +
       'min-width: 0 !important;' +
+      '}' +
       '}';
     document.head.appendChild(style);
   }
