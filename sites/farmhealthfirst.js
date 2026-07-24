@@ -1,4 +1,4 @@
-// Last updated: 2026-07-24 13:19:50
+// Last updated: 2026-07-24 13:34:10
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -132,6 +132,187 @@ document.addEventListener('click', function (event) {
   url.search = '?' + (country === 'IE' ? 'IE' : 'UK');
   location.assign(url.href);
 }, true);
+
+// USEBASIN MESSAGE FORM - INVISIBLE RECAPTCHA V2
+(function () {
+  const formSelector =
+    '#wf-form-Message-Form[action*="usebasin.com/f/"]';
+  const siteKey = '6Lew3SMUAAAAAJ82QoS7gqOTkRI_dhYrFy1f7Sqy';
+  let widgetId = null;
+  let isSubmitting = false;
+
+  function getForm() {
+    return document.querySelector(formSelector);
+  }
+
+  function getFormUi(form) {
+    const wrapper = form.closest('.w-form');
+
+    return {
+      success: wrapper && wrapper.querySelector('.w-form-done'),
+      error: wrapper && wrapper.querySelector('.w-form-fail')
+    };
+  }
+
+  function setSubmitState(form, submitting) {
+    const button = form.querySelector('[type="submit"]');
+
+    if (!button) return;
+
+    if (submitting) {
+      button.dataset.recaptchaOriginalValue =
+        button.value || button.textContent || '';
+
+      if (button.matches('input')) {
+        button.value = button.getAttribute('data-wait') || 'One moment...';
+      } else {
+        button.textContent =
+          button.getAttribute('data-wait') || 'One moment...';
+      }
+    } else {
+      const originalValue = button.dataset.recaptchaOriginalValue;
+
+      if (originalValue !== undefined) {
+        if (button.matches('input')) {
+          button.value = originalValue;
+        } else {
+          button.textContent = originalValue;
+        }
+      }
+    }
+
+    button.disabled = submitting;
+  }
+
+  function showFormResult(form, succeeded) {
+    const ui = getFormUi(form);
+
+    form.style.display = succeeded ? 'none' : '';
+
+    if (ui.success) {
+      ui.success.style.display = succeeded ? 'block' : 'none';
+      if (succeeded) ui.success.focus();
+    }
+
+    if (ui.error) {
+      ui.error.style.display = succeeded ? 'none' : 'block';
+      if (!succeeded) ui.error.focus();
+    }
+  }
+
+  async function submitToBasin(token) {
+    const form = getForm();
+
+    if (!form || isSubmitting) return;
+
+    isSubmitting = true;
+    setSubmitState(form, true);
+
+    try {
+      const formData = new FormData(form);
+      formData.set('g-recaptcha-response', token);
+
+      const response = await fetch(form.action.replace(/\/$/, '') + '.json', {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json'
+        },
+        body: formData
+      });
+
+      if (!response.ok) throw new Error('Basin rejected the form submission');
+
+      showFormResult(form, true);
+      form.reset();
+    } catch (error) {
+      console.error('[FHF message form]', error);
+      showFormResult(form, false);
+    } finally {
+      isSubmitting = false;
+      setSubmitState(form, false);
+
+      if (widgetId !== null && window.grecaptcha) {
+        window.grecaptcha.reset(widgetId);
+      }
+    }
+  }
+
+  function renderRecaptcha() {
+    const form = getForm();
+
+    if (
+      !form ||
+      widgetId !== null ||
+      !window.grecaptcha ||
+      typeof window.grecaptcha.render !== 'function'
+    ) {
+      return;
+    }
+
+    const container = document.createElement('div');
+    container.className = 'fhf-invisible-recaptcha';
+    form.appendChild(container);
+
+    widgetId = window.grecaptcha.render(container, {
+      sitekey: siteKey,
+      size: 'invisible',
+      badge: 'bottomright',
+      callback: submitToBasin,
+      'error-callback': function () {
+        isSubmitting = false;
+        setSubmitState(form, false);
+        showFormResult(form, false);
+      },
+      'expired-callback': function () {
+        isSubmitting = false;
+        setSubmitState(form, false);
+      }
+    });
+  }
+
+  function init() {
+    const form = getForm();
+
+    if (!form || form.dataset.invisibleRecaptchaReady === 'true') return;
+
+    form.dataset.invisibleRecaptchaReady = 'true';
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+
+      if (isSubmitting || !form.reportValidity()) return;
+
+      renderRecaptcha();
+
+      if (widgetId === null) {
+        console.error('[FHF message form] Google reCAPTCHA has not loaded');
+        showFormResult(form, false);
+        return;
+      }
+
+      window.grecaptcha.execute(widgetId);
+    });
+
+    renderRecaptcha();
+
+    if (widgetId === null) {
+      const recaptchaReadyTimer = window.setInterval(function () {
+        renderRecaptcha();
+
+        if (widgetId !== null) window.clearInterval(recaptchaReadyTimer);
+      }, 250);
+
+      window.setTimeout(function () {
+        window.clearInterval(recaptchaReadyTimer);
+      }, 15000);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
 
 // SHOW ALTERNATING FOOTER IMAGE DEPENDING ON EVEN/ODD SECOND
 $(function () {
