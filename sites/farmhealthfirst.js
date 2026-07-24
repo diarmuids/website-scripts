@@ -1,4 +1,4 @@
-// Last updated: 2026-07-24 13:48:54
+// Last updated: 2026-07-24 15:38:29
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -983,6 +983,8 @@ countryContentReady.then(function () {
 function initRelatedSectionSidebarLinks() {
   if (document.documentElement.dataset.relatedSectionLinksReady === 'true') return;
 
+  let scrollCorrectionTimers = [];
+
   const sections = [
     {
       href: '#related-products',
@@ -1000,6 +1002,44 @@ function initRelatedSectionSidebarLinks() {
       item: '.blog-list_item.is-slider'
     }
   ];
+
+  function stopRelatedSectionScrollCorrection() {
+    scrollCorrectionTimers.forEach(window.clearTimeout);
+    scrollCorrectionTimers = [];
+  }
+
+  function alignRelatedSection(target) {
+    target.scrollIntoView({
+      behavior: 'auto',
+      block: 'start'
+    });
+  }
+
+  document.addEventListener('click', function (event) {
+    const link = event.target instanceof Element
+      ? event.target.closest('.disease_sidebar-link-section[href^="#related-"]')
+      : null;
+    const target = link && document.querySelector(link.hash);
+
+    if (!link || !target) return;
+
+    event.preventDefault();
+    stopRelatedSectionScrollCorrection();
+    history.pushState(null, '', link.href);
+    alignRelatedSection(target);
+
+    [150, 400, 800, 1400].forEach(function (delay) {
+      scrollCorrectionTimers.push(window.setTimeout(function () {
+        alignRelatedSection(target);
+      }, delay));
+    });
+  });
+
+  ['wheel', 'touchstart', 'pointerdown', 'keydown'].forEach(function (eventName) {
+    window.addEventListener(eventName, stopRelatedSectionScrollCorrection, {
+      passive: true
+    });
+  });
 
   function updateRelatedSectionSidebarLinks() {
     sections.forEach(function (config) {
