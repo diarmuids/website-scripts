@@ -1,4 +1,4 @@
-// Last updated: 2026-07-29 15:12:38
+// Last updated: 2026-07-29 15:20:22
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -1008,9 +1008,9 @@ function initRelatedSectionSidebarLinks() {
     scrollCorrectionTimers = [];
   }
 
-  function alignRelatedSection(target) {
+  function alignRelatedSection(target, behavior) {
     target.scrollIntoView({
-      behavior: 'auto',
+      behavior: behavior || 'auto',
       block: 'start'
     });
   }
@@ -1023,7 +1023,10 @@ function initRelatedSectionSidebarLinks() {
 
     if (!link || !target) return;
 
+    event.preventDefault();
     stopRelatedSectionScrollCorrection();
+    history.pushState(null, '', link.href);
+    alignRelatedSection(target, 'smooth');
 
     [650, 1000, 1500].forEach(function (delay) {
       scrollCorrectionTimers.push(window.setTimeout(function () {
