@@ -1,4 +1,4 @@
-// Last updated: 2026-07-29 15:23:43
+// Last updated: 2026-07-29 15:52:27
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -984,6 +984,7 @@ function initRelatedSectionSidebarLinks() {
   if (document.documentElement.dataset.relatedSectionLinksReady === 'true') return;
 
   let scrollCorrectionTimers = [];
+  let scrollAnimationFrame = null;
 
   const sections = [
     {
@@ -1006,13 +1007,47 @@ function initRelatedSectionSidebarLinks() {
   function stopRelatedSectionScrollCorrection() {
     scrollCorrectionTimers.forEach(window.clearTimeout);
     scrollCorrectionTimers = [];
+
+    if (scrollAnimationFrame !== null) {
+      window.cancelAnimationFrame(scrollAnimationFrame);
+      scrollAnimationFrame = null;
+    }
   }
 
-  function alignRelatedSection(target, behavior) {
+  function alignRelatedSection(target) {
     target.scrollIntoView({
-      behavior: behavior || 'auto',
+      behavior: 'auto',
       block: 'start'
     });
+  }
+
+  function animateRelatedSectionScroll(target) {
+    const startY = window.scrollY;
+    const scrollMarginTop = parseFloat(getComputedStyle(target).scrollMarginTop) || 0;
+    const targetY = target.getBoundingClientRect().top + startY - scrollMarginTop;
+    const distance = targetY - startY;
+    const duration = 500;
+    const startTime = performance.now();
+
+    function easeInOutCubic(progress) {
+      return progress < 0.5
+        ? 4 * progress * progress * progress
+        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+    }
+
+    function step(now) {
+      const progress = Math.min((now - startTime) / duration, 1);
+
+      window.scrollTo(0, startY + distance * easeInOutCubic(progress));
+
+      if (progress < 1) {
+        scrollAnimationFrame = window.requestAnimationFrame(step);
+      } else {
+        scrollAnimationFrame = null;
+      }
+    }
+
+    scrollAnimationFrame = window.requestAnimationFrame(step);
   }
 
   document.addEventListener('click', function (event) {
@@ -1027,7 +1062,7 @@ function initRelatedSectionSidebarLinks() {
     event.stopImmediatePropagation();
     stopRelatedSectionScrollCorrection();
     history.pushState(null, '', link.href);
-    alignRelatedSection(target, 'smooth');
+    animateRelatedSectionScroll(target);
 
     [650, 1000, 1500].forEach(function (delay) {
       scrollCorrectionTimers.push(window.setTimeout(function () {
