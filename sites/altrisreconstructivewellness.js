@@ -1,9 +1,5 @@
 // Last updated: 2026-07-30 15:42:07
 
-Last updated: 2026-07-30 15:41:43
-
-// Last updated: 2026-07-30 15:38:27
-
 (() => {
   const initDiepFlapCalculator = () => {
     const form = document.querySelector(".form_component.is-calculator form");
