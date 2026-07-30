@@ -1,62 +1,64 @@
-// Last updated: 2026-07-30 15:38:27
+// Last updated: 2026-07-30 15:41:38
 
-(() => {
-  const initDiepFlapCalculator = () => {
-    const form = document.querySelector(".form_component.is-calculator form");
+// // Last updated: 2026-07-30 15:38:27
 
-    if (!form || form.diepCalculatorInitialized) {
-      return;
-    }
+// (() => {
+//   const initDiepFlapCalculator = () => {
+//     const form = document.querySelector(".form_component.is-calculator form");
 
-    const inputs = Array.from(form.querySelectorAll("input.form_input")).slice(
-      0,
-      3,
-    );
-    const result = form.querySelector(".calc_value");
+//     if (!form || form.diepCalculatorInitialized) {
+//       return;
+//     }
 
-    if (inputs.length !== 3 || !result) {
-      return;
-    }
+//     const inputs = Array.from(form.querySelectorAll("input.form_input")).slice(
+//       0,
+//       3,
+//     );
+//     const result = form.querySelector(".calc_value");
 
-    form.diepCalculatorInitialized = true;
+//     if (inputs.length !== 3 || !result) {
+//       return;
+//     }
 
-    inputs.forEach((input) => {
-      input.type = "number";
-      input.inputMode = "decimal";
-      input.min = "0";
-      input.step = "any";
-    });
+//     form.diepCalculatorInitialized = true;
 
-    const updateResult = () => {
-      if (inputs.some((input) => input.value.trim() === "")) {
-        result.textContent = "Please enter values above";
-        return;
-      }
+//     inputs.forEach((input) => {
+//       input.type = "number";
+//       input.inputMode = "decimal";
+//       input.min = "0";
+//       input.step = "any";
+//     });
 
-      const values = inputs.map((input) => Number.parseFloat(input.value));
+//     const updateResult = () => {
+//       if (inputs.some((input) => input.value.trim() === "")) {
+//         result.textContent = "Please enter values above";
+//         return;
+//       }
 
-      if (values.some((value) => !Number.isFinite(value) || value <= 0)) {
-        result.textContent = "Please enter valid positive values above";
-        return;
-      }
+//       const values = inputs.map((input) => Number.parseFloat(input.value));
 
-      const [x, y, z] = values;
-      const estimatedWeight = 91.3 * x + 36.4 * y + 6.2 * z - 1030;
+//       if (values.some((value) => !Number.isFinite(value) || value <= 0)) {
+//         result.textContent = "Please enter valid positive values above";
+//         return;
+//       }
 
-      result.textContent =
-        estimatedWeight > 0
-          ? `${estimatedWeight.toFixed(2)} g`
-          : "Please check the values above";
-    };
+//       const [x, y, z] = values;
+//       const estimatedWeight = 91.3 * x + 36.4 * y + 6.2 * z - 1030;
 
-    inputs.forEach((input) => input.addEventListener("input", updateResult));
-    form.addEventListener("submit", (event) => event.preventDefault());
-    updateResult();
-  };
+//       result.textContent =
+//         estimatedWeight > 0
+//           ? `${estimatedWeight.toFixed(2)} g`
+//           : "Please check the values above";
+//     };
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initDiepFlapCalculator);
-  } else {
-    initDiepFlapCalculator();
-  }
-})();
+//     inputs.forEach((input) => input.addEventListener("input", updateResult));
+//     form.addEventListener("submit", (event) => event.preventDefault());
+//     updateResult();
+//   };
+
+//   if (document.readyState === "loading") {
+//     document.addEventListener("DOMContentLoaded", initDiepFlapCalculator);
+//   } else {
+//     initDiepFlapCalculator();
+//   }
+// })();
