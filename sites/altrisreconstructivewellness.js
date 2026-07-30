@@ -101,6 +101,15 @@
           pointer-events: none;
         }
 
+        .form_component.is-calculator select.form_input {
+          appearance: none;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 4.25 6 7.75l3.5-3.5' stroke='%231a1a1a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+          background-position: right 16px center;
+          background-repeat: no-repeat;
+          background-size: 12px 12px;
+          padding-right: 40px;
+        }
+
         .form_component.is-calculator .calc_clear-values {
           appearance: none;
           background: none;
