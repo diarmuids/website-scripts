@@ -1,4 +1,4 @@
-// Last updated: 2026-07-30 16:09:59
+// Last updated: 2026-07-30 16:10:13
 
 Last updated: 2026-07 - 30 16:09: 42
 
@@ -6,9 +6,8 @@ Last updated: 2026-07 - 30 16:09: 42
 
   (() => {
     const CALCULATORS = {
-      diep: {
-        tab: "Tab 1",
-        resultHeading: "DIEP Flap Weight",
+    diep: {
+      resultHeading: "DIEP Flap Weight",
         fields: [
           {
             label: "(X)  Subcutaneous tissue thickness",
@@ -28,9 +27,8 @@ Last updated: 2026-07 - 30 16:09: 42
         ],
         calculate: ([x, y, z]) => 91.3 * x + 36.4 * y + 6.2 * z - 1030,
       },
-      pap: {
-        tab: "Tab 2",
-        resultHeading: "PAP Flap Weight",
+    pap: {
+      resultHeading: "PAP Flap Weight",
         fields: [
           {
             label: "(X)  Subcutaneous tissue thickness",
@@ -83,11 +81,14 @@ Last updated: 2026-07 - 30 16:09: 42
 
       form.flapCalculatorInitialized = true;
 
-      const savedValues = {
-        diep: ["", "", ""],
-        pap: ["", "", ""],
-      };
-      let activeCalculator = "diep";
+    const savedValues = {
+      diep: ["", "", ""],
+      pap: ["", "", ""],
+    };
+    let activeCalculator = "diep";
+
+    const getCalculatorFromTab = (tab) =>
+      /\bpap\b/i.test(tab?.getAttribute("data-w-tab") ?? "") ? "pap" : "diep";
 
       const getControls = () =>
         fieldWrappers.map((wrapper) =>
@@ -219,25 +220,18 @@ Last updated: 2026-07 - 30 16:09: 42
         updateResult();
       };
 
-      tabs.querySelectorAll(".calc_tab[data-w-tab]").forEach((tab) => {
-        tab.addEventListener("click", () => {
-          const calculatorName =
-            tab.getAttribute("data-w-tab") === CALCULATORS.pap.tab
-              ? "pap"
-              : "diep";
-          renderCalculator(calculatorName);
-        });
+    tabs.querySelectorAll(".calc_tab[data-w-tab]").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        renderCalculator(getCalculatorFromTab(tab));
       });
+    });
 
       form.addEventListener("submit", (event) => event.preventDefault());
 
-      const initialCalculator =
-        tabs
-          .querySelector(".calc_tab.w--current")
-          ?.getAttribute("data-w-tab") === CALCULATORS.pap.tab
-          ? "pap"
-          : "diep";
-      renderCalculator(initialCalculator, false);
+    const initialCalculator = getCalculatorFromTab(
+      tabs.querySelector(".calc_tab.w--current"),
+    );
+    renderCalculator(initialCalculator, false);
     };
 
     if (document.readyState === "loading") {
