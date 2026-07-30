@@ -1,9 +1,5 @@
 // Last updated: 2026-07-30 16:10:13
 
-Last updated: 2026-07 - 30 16:09: 42
-
-  // Last updated: 2026-07-30 16:00:42
-
   (() => {
     const CALCULATORS = {
     diep: {
