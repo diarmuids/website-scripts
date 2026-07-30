@@ -1,4 +1,4 @@
-// Last updated: 2026-07-30 15:41:52
+// Last updated: 2026-07-30 15:42:07
 
 Last updated: 2026-07-30 15:41:43
 
@@ -33,14 +33,14 @@ Last updated: 2026-07-30 15:41:43
 
     const updateResult = () => {
       if (inputs.some((input) => input.value.trim() === "")) {
-        result.textContent = "Please enter values above";
+        result.textContent = "0.00g";
         return;
       }
 
       const values = inputs.map((input) => Number.parseFloat(input.value));
 
       if (values.some((value) => !Number.isFinite(value) || value <= 0)) {
-        result.textContent = "Please enter valid positive values above";
+        result.textContent = "0.00g";
         return;
       }
 
@@ -49,8 +49,8 @@ Last updated: 2026-07-30 15:41:43
 
       result.textContent =
         estimatedWeight > 0
-          ? `${estimatedWeight.toFixed(2)} g`
-          : "Please check the values above";
+          ? `${estimatedWeight.toFixed(2)}g`
+          : "0.00g";
     };
 
     inputs.forEach((input) => input.addEventListener("input", updateResult));
