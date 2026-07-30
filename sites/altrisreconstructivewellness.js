@@ -1,86 +1,244 @@
-// Last updated: 2026-07-30 15:59:39
-
-Last updated: 2026-07-30 15:59:27
-
-// Last updated: 2026-07-30 15:47:03
+// Last updated: 2026-07-30 16:00:42
 
 (() => {
-  const initDiepFlapCalculator = () => {
-    const form = document.querySelector(".form_component.is-calculator form");
+  const CALCULATORS = {
+    diep: {
+      tab: "Tab 1",
+      resultHeading: "DIEP Flap Weight",
+      fields: [
+        {
+          label: "(X)  Subcutaneous tissue thickness",
+          helper: "Enter measurement X in centimetres.",
+          placeholder: "Enter thickness in cm",
+        },
+        {
+          label: "(Y)  Estimated skin paddle length",
+          helper: "Enter measurement Y in centimetres.",
+          placeholder: "Enter length in cm",
+        },
+        {
+          label: "(Z)  Patient weight",
+          helper: "Enter patient’s pre-operative weight in kg.",
+          placeholder: "Enter weight in kg",
+        },
+      ],
+      calculate: ([x, y, z]) => 91.3 * x + 36.4 * y + 6.2 * z - 1030,
+    },
+    pap: {
+      tab: "Tab 2",
+      resultHeading: "PAP Flap Weight",
+      fields: [
+        {
+          label: "(X)  Subcutaneous tissue thickness",
+          helper: "Enter measurement X in centimetres.",
+          placeholder: "Enter thickness in cm",
+        },
+        {
+          label: "(Y)  Inferior gluteal fold to dominant PAP",
+          helper: "Enter measurement Y in centimetres.",
+          placeholder: "Enter distance in cm",
+        },
+        {
+          label: "(Z)  Patient scan position",
+          helper: "Select the patient’s position during the CT scan.",
+          type: "select",
+          placeholder: "Select scan position",
+          options: [
+            { label: "Supine", value: "1" },
+            { label: "Prone", value: "0" },
+          ],
+        },
+      ],
+      calculate: ([x, y, z]) => 77.9 * x + 33.8 * y + 43.4 * z - 254.3,
+    },
+  };
 
-    if (!form || form.diepCalculatorInitialized) {
+  const initFlapCalculator = () => {
+    const form = document.querySelector(".form_component.is-calculator form");
+    const tabs = document.querySelector(".podcast_row.is-calculator .w-tabs");
+
+    if (!form || !tabs || form.flapCalculatorInitialized) {
       return;
     }
 
-    const inputs = Array.from(form.querySelectorAll("input.form_input")).slice(
-      0,
-      3,
-    );
+    const fieldWrappers = Array.from(
+      form.querySelectorAll(".form_field-wrapper.is-calc"),
+    ).slice(0, 3);
+    const resultHeading = form.querySelector(".calc_value-header");
     const result = form.querySelector(".calc_value");
     const resultFooter = form.querySelector(".calc_value-footer");
 
-    if (inputs.length !== 3 || !result) {
+    if (
+      fieldWrappers.length !== 3 ||
+      !resultHeading ||
+      !result ||
+      !resultFooter
+    ) {
       return;
     }
 
-    form.diepCalculatorInitialized = true;
+    form.flapCalculatorInitialized = true;
 
-    if (resultFooter) {
-      resultFooter.style.opacity = "";
-      resultFooter.style.pointerEvents = "";
-      resultFooter.removeAttribute("aria-hidden");
-    }
+    const savedValues = {
+      diep: ["", "", ""],
+      pap: ["", "", ""],
+    };
+    let activeCalculator = "diep";
 
-    inputs.forEach((input) => {
+    const getControls = () =>
+      fieldWrappers.map((wrapper) =>
+        wrapper.querySelector(".form_input-wrapper-calc .form_input"),
+      );
+
+    const saveCurrentValues = () => {
+      savedValues[activeCalculator] = getControls().map(
+        (control) => control?.value ?? "",
+      );
+    };
+
+    const updateResult = () => {
+      const controls = getControls();
+      const rawValues = controls.map((control) => control?.value.trim() ?? "");
+
+      if (rawValues.some((value) => value === "")) {
+        result.textContent = "0.00g";
+        resultFooter.textContent = "Auto-calculated once values are entered";
+        return;
+      }
+
+      const values = rawValues.map((value) => Number.parseFloat(value));
+      const invalid = values.some(
+        (value, index) =>
+          !Number.isFinite(value) ||
+          value < 0 ||
+          (index < 2 && value === 0) ||
+          (activeCalculator === "diep" && index === 2 && value === 0),
+      );
+
+      if (invalid) {
+        result.textContent = "0.00g";
+        resultFooter.textContent = "Auto-calculated once values are entered";
+        return;
+      }
+
+      const estimatedWeight =
+        CALCULATORS[activeCalculator].calculate(values);
+
+      result.textContent =
+        estimatedWeight > 0 ? `${estimatedWeight.toFixed(2)}g` : "0.00g";
+      resultFooter.textContent =
+        estimatedWeight > 0
+          ? "Calculated using the values entered above"
+          : "Auto-calculated once values are entered";
+    };
+
+    const createControl = (field, index, savedValue) => {
+      const id = `flap-calculator-${activeCalculator}-${index + 1}`;
+
+      if (field.type === "select") {
+        const select = document.createElement("select");
+        select.className = "form_input w-input";
+        select.id = id;
+        select.name = `${activeCalculator}-${index + 1}`;
+        select.required = true;
+
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = field.placeholder;
+        placeholder.disabled = true;
+        select.append(placeholder);
+
+        field.options.forEach((optionConfig) => {
+          const option = document.createElement("option");
+          option.value = optionConfig.value;
+          option.textContent = optionConfig.label;
+          select.append(option);
+        });
+
+        select.value = savedValue;
+        select.addEventListener("change", updateResult);
+        return select;
+      }
+
+      const input = document.createElement("input");
+      input.className = "form_input w-input";
+      input.id = id;
+      input.name = `${activeCalculator}-${index + 1}`;
       input.type = "number";
       input.inputMode = "decimal";
       input.min = "0";
       input.step = "any";
-    });
-
-    const updateResult = () => {
-      if (inputs.some((input) => input.value.trim() === "")) {
-        result.textContent = "0.00g";
-        if (resultFooter) {
-          resultFooter.textContent = "Auto-calculated once values are entered";
-        }
-        return;
-      }
-
-      const values = inputs.map((input) => Number.parseFloat(input.value));
-
-      if (values.some((value) => !Number.isFinite(value) || value <= 0)) {
-        result.textContent = "0.00g";
-        if (resultFooter) {
-          resultFooter.textContent = "Auto-calculated once values are entered";
-        }
-        return;
-      }
-
-      const [x, y, z] = values;
-      const estimatedWeight = 91.3 * x + 36.4 * y + 6.2 * z - 1030;
-
-      result.textContent =
-        estimatedWeight > 0
-          ? `${estimatedWeight.toFixed(2)}g`
-          : "0.00g";
-
-      if (resultFooter) {
-        resultFooter.textContent =
-          estimatedWeight > 0
-            ? "Calculated using the values entered above"
-            : "Auto-calculated once values are entered";
-      }
+      input.required = true;
+      input.placeholder = field.placeholder;
+      input.value = savedValue;
+      input.addEventListener("input", updateResult);
+      return input;
     };
 
-    inputs.forEach((input) => input.addEventListener("input", updateResult));
+    const renderCalculator = (calculatorName, saveValues = true) => {
+      if (!CALCULATORS[calculatorName]) {
+        return;
+      }
+
+      if (saveValues) {
+        saveCurrentValues();
+      }
+
+      activeCalculator = calculatorName;
+      const config = CALCULATORS[calculatorName];
+
+      fieldWrappers.forEach((wrapper, index) => {
+        const field = config.fields[index];
+        const label = wrapper.querySelector(".form_label.is-calc");
+        const helper = wrapper.querySelector(".calc_subtext");
+        const controlWrapper = wrapper.querySelector(
+          ".form_input-wrapper-calc",
+        );
+
+        if (!label || !helper || !controlWrapper) {
+          return;
+        }
+
+        const control = createControl(
+          field,
+          index,
+          savedValues[calculatorName][index],
+        );
+
+        label.textContent = field.label;
+        label.htmlFor = control.id;
+        helper.textContent = field.helper;
+        controlWrapper.replaceChildren(control);
+      });
+
+      resultHeading.textContent = config.resultHeading;
+      updateResult();
+    };
+
+    tabs.querySelectorAll(".calc_tab[data-w-tab]").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        const calculatorName =
+          tab.getAttribute("data-w-tab") === CALCULATORS.pap.tab
+            ? "pap"
+            : "diep";
+        renderCalculator(calculatorName);
+      });
+    });
+
     form.addEventListener("submit", (event) => event.preventDefault());
-    updateResult();
+
+    const initialCalculator =
+      tabs
+        .querySelector(".calc_tab.w--current")
+        ?.getAttribute("data-w-tab") === CALCULATORS.pap.tab
+        ? "pap"
+        : "diep";
+    renderCalculator(initialCalculator, false);
   };
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initDiepFlapCalculator);
+    document.addEventListener("DOMContentLoaded", initFlapCalculator);
   } else {
-    initDiepFlapCalculator();
+    initFlapCalculator();
   }
 })();
