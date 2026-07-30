@@ -100,6 +100,17 @@
         .form_component.is-calculator .calc_unit {
           pointer-events: none;
         }
+
+        .form_component.is-calculator .calc_clear-values {
+          appearance: none;
+          background: none;
+          border: 0;
+          color: inherit;
+          cursor: pointer;
+          font: inherit;
+          padding: 0;
+          text-decoration: underline;
+        }
       `;
       document.head.append(numberStyles);
     }
@@ -121,6 +132,34 @@
     const saveCurrentValues = () => {
       savedValues[activeCalculator] = getControls().map(
         (control) => control?.value ?? "",
+      );
+    };
+
+    const showCalculatedFooter = () => {
+      const clearButton = document.createElement("button");
+      clearButton.type = "button";
+      clearButton.className = "calc_clear-values";
+      clearButton.textContent = "Clear values";
+      clearButton.addEventListener("click", () => {
+        const controls = getControls();
+        savedValues[activeCalculator] = ["", "", ""];
+
+        controls.forEach((control) => {
+          control.value = "";
+        });
+        controls.forEach((control) => {
+          const eventName = control instanceof HTMLSelectElement
+            ? "change"
+            : "input";
+          control.dispatchEvent(new Event(eventName, { bubbles: true }));
+        });
+      });
+
+      resultFooter.replaceChildren(
+        document.createTextNode(
+          "Calculated using the values entered above. ",
+        ),
+        clearButton,
       );
     };
 
@@ -155,10 +194,11 @@
 
       result.textContent =
         estimatedWeight > 0 ? `${estimatedWeight.toFixed(2)}g` : "0.00g";
-      resultFooter.textContent =
-        estimatedWeight > 0
-          ? "Calculated using the values entered above"
-          : "Auto-calculated once values are entered";
+      if (estimatedWeight > 0) {
+        showCalculatedFooter();
+      } else {
+        resultFooter.textContent = "Auto-calculated once values are entered";
+      }
     };
 
     const createControl = (field, index, savedValue) => {
