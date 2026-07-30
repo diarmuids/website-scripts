@@ -1,27 +1,24 @@
-// Last updated: 2026-07-30 14:37:17
+// Last updated: 2026-07-30 15:38:27
 
 (() => {
   const initDiepFlapCalculator = () => {
     const form = document.querySelector(".form_component.is-calculator form");
 
-    if (!form || form.dataset.diepCalculatorReady === "true") {
+    if (!form || form.diepCalculatorInitialized) {
       return;
     }
 
-    const calculator = form.closest(".form_component.is-calculator");
     const inputs = Array.from(form.querySelectorAll("input.form_input")).slice(
       0,
       3,
     );
-    const successPanel = calculator?.querySelector(".w-form-done");
-    const errorPanel = calculator?.querySelector(".w-form-fail");
-    const errorText = errorPanel?.querySelector(".error-text");
+    const result = form.querySelector(".calc_value");
 
-    if (inputs.length !== 3 || !successPanel || !errorPanel) {
+    if (inputs.length !== 3 || !result) {
       return;
     }
 
-    form.dataset.diepCalculatorReady = "true";
+    form.diepCalculatorInitialized = true;
 
     inputs.forEach((input) => {
       input.type = "number";
@@ -30,55 +27,31 @@
       input.step = "any";
     });
 
-    const showError = (message) => {
-      successPanel.style.display = "none";
-      if (errorText) {
-        errorText.textContent = message;
+    const updateResult = () => {
+      if (inputs.some((input) => input.value.trim() === "")) {
+        result.textContent = "Please enter values above";
+        return;
       }
-      errorPanel.style.display = "block";
+
+      const values = inputs.map((input) => Number.parseFloat(input.value));
+
+      if (values.some((value) => !Number.isFinite(value) || value <= 0)) {
+        result.textContent = "Please enter valid positive values above";
+        return;
+      }
+
+      const [x, y, z] = values;
+      const estimatedWeight = 91.3 * x + 36.4 * y + 6.2 * z - 1030;
+
+      result.textContent =
+        estimatedWeight > 0
+          ? `${estimatedWeight.toFixed(2)} g`
+          : "Please check the values above";
     };
 
-    form.addEventListener(
-      "submit",
-      (event) => {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-
-        const values = inputs.map((input) => Number.parseFloat(input.value));
-        const invalidIndex = values.findIndex(
-          (value) => !Number.isFinite(value) || value <= 0,
-        );
-
-        if (invalidIndex !== -1) {
-          showError("Please enter a valid positive number in every field.");
-          inputs[invalidIndex].focus();
-          return;
-        }
-
-        const [x, y, z] = values;
-        const estimatedWeight = 91.3 * x + 36.4 * y + 6.2 * z - 1030;
-
-        if (estimatedWeight <= 0) {
-          showError(
-            "These measurements do not produce a positive estimated flap weight. Please check the values entered.",
-          );
-          return;
-        }
-
-        errorPanel.style.display = "none";
-        successPanel.innerHTML = `
-          <div class="form_success-inner is-sticky">
-            <div class="text-rich-text w-richtext">
-              <p><strong>Estimated DIEP Flap Weight</strong></p>
-              <p><strong>${estimatedWeight.toFixed(2)} g</strong></p>
-              <p>Calculated using the entered CT measurements and patient weight.</p>
-            </div>
-          </div>
-        `;
-        successPanel.style.display = "block";
-      },
-      true,
-    );
+    inputs.forEach((input) => input.addEventListener("input", updateResult));
+    form.addEventListener("submit", (event) => event.preventDefault());
+    updateResult();
   };
 
   if (document.readyState === "loading") {
