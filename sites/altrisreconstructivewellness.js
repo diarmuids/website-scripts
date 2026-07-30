@@ -82,6 +82,28 @@
 
     form.flapCalculatorInitialized = true;
 
+    if (!document.querySelector("#flap-calculator-number-styles")) {
+      const numberStyles = document.createElement("style");
+      numberStyles.id = "flap-calculator-number-styles";
+      numberStyles.textContent = `
+        .form_component.is-calculator input.form_input[type="number"] {
+          appearance: textfield;
+          -moz-appearance: textfield;
+        }
+
+        .form_component.is-calculator input.form_input[type="number"]::-webkit-inner-spin-button,
+        .form_component.is-calculator input.form_input[type="number"]::-webkit-outer-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+
+        .form_component.is-calculator .calc_unit {
+          pointer-events: none;
+        }
+      `;
+      document.head.append(numberStyles);
+    }
+
     const savedValues = {
       diep: ["", "", ""],
       pap: ["", "", ""],
@@ -233,7 +255,12 @@
 
         if (field.unit) {
           unit.textContent = field.unit;
-          unit.style.visibility = "";
+          const updateUnitVisibility = () => {
+            unit.style.visibility =
+              control.value.trim() === "" ? "hidden" : "";
+          };
+          control.addEventListener("input", updateUnitVisibility);
+          updateUnitVisibility();
         } else {
           unit.textContent = "kg";
           unit.style.visibility = "hidden";
