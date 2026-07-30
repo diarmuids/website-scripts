@@ -1,4 +1,4 @@
-// Last updated: 2026-07-30 15:45:18
+// Last updated: 2026-07-30 15:47:03
 
 (() => {
   const initDiepFlapCalculator = () => {
@@ -22,9 +22,9 @@
     form.diepCalculatorInitialized = true;
 
     if (resultFooter) {
-      resultFooter.style.opacity = "0";
-      resultFooter.style.pointerEvents = "none";
-      resultFooter.setAttribute("aria-hidden", "true");
+      resultFooter.style.opacity = "";
+      resultFooter.style.pointerEvents = "";
+      resultFooter.removeAttribute("aria-hidden");
     }
 
     inputs.forEach((input) => {
@@ -37,6 +37,9 @@
     const updateResult = () => {
       if (inputs.some((input) => input.value.trim() === "")) {
         result.textContent = "0.00g";
+        if (resultFooter) {
+          resultFooter.textContent = "Auto-calculated once values are entered";
+        }
         return;
       }
 
@@ -44,6 +47,9 @@
 
       if (values.some((value) => !Number.isFinite(value) || value <= 0)) {
         result.textContent = "0.00g";
+        if (resultFooter) {
+          resultFooter.textContent = "Auto-calculated once values are entered";
+        }
         return;
       }
 
@@ -54,6 +60,13 @@
         estimatedWeight > 0
           ? `${estimatedWeight.toFixed(2)}g`
           : "0.00g";
+
+      if (resultFooter) {
+        resultFooter.textContent =
+          estimatedWeight > 0
+            ? "Calculated using the values entered above"
+            : "Auto-calculated once values are entered";
+      }
     };
 
     inputs.forEach((input) => input.addEventListener("input", updateResult));
