@@ -1,4 +1,4 @@
-// Last updated: 2026-07-30 15:42:07
+// Last updated: 2026-07-30 15:45:18
 
 (() => {
   const initDiepFlapCalculator = () => {
@@ -13,12 +13,19 @@
       3,
     );
     const result = form.querySelector(".calc_value");
+    const resultFooter = form.querySelector(".calc_value-footer");
 
     if (inputs.length !== 3 || !result) {
       return;
     }
 
     form.diepCalculatorInitialized = true;
+
+    if (resultFooter) {
+      resultFooter.style.opacity = "0";
+      resultFooter.style.pointerEvents = "none";
+      resultFooter.setAttribute("aria-hidden", "true");
+    }
 
     inputs.forEach((input) => {
       input.type = "number";
