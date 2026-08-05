@@ -1,10 +1,10 @@
-// Last updated: 2026-08-05 14:51:44
+// Last updated: 2026-08-05 15:00:21
 
 (function () {
   'use strict';
 
   const INFO_COLLECTION_ID = '6a72196fc934ca57e2d34082';
-  const SCHEMA_SCRIPT_ID = 'the-movement-info-schema';
+  const SCHEMA_SCRIPT_ID = 'the-movement-schema';
   const BUSINESS_ID = 'https://www.themovement.ie/#fitness-club';
 
   function cleanText(value) {
@@ -107,49 +107,74 @@
     return match ? match[1].replace(',', '.') : '';
   }
 
-  function buildSchema() {
-    const url = pageUrl();
-    const name = pageName();
-    const description = serviceDescription();
-    const image = primaryImage();
-    const locality = areaServed();
-    const schedules = classSchedule();
-    const price = publicPrice();
-    const serviceId = url + '#service';
+  function timetablePrice() {
+    const content = cleanText(document.querySelector('.timetable_rich-text') && document.querySelector('.timetable_rich-text').textContent);
+    const match = content.match(/(?:€|EUR)\s*(\d+(?:[.,]\d{1,2})?)\s+for\s+non-members/i);
+    return match ? match[1].replace(',', '.') : '';
+  }
 
-    const classEvents = schedules.map(function (schedule, index) {
-      const eventId = url + '#class-' + slug(schedule.name + '-' + schedule.day + '-' + schedule.startTime) + '-' + (index + 1);
-      return {
-        '@type': 'Event',
-        '@id': eventId,
-        name: schedule.name,
-        description: schedule.name + ' recurring class at The Movement Fitness Club.',
-        url: url,
-        eventStatus: 'https://schema.org/EventScheduled',
-        eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-        eventSchedule: {
-          '@type': 'Schedule',
-          repeatFrequency: 'P1W',
-          byDay: schemaDay(schedule.day),
-          startTime: schedule.startTime,
-          endTime: schedule.endTime,
-          scheduleTimezone: 'Europe/Dublin',
-        },
-        location: { '@id': BUSINESS_ID },
-        organizer: { '@id': BUSINESS_ID },
-        offers: price
-          ? {
-              '@type': 'Offer',
-              price: price,
-              priceCurrency: 'EUR',
-              availability: 'https://schema.org/InStock',
-              url: url,
-            }
-          : undefined,
-      };
+  function timetableSchedule() {
+    const row = document.querySelector('.time_wrapper .time_row:not(.tr-note)');
+    if (!row) return [];
+
+    const columns = Array.from(row.querySelectorAll(':scope > .time_col'));
+    const timeColumn = columns.find(function (column) {
+      return column.classList.contains('is-time');
+    });
+    if (!timeColumn) return [];
+
+    const times = Array.from(timeColumn.querySelectorAll(':scope > .time_cell:not(.is-header)')).map(function (cell) {
+      const match = cleanText(cell.textContent).match(/(\d{1,2}:\d{2})\s*[-–—]\s*(\d{1,2}:\d{2})/);
+      return match ? { startTime: match[1], endTime: match[2] } : null;
     });
 
-    const business = {
+    const classes = [];
+    columns.forEach(function (column) {
+      if (column === timeColumn) return;
+
+      const cells = Array.from(column.querySelectorAll(':scope > .time_cell'));
+      const day = cleanText(cells.shift() && column.querySelector('.time_cell.is-header').textContent);
+      if (!schemaDay(day)) return;
+
+      cells.forEach(function (cell, index) {
+        const copy = cell.cloneNode(true);
+        copy.querySelectorAll('.time_detail').forEach(function (detail) {
+          detail.remove();
+        });
+        const name = cleanText(copy.textContent);
+        const time = times[index];
+        if (!name || !time) return;
+
+        classes.push({
+          name: name,
+          day: day,
+          startTime: time.startTime,
+          endTime: time.endTime,
+          room: cell.classList.contains('is-white') ? 'Spin Studio' : 'Studio',
+        });
+      });
+    });
+
+    return classes;
+  }
+
+  function faqEntities() {
+    return Array.from(document.querySelectorAll('.fll-timetable .faq-list-item'))
+      .map(function (item) {
+        const question = cleanText(item.querySelector('.faq-question-text') && item.querySelector('.faq-question-text').textContent);
+        const answer = cleanText(item.querySelector('.faq-answer') && item.querySelector('.faq-answer').textContent);
+        if (!question || !answer) return null;
+        return {
+          '@type': 'Question',
+          name: question,
+          acceptedAnswer: { '@type': 'Answer', text: answer },
+        };
+      })
+      .filter(Boolean);
+  }
+
+  function businessSchema(image) {
+    return {
       '@type': 'ExerciseGym',
       '@id': BUSINESS_ID,
       name: 'The Movement Fitness Club',
@@ -157,6 +182,13 @@
       telephone: '+3532643492',
       email: 'info@themovement.ie',
       image: image || undefined,
+      priceRange: '€12',
+      sameAs: [
+        'https://www.instagram.com/themovementmacroom/',
+        'https://www.facebook.com/The-Movement-Macroom-1693712704182384/',
+        'https://www.youtube.com/channel/UC1D6E0uLl9TTkfopAFl4Gew',
+        'https://twitter.com/themovementmac',
+      ],
       address: {
         '@type': 'PostalAddress',
         streetAddress: 'Hollands Lane, Off Main Street',
@@ -175,6 +207,50 @@
         { '@type': 'OpeningHoursSpecification', dayOfWeek: 'Sunday', opens: '08:00', closes: '16:00' },
       ],
     };
+  }
+
+  function scheduledEvents(schedules, url, price) {
+    return schedules.map(function (schedule, index) {
+      const eventId = url + '#class-' + slug(schedule.name + '-' + schedule.day + '-' + schedule.startTime) + '-' + (index + 1);
+      return {
+        '@type': 'Event',
+        '@id': eventId,
+        name: schedule.name,
+        description: schedule.name + ' recurring class at The Movement Fitness Club.',
+        url: url,
+        eventStatus: 'https://schema.org/EventScheduled',
+        eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+        eventSchedule: {
+          '@type': 'Schedule',
+          repeatFrequency: 'P1W',
+          byDay: schemaDay(schedule.day),
+          startTime: schedule.startTime,
+          endTime: schedule.endTime,
+          scheduleTimezone: 'Europe/Dublin',
+        },
+        location: schedule.room
+          ? { '@type': 'Place', name: schedule.room + ', The Movement Fitness Club', address: { '@id': BUSINESS_ID } }
+          : { '@id': BUSINESS_ID },
+        organizer: { '@id': BUSINESS_ID },
+        offers: price
+          ? { '@type': 'Offer', price: price, priceCurrency: 'EUR', availability: 'https://schema.org/InStock', url: url }
+          : undefined,
+      };
+    });
+  }
+
+  function buildSchema() {
+    const url = pageUrl();
+    const name = pageName();
+    const description = serviceDescription();
+    const image = primaryImage();
+    const locality = areaServed();
+    const schedules = classSchedule();
+    const price = publicPrice();
+    const serviceId = url + '#service';
+
+    const classEvents = scheduledEvents(schedules, url, price);
+    const business = businessSchema(image);
 
     const service = {
       '@type': 'Service',
@@ -228,6 +304,54 @@
     };
   }
 
+  function buildTimetableSchema() {
+    const url = pageUrl();
+    const name = cleanText(document.querySelector('h1') && document.querySelector('h1').textContent) || 'Class Timetable';
+    const description = getMeta('meta[name="description"]');
+    const image = primaryImage();
+    const price = timetablePrice();
+    const events = scheduledEvents(timetableSchedule(), url, price);
+    const timetableId = url + '#timetable';
+    const faqId = url + '#faq';
+    const questions = faqEntities();
+
+    const timetable = {
+      '@type': 'ItemList',
+      '@id': timetableId,
+      name: 'The Movement Fitness Club weekly class timetable',
+      description: description || undefined,
+      numberOfItems: events.length,
+      itemListElement: events.map(function (event, index) {
+        return { '@type': 'ListItem', position: index + 1, item: { '@id': event['@id'] } };
+      }),
+    };
+
+    const webPage = {
+      '@type': 'WebPage',
+      '@id': url + '#webpage',
+      url: url,
+      name: cleanText(document.title) || name,
+      description: description || undefined,
+      mainEntity: { '@id': timetableId },
+      about: { '@id': BUSINESS_ID },
+      isPartOf: { '@type': 'WebSite', '@id': 'https://www.themovement.ie/#website', url: 'https://www.themovement.ie/', name: 'The Movement Fitness Club' },
+      hasPart: questions.length ? { '@id': faqId } : undefined,
+    };
+
+    const breadcrumb = {
+      '@type': 'BreadcrumbList',
+      '@id': url + '#breadcrumb',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.themovement.ie/' },
+        { '@type': 'ListItem', position: 2, name: name, item: url },
+      ],
+    };
+
+    const graph = [webPage, businessSchema(image), timetable, breadcrumb].concat(events);
+    if (questions.length) graph.push({ '@type': 'FAQPage', '@id': faqId, mainEntity: questions });
+    return { '@context': 'https://schema.org', '@graph': graph };
+  }
+
   function addInfoPageSchema() {
     const root = document.documentElement;
     if (!root || root.getAttribute('data-wf-collection') !== INFO_COLLECTION_ID) return;
@@ -243,9 +367,28 @@
     document.head.appendChild(script);
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', addInfoPageSchema, { once: true });
-  } else {
+  function addTimetableSchema() {
+    if (window.location.pathname.replace(/\/+$/, '') !== '/timetable') return;
+    if (!document.querySelector('.time_wrapper')) return;
+
+    const previous = document.getElementById(SCHEMA_SCRIPT_ID);
+    if (previous) previous.remove();
+
+    const script = document.createElement('script');
+    script.id = SCHEMA_SCRIPT_ID;
+    script.type = 'application/ld+json';
+    script.textContent = JSON.stringify(buildTimetableSchema());
+    document.head.appendChild(script);
+  }
+
+  function addPageSchema() {
     addInfoPageSchema();
+    addTimetableSchema();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', addPageSchema, { once: true });
+  } else {
+    addPageSchema();
   }
 })();
