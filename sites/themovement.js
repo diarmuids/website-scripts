@@ -1,4 +1,4 @@
-// Last updated: 2026-08-05 15:07:40
+// Last updated: 2026-08-05 15:08:26
 
 (function () {
   'use strict';
@@ -581,6 +581,76 @@
     };
   }
 
+  function classLocationPages() {
+    return Array.from(document.querySelectorAll('.pages-list_list .pages-list_item a[href]'))
+      .map(function (link, index) {
+        const name = cleanText(link.textContent);
+        const url = absoluteUrl(link.getAttribute('href'));
+        if (!name || !url) return null;
+        return {
+          '@type': 'WebPage',
+          '@id': url + '#webpage',
+          url: url,
+          name: name,
+          position: index + 1,
+          isPartOf: { '@id': 'https://www.themovement.ie/#website' },
+          about: { '@id': BUSINESS_ID },
+        };
+      })
+      .filter(Boolean);
+  }
+
+  function buildClassLocationsSchema() {
+    const url = pageUrl();
+    const name = cleanText(document.querySelector('h1') && document.querySelector('h1').textContent) || 'Class Locations';
+    const description = getMeta('meta[name="description"]');
+    const image = primaryImage();
+    const pages = classLocationPages();
+    const listId = url + '#service-area-pages';
+    const breadcrumbId = url + '#breadcrumb';
+
+    const collectionPage = {
+      '@type': 'CollectionPage',
+      '@id': url + '#webpage',
+      url: url,
+      name: cleanText(document.title) || name,
+      headline: name,
+      description: description || undefined,
+      mainEntity: { '@id': listId },
+      about: { '@id': BUSINESS_ID },
+      breadcrumb: { '@id': breadcrumbId },
+      isPartOf: { '@type': 'WebSite', '@id': 'https://www.themovement.ie/#website', url: 'https://www.themovement.ie/', name: 'The Movement Fitness Club' },
+    };
+
+    const pageList = {
+      '@type': 'ItemList',
+      '@id': listId,
+      name: 'Class and training pages by nearby area',
+      numberOfItems: pages.length,
+      itemListElement: pages.map(function (page) {
+        return { '@type': 'ListItem', position: page.position, item: { '@id': page['@id'] } };
+      }),
+    };
+
+    const breadcrumb = {
+      '@type': 'BreadcrumbList',
+      '@id': breadcrumbId,
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.themovement.ie/' },
+        { '@type': 'ListItem', position: 2, name: name, item: url },
+      ],
+    };
+
+    pages.forEach(function (page) {
+      delete page.position;
+    });
+
+    return {
+      '@context': 'https://schema.org',
+      '@graph': [collectionPage, businessSchema(image), pageList, breadcrumb].concat(pages),
+    };
+  }
+
   function addInfoPageSchema() {
     const root = document.documentElement;
     if (!root || root.getAttribute('data-wf-collection') !== INFO_COLLECTION_ID) return;
@@ -652,12 +722,27 @@
     document.head.appendChild(script);
   }
 
+  function addClassLocationsSchema() {
+    if (window.location.pathname.replace(/\/+$/, '') !== '/class-locations') return;
+    if (!document.querySelector('.pages-list_list .pages-list_item a[href]')) return;
+
+    const previous = document.getElementById(SCHEMA_SCRIPT_ID);
+    if (previous) previous.remove();
+
+    const script = document.createElement('script');
+    script.id = SCHEMA_SCRIPT_ID;
+    script.type = 'application/ld+json';
+    script.textContent = JSON.stringify(buildClassLocationsSchema());
+    document.head.appendChild(script);
+  }
+
   function addPageSchema() {
     addInfoPageSchema();
     addTimetableSchema();
     addClassesSchema();
     addPackagesSchema();
     addFaqSchema();
+    addClassLocationsSchema();
   }
 
   if (document.readyState === 'loading') {
