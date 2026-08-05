@@ -1,4 +1,4 @@
-// Last updated: 2026-08-05 15:02:56
+// Last updated: 2026-08-05 15:04:20
 
 (function () {
   'use strict';
@@ -435,6 +435,117 @@
     return { '@context': 'https://schema.org', '@graph': graph };
   }
 
+  function packageOffers(url, serviceId) {
+    const wrapper = document.querySelector('.time_wrapper.th-pt');
+    if (!wrapper) return [];
+
+    const quantityCells = wrapper.querySelectorAll('.tc-packages-row-header .time_cell.is-row-header');
+    const quantities = Array.from(quantityCells).map(function (cell) {
+      const match = cleanText(cell.textContent).match(/\d+/);
+      return match ? Number(match[0]) : null;
+    });
+
+    const offers = [];
+    wrapper.querySelectorAll('.time_row.is-new > .time_col.tc-pt').forEach(function (column) {
+      const cells = Array.from(column.querySelectorAll(':scope > .time_cell'));
+      const heading = cleanText(cells.shift() && column.querySelector('.time_cell.is-header').textContent);
+      const durationMatch = heading.match(/(30|45)\s*minute/i);
+      const duration = durationMatch ? Number(durationMatch[1]) : null;
+      const audience = /non-member/i.test(heading) ? 'Non-member' : 'Member';
+
+      cells.forEach(function (cell, index) {
+        const priceMatch = cleanText(cell.textContent).match(/(\d+(?:[.,]\d{1,2})?)/);
+        const quantity = quantities[index];
+        if (!priceMatch || !quantity || !duration) return;
+
+        const price = priceMatch[1].replace(',', '.');
+        const offerName = quantity + ' × ' + duration + '-minute personal training sessions — ' + audience;
+        offers.push({
+          '@type': 'Offer',
+          '@id': url + '#offer-' + quantity + '-' + duration + '-' + slug(audience),
+          name: offerName,
+          description: offerName + ' package at The Movement Fitness Club.',
+          price: price,
+          priceCurrency: 'EUR',
+          availability: 'https://schema.org/InStock',
+          url: url,
+          category: audience,
+          eligibleQuantity: { '@type': 'QuantitativeValue', value: quantity, unitText: 'personal training sessions' },
+          audience: { '@type': 'Audience', audienceType: audience },
+          itemOffered: { '@id': serviceId },
+        });
+      });
+    });
+
+    return offers;
+  }
+
+  function buildPackagesSchema() {
+    const url = pageUrl();
+    const name = cleanText(document.querySelector('h1') && document.querySelector('h1').textContent) || 'Personal Training Packages';
+    const description = getMeta('meta[name="description"]');
+    const image = primaryImage();
+    const serviceId = url + '#personal-training';
+    const catalogId = url + '#packages';
+    const offers = packageOffers(url, serviceId);
+    const pdfLink = document.querySelector('.bh-download-pdf a[href]');
+    const pdfUrl = absoluteUrl(pdfLink && pdfLink.getAttribute('href'));
+
+    const service = {
+      '@type': 'Service',
+      '@id': serviceId,
+      name: 'Personal Training at The Movement Fitness Club',
+      serviceType: 'Personal training',
+      description: description || 'Personal training packages for members and non-members.',
+      provider: { '@id': BUSINESS_ID },
+      areaServed: { '@type': 'City', name: 'Macroom' },
+      hasOfferCatalog: { '@id': catalogId },
+    };
+
+    const catalog = {
+      '@type': 'OfferCatalog',
+      '@id': catalogId,
+      name: 'Personal Training Packages',
+      numberOfItems: offers.length,
+      itemListElement: offers.map(function (offer, index) {
+        return { '@type': 'ListItem', position: index + 1, item: { '@id': offer['@id'] } };
+      }),
+    };
+
+    const webPage = {
+      '@type': 'WebPage',
+      '@id': url + '#webpage',
+      url: url,
+      name: cleanText(document.title) || name,
+      description: description || undefined,
+      mainEntity: { '@id': serviceId },
+      about: { '@id': BUSINESS_ID },
+      isPartOf: { '@type': 'WebSite', '@id': 'https://www.themovement.ie/#website', url: 'https://www.themovement.ie/', name: 'The Movement Fitness Club' },
+      associatedMedia: pdfUrl ? { '@id': url + '#price-list-pdf' } : undefined,
+    };
+
+    const breadcrumb = {
+      '@type': 'BreadcrumbList',
+      '@id': url + '#breadcrumb',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.themovement.ie/' },
+        { '@type': 'ListItem', position: 2, name: name, item: url },
+      ],
+    };
+
+    const graph = [webPage, businessSchema(image), service, catalog, breadcrumb].concat(offers);
+    if (pdfUrl) {
+      graph.push({
+        '@type': 'MediaObject',
+        '@id': url + '#price-list-pdf',
+        name: 'Personal Training Packages price list',
+        contentUrl: pdfUrl,
+        encodingFormat: 'application/pdf',
+      });
+    }
+    return { '@context': 'https://schema.org', '@graph': graph };
+  }
+
   function addInfoPageSchema() {
     const root = document.documentElement;
     if (!root || root.getAttribute('data-wf-collection') !== INFO_COLLECTION_ID) return;
@@ -478,10 +589,25 @@
     document.head.appendChild(script);
   }
 
+  function addPackagesSchema() {
+    if (window.location.pathname.replace(/\/+$/, '') !== '/packages') return;
+    if (!document.querySelector('.time_wrapper.th-pt')) return;
+
+    const previous = document.getElementById(SCHEMA_SCRIPT_ID);
+    if (previous) previous.remove();
+
+    const script = document.createElement('script');
+    script.id = SCHEMA_SCRIPT_ID;
+    script.type = 'application/ld+json';
+    script.textContent = JSON.stringify(buildPackagesSchema());
+    document.head.appendChild(script);
+  }
+
   function addPageSchema() {
     addInfoPageSchema();
     addTimetableSchema();
     addClassesSchema();
+    addPackagesSchema();
   }
 
   if (document.readyState === 'loading') {
