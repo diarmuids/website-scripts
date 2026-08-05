@@ -1,4 +1,4 @@
-// Last updated: 2026-08-05 15:00:21
+// Last updated: 2026-08-05 15:00:40
 
 (function () {
   'use strict';
@@ -229,7 +229,7 @@
           scheduleTimezone: 'Europe/Dublin',
         },
         location: schedule.room
-          ? { '@type': 'Place', name: schedule.room + ', The Movement Fitness Club', address: { '@id': BUSINESS_ID } }
+          ? { '@type': 'Place', name: schedule.room, containedInPlace: { '@id': BUSINESS_ID } }
           : { '@id': BUSINESS_ID },
         organizer: { '@id': BUSINESS_ID },
         offers: price
