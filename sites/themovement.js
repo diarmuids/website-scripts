@@ -1,4 +1,4 @@
-// Last updated: 2026-08-05 15:00:40
+// Last updated: 2026-08-05 15:02:56
 
 (function () {
   'use strict';
@@ -158,8 +158,8 @@
     return classes;
   }
 
-  function faqEntities() {
-    return Array.from(document.querySelectorAll('.fll-timetable .faq-list-item'))
+  function faqEntities(selector) {
+    return Array.from(document.querySelectorAll(selector || '.fll-timetable .faq-list-item'))
       .map(function (item) {
         const question = cleanText(item.querySelector('.faq-question-text') && item.querySelector('.faq-question-text').textContent);
         const answer = cleanText(item.querySelector('.faq-answer') && item.querySelector('.faq-answer').textContent);
@@ -313,7 +313,7 @@
     const events = scheduledEvents(timetableSchedule(), url, price);
     const timetableId = url + '#timetable';
     const faqId = url + '#faq';
-    const questions = faqEntities();
+    const questions = faqEntities('.fll-timetable .faq-list-item');
 
     const timetable = {
       '@type': 'ItemList',
@@ -352,6 +352,89 @@
     return { '@context': 'https://schema.org', '@graph': graph };
   }
 
+  function classServices(url, price) {
+    return Array.from(document.querySelectorAll('.classes_list .classes_item'))
+      .map(function (item, index) {
+        const title = cleanText(item.querySelector('.classes_title > div:first-child') && item.querySelector('.classes_title > div:first-child').textContent);
+        const description = cleanText(item.querySelector('.classes_description') && item.querySelector('.classes_description').textContent);
+        const background = item.querySelector('.classes_bg');
+        const style = background && background.getAttribute('style');
+        const imageMatch = style && style.match(/background-image\s*:\s*url\(["']?([^"')]+)["']?\)/i);
+        const image = absoluteUrl(imageMatch && imageMatch[1]);
+        if (!title) return null;
+
+        return {
+          '@type': 'Service',
+          '@id': url + '#class-' + slug(title) + '-' + (index + 1),
+          name: title,
+          serviceType: 'Fitness class',
+          description: description || undefined,
+          image: image || undefined,
+          provider: { '@id': BUSINESS_ID },
+          areaServed: { '@type': 'City', name: 'Macroom' },
+          offers: price
+            ? {
+                '@type': 'Offer',
+                price: price,
+                priceCurrency: 'EUR',
+                description: 'Non-member price per class. Classes are free for members.',
+                availability: 'https://schema.org/InStock',
+                url: 'https://www.themovement.ie/timetable',
+              }
+            : undefined,
+        };
+      })
+      .filter(Boolean);
+  }
+
+  function buildClassesSchema() {
+    const url = pageUrl();
+    const name = cleanText(document.querySelector('h1') && document.querySelector('h1').textContent) || 'Classes';
+    const description = getMeta('meta[name="description"]');
+    const image = primaryImage();
+    const price = timetablePrice() || '12';
+    const services = classServices(url, price);
+    const catalogId = url + '#class-list';
+    const faqId = url + '#faq';
+    const questions = faqEntities('.content-section .faq-list-item');
+
+    const catalog = {
+      '@type': 'ItemList',
+      '@id': catalogId,
+      name: 'Fitness classes at The Movement Fitness Club',
+      description: description || undefined,
+      numberOfItems: services.length,
+      itemListElement: services.map(function (service, index) {
+        return { '@type': 'ListItem', position: index + 1, item: { '@id': service['@id'] } };
+      }),
+    };
+
+    const collectionPage = {
+      '@type': 'CollectionPage',
+      '@id': url + '#webpage',
+      url: url,
+      name: cleanText(document.title) || name,
+      description: description || undefined,
+      mainEntity: { '@id': catalogId },
+      about: { '@id': BUSINESS_ID },
+      isPartOf: { '@type': 'WebSite', '@id': 'https://www.themovement.ie/#website', url: 'https://www.themovement.ie/', name: 'The Movement Fitness Club' },
+      hasPart: questions.length ? { '@id': faqId } : undefined,
+    };
+
+    const breadcrumb = {
+      '@type': 'BreadcrumbList',
+      '@id': url + '#breadcrumb',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.themovement.ie/' },
+        { '@type': 'ListItem', position: 2, name: name, item: url },
+      ],
+    };
+
+    const graph = [collectionPage, businessSchema(image), catalog, breadcrumb].concat(services);
+    if (questions.length) graph.push({ '@type': 'FAQPage', '@id': faqId, mainEntity: questions });
+    return { '@context': 'https://schema.org', '@graph': graph };
+  }
+
   function addInfoPageSchema() {
     const root = document.documentElement;
     if (!root || root.getAttribute('data-wf-collection') !== INFO_COLLECTION_ID) return;
@@ -381,9 +464,24 @@
     document.head.appendChild(script);
   }
 
+  function addClassesSchema() {
+    if (window.location.pathname.replace(/\/+$/, '') !== '/classes') return;
+    if (!document.querySelector('.classes_list .classes_item')) return;
+
+    const previous = document.getElementById(SCHEMA_SCRIPT_ID);
+    if (previous) previous.remove();
+
+    const script = document.createElement('script');
+    script.id = SCHEMA_SCRIPT_ID;
+    script.type = 'application/ld+json';
+    script.textContent = JSON.stringify(buildClassesSchema());
+    document.head.appendChild(script);
+  }
+
   function addPageSchema() {
     addInfoPageSchema();
     addTimetableSchema();
+    addClassesSchema();
   }
 
   if (document.readyState === 'loading') {
