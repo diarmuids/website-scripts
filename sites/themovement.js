@@ -1,4 +1,4 @@
-// Last updated: 2026-08-05 14:49:09
+// Last updated: 2026-08-05 14:51:44
 
 (function () {
   'use strict';
@@ -57,10 +57,40 @@
         const day = cleanText(details[1] && details[1].textContent);
         const time = cleanText(details[2] && details[2].textContent);
 
-        if (!name || (!day && !time)) return null;
-        return cleanText([name, day, time].filter(Boolean).join(' - '));
+        if (!name || !day || !time) return null;
+
+        const timeParts = time.match(/(\d{1,2}:\d{2})\s*[-–—]\s*(\d{1,2}:\d{2})/);
+        if (!timeParts) return null;
+
+        return {
+          name: name,
+          day: day,
+          startTime: timeParts[1],
+          endTime: timeParts[2],
+        };
       })
       .filter(Boolean);
+  }
+
+  function schemaDay(day) {
+    const days = {
+      monday: 'Monday',
+      tuesday: 'Tuesday',
+      wednesday: 'Wednesday',
+      thursday: 'Thursday',
+      friday: 'Friday',
+      saturday: 'Saturday',
+      sunday: 'Sunday',
+    };
+    const value = days[cleanText(day).toLowerCase()];
+    return value ? 'https://schema.org/' + value : '';
+  }
+
+  function slug(value) {
+    return cleanText(value)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
   }
 
   function serviceDescription() {
@@ -86,6 +116,38 @@
     const schedules = classSchedule();
     const price = publicPrice();
     const serviceId = url + '#service';
+
+    const classEvents = schedules.map(function (schedule, index) {
+      const eventId = url + '#class-' + slug(schedule.name + '-' + schedule.day + '-' + schedule.startTime) + '-' + (index + 1);
+      return {
+        '@type': 'Event',
+        '@id': eventId,
+        name: schedule.name,
+        description: schedule.name + ' recurring class at The Movement Fitness Club.',
+        url: url,
+        eventStatus: 'https://schema.org/EventScheduled',
+        eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+        eventSchedule: {
+          '@type': 'Schedule',
+          repeatFrequency: 'P1W',
+          byDay: schemaDay(schedule.day),
+          startTime: schedule.startTime,
+          endTime: schedule.endTime,
+          scheduleTimezone: 'Europe/Dublin',
+        },
+        location: { '@id': BUSINESS_ID },
+        organizer: { '@id': BUSINESS_ID },
+        offers: price
+          ? {
+              '@type': 'Offer',
+              price: price,
+              priceCurrency: 'EUR',
+              availability: 'https://schema.org/InStock',
+              url: url,
+            }
+          : undefined,
+      };
+    });
 
     const business = {
       '@type': 'ExerciseGym',
@@ -122,6 +184,9 @@
       url: url,
       image: image || undefined,
       provider: { '@id': BUSINESS_ID },
+      subjectOf: classEvents.map(function (event) {
+        return { '@id': event['@id'] };
+      }),
       areaServed: locality
         ? { '@type': 'Place', name: locality }
         : undefined,
@@ -130,9 +195,7 @@
             '@type': 'Offer',
             price: price,
             priceCurrency: 'EUR',
-            description: schedules.length
-              ? 'Non-member price per class. Booking essential. Schedule: ' + schedules.join('; ')
-              : 'Non-member price per class. Booking essential.',
+            description: 'Non-member price per class. Booking essential.',
             availability: 'https://schema.org/InStock',
             url: url,
           }
@@ -161,7 +224,7 @@
 
     return {
       '@context': 'https://schema.org',
-      '@graph': [webPage, business, service, breadcrumb],
+      '@graph': [webPage, business, service, breadcrumb].concat(classEvents),
     };
   }
 
