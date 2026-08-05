@@ -1,4 +1,4 @@
-// Last updated: 2026-08-05 15:04:20
+// Last updated: 2026-08-05 15:07:07
 
 (function () {
   'use strict';
@@ -471,7 +471,6 @@
           url: url,
           category: audience,
           eligibleQuantity: { '@type': 'QuantitativeValue', value: quantity, unitText: 'personal training sessions' },
-          audience: { '@type': 'Audience', audienceType: audience },
           itemOffered: { '@id': serviceId },
         });
       });
