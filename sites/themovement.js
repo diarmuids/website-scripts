@@ -1,4 +1,4 @@
-// Last updated: 2026-08-05 14:48:52
+// Last updated: 2026-08-05 14:49:09
 
 (function () {
   'use strict';
@@ -71,6 +71,12 @@
     return cleanText(firstParagraph && firstParagraph.textContent);
   }
 
+  function publicPrice() {
+    const content = cleanText(document.querySelector('.page_content') && document.querySelector('.page_content').textContent);
+    const match = content.match(/non-members?\s*:\s*€\s*(\d+(?:[.,]\d{1,2})?)/i);
+    return match ? match[1].replace(',', '.') : '';
+  }
+
   function buildSchema() {
     const url = pageUrl();
     const name = pageName();
@@ -78,6 +84,7 @@
     const image = primaryImage();
     const locality = areaServed();
     const schedules = classSchedule();
+    const price = publicPrice();
     const serviceId = url + '#service';
 
     const business = {
@@ -118,16 +125,18 @@
       areaServed: locality
         ? { '@type': 'Place', name: locality }
         : undefined,
-      offers: {
-        '@type': 'Offer',
-        price: '12',
-        priceCurrency: 'EUR',
-        description: schedules.length
-          ? 'Non-members: EUR 12 per class. Booking essential. Schedule: ' + schedules.join('; ')
-          : 'Non-members: EUR 12 per class. Booking essential.',
-        availability: 'https://schema.org/InStock',
-        url: url,
-      },
+      offers: price
+        ? {
+            '@type': 'Offer',
+            price: price,
+            priceCurrency: 'EUR',
+            description: schedules.length
+              ? 'Non-member price per class. Booking essential. Schedule: ' + schedules.join('; ')
+              : 'Non-member price per class. Booking essential.',
+            availability: 'https://schema.org/InStock',
+            url: url,
+          }
+        : undefined,
     };
 
     const webPage = {
