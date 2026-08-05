@@ -1,4 +1,4 @@
-// Last updated: 2026-08-05 15:07:07
+// Last updated: 2026-08-05 15:07:40
 
 (function () {
   'use strict';
@@ -545,6 +545,42 @@
     return { '@context': 'https://schema.org', '@graph': graph };
   }
 
+  function buildFaqSchema() {
+    const url = pageUrl();
+    const name = cleanText(document.querySelector('h1') && document.querySelector('h1').textContent) || 'Frequently Asked Questions';
+    const description = getMeta('meta[name="description"]');
+    const image = primaryImage();
+    const questions = faqEntities('.faq-row .faq-list-item');
+    const breadcrumbId = url + '#breadcrumb';
+
+    const faqPage = {
+      '@type': 'FAQPage',
+      '@id': url + '#webpage',
+      url: url,
+      name: cleanText(document.title) || name,
+      headline: name,
+      description: description || undefined,
+      mainEntity: questions,
+      about: { '@id': BUSINESS_ID },
+      breadcrumb: { '@id': breadcrumbId },
+      isPartOf: { '@type': 'WebSite', '@id': 'https://www.themovement.ie/#website', url: 'https://www.themovement.ie/', name: 'The Movement Fitness Club' },
+    };
+
+    const breadcrumb = {
+      '@type': 'BreadcrumbList',
+      '@id': breadcrumbId,
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.themovement.ie/' },
+        { '@type': 'ListItem', position: 2, name: name, item: url },
+      ],
+    };
+
+    return {
+      '@context': 'https://schema.org',
+      '@graph': [faqPage, businessSchema(image), breadcrumb],
+    };
+  }
+
   function addInfoPageSchema() {
     const root = document.documentElement;
     if (!root || root.getAttribute('data-wf-collection') !== INFO_COLLECTION_ID) return;
@@ -602,11 +638,26 @@
     document.head.appendChild(script);
   }
 
+  function addFaqSchema() {
+    if (window.location.pathname.replace(/\/+$/, '') !== '/faq') return;
+    if (!document.querySelector('.faq-row .faq-list-item')) return;
+
+    const previous = document.getElementById(SCHEMA_SCRIPT_ID);
+    if (previous) previous.remove();
+
+    const script = document.createElement('script');
+    script.id = SCHEMA_SCRIPT_ID;
+    script.type = 'application/ld+json';
+    script.textContent = JSON.stringify(buildFaqSchema());
+    document.head.appendChild(script);
+  }
+
   function addPageSchema() {
     addInfoPageSchema();
     addTimetableSchema();
     addClassesSchema();
     addPackagesSchema();
+    addFaqSchema();
   }
 
   if (document.readyState === 'loading') {
