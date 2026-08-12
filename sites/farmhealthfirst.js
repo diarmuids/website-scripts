@@ -1,4 +1,4 @@
-// Last updated: 2026-08-12 07:41:16
+// Last updated: 2026-08-12 07:42:51
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -1326,6 +1326,8 @@ function initContentSwipers() {
       loop: false,
       speed: 500,
       watchOverflow: true,
+      allowTouchMove: true,
+      simulateTouch: true,
       navigation: {
         prevEl: prev,
         nextEl: next,
@@ -1356,6 +1358,34 @@ function initContentSwipers() {
     swiper.on('unlock', updateSliderArrowStates);
     swiper.on('update', updateSliderArrowStates);
     updateSliderArrowStates();
+
+    wrapper.addEventListener('wheel', function (event) {
+      if (!event.shiftKey || swiper.isLocked) return;
+
+      var wheelDelta = Math.abs(event.deltaX) > Math.abs(event.deltaY)
+        ? event.deltaX
+        : event.deltaY;
+
+      if (!wheelDelta) return;
+
+      if (event.deltaMode === 1) wheelDelta *= 16;
+      if (event.deltaMode === 2) wheelDelta *= wrapper.clientWidth;
+
+      var nextTranslate = Math.max(
+        swiper.maxTranslate(),
+        Math.min(swiper.minTranslate(), swiper.translate - wheelDelta)
+      );
+
+      if (nextTranslate === swiper.translate) return;
+
+      event.preventDefault();
+      swiper.setTransition(0);
+      swiper.setTranslate(nextTranslate);
+      swiper.updateProgress(nextTranslate);
+      swiper.updateActiveIndex();
+      swiper.updateSlidesClasses();
+      updateSliderArrowStates();
+    }, { passive: false });
 
     window.addEventListener('resize', function () {
       var nextSetup = getSetup();
