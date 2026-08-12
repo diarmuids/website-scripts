@@ -1,4 +1,4 @@
-// Last updated: 2026-08-12 07:44:17
+// Last updated: 2026-08-12 07:47:28
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -1120,7 +1120,13 @@ window.addEventListener('load', initRelatedSectionSidebarLinks);
 $(function () {
   $('.w-richtext').each(function (richTextIndex) {
     const galleryName = 'rich-text-images-' + richTextIndex;
-    const $images = $(this).find('figure.w-richtext-figure-type-image img');
+    const $allImages = $(this).find('figure.w-richtext-figure-type-image img');
+    const $linkedImages = $allImages.filter(function () {
+      return $(this).closest('a[href]').length > 0;
+    });
+    const $images = $allImages.not($linkedImages);
+
+    $linkedImages.removeAttr('data-fancybox data-src data-caption');
 
     $images.each(function () {
       const $image = $(this);
