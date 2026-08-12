@@ -1,4 +1,4 @@
-// Last updated: 2026-08-12 07:36:11
+// Last updated: 2026-08-12 07:37:43
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -3443,6 +3443,40 @@ function initDosingGuideLinkButtons() {
 }
 
 countryContentReady.then(initDosingGuideLinkButtons);
+
+// CONVERT BLOG "KEEP LEARNING" RICH-TEXT LINKS TO BUTTONS
+function initBlogLinkButtons() {
+  $('.blog_button-wrap:not(.is-dosing)').each(function () {
+    const $wrap = $(this);
+    const $source = $wrap.children('.text-rich-text.is-blog-buttons').first();
+    const $links = $source.find('a[href]');
+
+    if (!$source.length || !$links.length) return;
+
+    const $group = $('<div class="button-group is-vertical"></div>');
+
+    $links.each(function () {
+      const $link = $(this);
+      const $button = $('<a class="button is-tertiary w-inline-block"></a>');
+      const target = $link.attr('target');
+      const rel = $link.attr('rel');
+
+      $button.attr('href', $link.attr('href'));
+      if (target) $button.attr('target', target);
+      if (rel) $button.attr('rel', rel);
+
+      $button.append($('<div></div>').text($.trim($link.text()).replace(/\.{2,}$/, '')));
+      $button.append(
+        '<div class="button_icon w-embed"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width="100%" height="100%" fill="none"><path d="M534.9 278.6l22.6-22.6-22.6-22.6-160-160-22.6-22.6-45.3 45.3c1.3 1.3 44 44 128 128l-402.7 0 0 64 402.7 0c-84 84-126.7 126.7-128 128l45.3 45.3 22.6-22.6 160-160z" fill="currentColor" stroke="currentColor"></path></svg></div>'
+      );
+      $group.append($button);
+    });
+
+    $source.replaceWith($group);
+  });
+}
+
+countryContentReady.then(initBlogLinkButtons);
 
 // SET SLIDER MASK HEIGHT
 $(function () {
