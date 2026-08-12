@@ -1,4 +1,4 @@
-// Last updated: 2026-08-12 07:47:28
+// Last updated: 2026-08-12 08:56:40
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -12,6 +12,7 @@ function sentenceCaseSidebarLabel(value) {
 const WEBFLOW_PAGE_IDS = {
   home: '6a28130a9f765f9bc4698235',
   faq: '6a298df45cd69f1a53c202a7',
+  faqDetail: '6a298ea7a63a9ab62f883c43',
   diseaseDetail: '6a282dae1696fde426e181d9',
   dosingGuide: '6a292541aac8585a2a153456',
   videos: '6a29b82a83695807b19eda76',
@@ -47,6 +48,7 @@ function isIncludedInUkSchema(element) {
 // or unrelated interface initialisers can modify the page or stop execution.
 generateHomePageSchema();
 generateFaqPageSchema();
+generateFaqDetailSchema();
 generateDiseaseDetailSchema();
 generateDosingGuideSchema();
 generateVideosCollectionSchema();
@@ -1477,6 +1479,121 @@ function generateFaqPageSchema() {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
     mainEntity: mainEntity
+  });
+  document.head.appendChild(schema);
+}
+
+// FAQ DETAIL SCHEMA
+function generateFaqDetailSchema() {
+  if (document.documentElement.dataset.wfPage !== WEBFLOW_PAGE_IDS.faqDetail) return;
+
+  const pageUrl = getSchemaPageUrl();
+  const siteUrl = new URL('/', pageUrl).href;
+  const organizationId = siteUrl + '#organization';
+  const websiteId = siteUrl + '#website';
+  const webpageId = pageUrl + '#webpage';
+  const questionId = pageUrl + '#question';
+  const breadcrumbId = pageUrl + '#breadcrumb';
+  const question = document.querySelector('.faq_question-text.is-page')
+    ?.textContent.replace(/\s+/g, ' ').trim();
+  const answerElement = document.querySelector(
+    '.faq_answer .text-rich-text.is-faq[data-country="UK"]:not(.is-faq-buttons)'
+  ) || document.querySelector(
+    '.faq_answer .text-rich-text.is-faq:not([data-country]):not(.is-faq-buttons)'
+  );
+  const answer = answerElement?.textContent.replace(/\s+/g, ' ').trim();
+
+  if (!question || !answer) return;
+
+  const siteName = document.title.split(/\s*\u00b7\s*/).pop().trim();
+  const description = document.querySelector('meta[name="description"]')?.content.trim() || answer;
+  const logo = document.querySelector('.footer_logo[src]');
+  const organization = {
+    '@type': 'Organization',
+    '@id': organizationId,
+    name: siteName,
+    url: siteUrl
+  };
+
+  if (logo) {
+    const logoUrl = new URL(logo.getAttribute('src'), pageUrl).href;
+
+    organization.logo = {
+      '@type': 'ImageObject',
+      '@id': siteUrl + '#logo',
+      url: logoUrl,
+      contentUrl: logoUrl,
+      caption: siteName
+    };
+    organization.image = { '@id': siteUrl + '#logo' };
+  }
+
+  const existingSchema = document.getElementById('faq-detail-schema');
+
+  if (existingSchema) existingSchema.remove();
+
+  const schema = document.createElement('script');
+  schema.id = 'faq-detail-schema';
+  schema.type = 'application/ld+json';
+  schema.textContent = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@graph': [
+      organization,
+      {
+        '@type': 'WebSite',
+        '@id': websiteId,
+        url: siteUrl,
+        name: siteName,
+        publisher: { '@id': organizationId },
+        inLanguage: document.documentElement.lang || 'en'
+      },
+      {
+        '@type': 'FAQPage',
+        '@id': webpageId,
+        url: pageUrl,
+        name: document.title,
+        headline: question,
+        description: description,
+        isPartOf: { '@id': websiteId },
+        publisher: { '@id': organizationId },
+        breadcrumb: { '@id': breadcrumbId },
+        mainEntity: { '@id': questionId },
+        inLanguage: document.documentElement.lang || 'en'
+      },
+      {
+        '@type': 'Question',
+        '@id': questionId,
+        name: question,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: answer
+        }
+      },
+      {
+        '@type': 'BreadcrumbList',
+        '@id': breadcrumbId,
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Home',
+            item: siteUrl
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'FAQ',
+            item: new URL('/faq', siteUrl).href
+          },
+          {
+            '@type': 'ListItem',
+            position: 3,
+            name: question,
+            item: pageUrl
+          }
+        ]
+      }
+    ]
   });
   document.head.appendChild(schema);
 }
