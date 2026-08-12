@@ -1,4 +1,4 @@
-// Last updated: 2026-07-29 15:52:27
+// Last updated: 2026-08-12 07:36:11
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -3411,6 +3411,38 @@ function initFaqLinkButtons() {
 }
 
 countryContentReady.then(initFaqLinkButtons);
+
+// CONVERT DOSING GUIDE RICH-TEXT LINKS TO THE EXISTING BUTTON LIST
+function initDosingGuideLinkButtons() {
+  $('.blog_button-wrap.is-dosing').each(function () {
+    const $wrap = $(this);
+    const $source = $wrap.children('.text-rich-text.is-blog-buttons').first();
+    const $group = $wrap.children('.button-group.is-vertical').first();
+    const $template = $group.children('a.button.is-tertiary').first();
+
+    if (!$source.length || !$group.length || !$template.length) return;
+
+    const $buttons = $source.find('a[href]').map(function () {
+      const $link = $(this);
+      const $button = $template.clone();
+
+      $button.attr('href', $link.attr('href'));
+      $button.children('div').first().text($.trim($link.text()).replace(/\.{2,}$/, ''));
+
+      return $button[0];
+    }).get();
+
+    if (!$buttons.length) {
+      $wrap.remove();
+      return;
+    }
+
+    $group.empty().append($buttons).removeClass('hide');
+    $source.remove();
+  });
+}
+
+countryContentReady.then(initDosingGuideLinkButtons);
 
 // SET SLIDER MASK HEIGHT
 $(function () {
