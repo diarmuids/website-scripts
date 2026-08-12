@@ -1,4 +1,4 @@
-// Last updated: 2026-08-12 07:37:43
+// Last updated: 2026-08-12 07:41:16
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -1274,15 +1274,22 @@ function initContentSwipers() {
 
       var styles = getComputedStyle(list);
       var gap = parseFloat(styles.columnGap || styles.gap) || 0;
-      var width = items[0].getBoundingClientRect().width;
+      var measurementItem = Array.from(items).find(function (item) {
+        return item.getClientRects().length && item.getBoundingClientRect().width > 0;
+      });
+      var width = measurementItem
+        ? measurementItem.getBoundingClientRect().width
+        : 0;
       var itemMarginRight = 0;
 
-      if (!isProductSlider && !isBlogSlider) {
-        var inlineMarginRight = items[0].style.marginRight;
+      if (!width) return null;
 
-        items[0].style.marginRight = '';
-        itemMarginRight = parseFloat(getComputedStyle(items[0]).marginRight) || 0;
-        items[0].style.marginRight = inlineMarginRight;
+      if (!isProductSlider && !isBlogSlider) {
+        var inlineMarginRight = measurementItem.style.marginRight;
+
+        measurementItem.style.marginRight = '';
+        itemMarginRight = parseFloat(getComputedStyle(measurementItem).marginRight) || 0;
+        measurementItem.style.marginRight = inlineMarginRight;
       }
 
       list.style.gap = '0px';
@@ -1307,6 +1314,11 @@ function initContentSwipers() {
     });
 
     var setup = getSetup();
+
+    if (!setup) {
+      wrapper.dataset.swiperReady = '';
+      return;
+    }
 
     var swiper = new Swiper(wrapper, {
       slidesPerView: 'auto',
@@ -1346,8 +1358,12 @@ function initContentSwipers() {
     updateSliderArrowStates();
 
     window.addEventListener('resize', function () {
-      setup = getSetup();
-      swiper.params.spaceBetween = setup.swiperGap;
+      var nextSetup = getSetup();
+
+      if (!nextSetup) return;
+
+      setup = nextSetup;
+      swiper.params.spaceBetween = nextSetup.swiperGap;
       swiper.update();
       swiper.navigation.update();
       updateSliderArrowStates();
