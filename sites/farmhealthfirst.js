@@ -1,4 +1,4 @@
-// Last updated: 2026-08-12 07:43:50
+// Last updated: 2026-08-12 07:44:17
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -1359,8 +1359,6 @@ function initContentSwipers() {
     swiper.on('update', updateSliderArrowStates);
     updateSliderArrowStates();
 
-    var wheelSnapTimer;
-
     wrapper.addEventListener('wheel', function (event) {
       if (!event.shiftKey || swiper.isLocked) return;
 
@@ -1387,11 +1385,6 @@ function initContentSwipers() {
       swiper.updateActiveIndex();
       swiper.updateSlidesClasses();
       updateSliderArrowStates();
-
-      window.clearTimeout(wheelSnapTimer);
-      wheelSnapTimer = window.setTimeout(function () {
-        swiper.slideToClosest(300, true, false, 0.5);
-      }, 140);
     }, { passive: false });
 
     window.addEventListener('resize', function () {
