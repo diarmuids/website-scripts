@@ -1,4 +1,4 @@
-// Last updated: 2026-08-13 12:43:34
+// Last updated: 2026-08-13 12:47:21
 
 (function () {
   'use strict';
@@ -101,49 +101,43 @@
     return cleanText(firstParagraph && firstParagraph.textContent);
   }
 
-  function seoBlockText(heading) {
-    const block = Array.from(document.querySelectorAll('.seo_block')).find(function (item) {
+  function seoBlock(heading) {
+    return Array.from(document.querySelectorAll('.seo_block')).find(function (item) {
       const title = item.querySelector('.seo_heading');
       return cleanText(title && title.textContent).toLowerCase() === heading.toLowerCase();
     });
+  }
+
+  function seoBlockText(heading) {
+    const block = seoBlock(heading);
     return cleanText(block && block.textContent);
   }
 
-  function publicPrice() {
-    const content = seoBlockText('Costs') || cleanText(document.querySelector('.page_content') && document.querySelector('.page_content').textContent);
-    const match = content.match(/non-members?\s*:\s*€\s*(\d+(?:[.,]\d{1,2})?)/i);
-    return match ? match[1].replace(',', '.') : '';
-  }
+  function publicOffers(url, details) {
+    const costs = seoBlock('Costs');
+    if (!costs) return [];
 
-  function bookingDetails() {
-    const costs = seoBlockText('Costs');
-    const booking = seoBlockText('Booking');
+    const offers = Array.from(costs.querySelectorAll('li'))
+      .map(function (item) {
+        const text = cleanText(item.textContent);
+        const match = text.match(/^(.+?)\s*:\s*€\s*(\d+(?:[.,]\d{1,2})?)/i);
+        if (!match) return null;
 
-    return {
-      membersFree: /free\s+for\s+members/i.test(costs),
-      bookingEssential: /booking\s+essential/i.test(costs),
-      membersUseApp: /members?\s*:\s*book\s+through\s+the\s+club\s+app/i.test(booking),
-      nonMembersUseSocial: /non-members?\s*:\s*book\s+by\s+social\s+dm/i.test(booking),
-      nonMembersUseEmail: /non-members?[\s\S]*email/i.test(booking),
-      nonMembersUsePhone: /non-members?[\s\S]*(?:call|phone)/i.test(booking),
-    };
-  }
-
-  function classOffers(url, price, details) {
-    const offers = [];
-
-    if (price) {
-      offers.push({
-        '@type': 'Offer',
-        name: 'Non-member class admission',
-        price: price,
-        priceCurrency: 'EUR',
-        description: 'Non-members pay €' + price + ' per class.' + (details.bookingEssential ? ' Booking essential.' : ''),
-        category: 'Non-member',
-        availability: 'https://schema.org/InStock',
-        url: url,
-      });
-    }
+        const label = cleanText(match[1]);
+        const price = match[2].replace(',', '.');
+        const isNonMember = /^non-members?$/i.test(label);
+        return {
+          '@type': 'Offer',
+          name: isNonMember ? 'Non-member class admission' : label,
+          price: price,
+          priceCurrency: 'EUR',
+          description: label + ' costs €' + price + '.' + (details.bookingEssential ? ' Booking essential.' : ''),
+          category: isNonMember ? 'Non-member' : label,
+          availability: 'https://schema.org/InStock',
+          url: url,
+        };
+      })
+      .filter(Boolean);
 
     if (details.membersFree) {
       offers.push({
@@ -159,6 +153,20 @@
     }
 
     return offers;
+  }
+
+  function bookingDetails() {
+    const costs = seoBlockText('Costs');
+    const booking = seoBlockText('Booking');
+
+    return {
+      membersFree: /free\s+for\s+members/i.test(costs),
+      bookingEssential: /booking\s+essential/i.test(costs),
+      membersUseApp: /members?\s*:\s*book\s+through\s+the\s+club\s+app/i.test(booking),
+      nonMembersUseSocial: /non-members?\s*:\s*book\s+by\s+social\s+dm/i.test(booking),
+      nonMembersUseEmail: /non-members?[\s\S]*email/i.test(booking),
+      nonMembersUsePhone: /non-members?[\s\S]*(?:call|phone)/i.test(booking),
+    };
   }
 
   function bookingChannels(details) {
