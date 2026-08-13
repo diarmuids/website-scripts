@@ -1,4 +1,4 @@
-// Last updated: 2026-08-05 15:08:26
+// Last updated: 2026-08-13 12:43:29
 
 (function () {
   'use strict';
@@ -101,10 +101,90 @@
     return cleanText(firstParagraph && firstParagraph.textContent);
   }
 
+  function seoBlockText(heading) {
+    const block = Array.from(document.querySelectorAll('.seo_block')).find(function (item) {
+      const title = item.querySelector('.seo_heading');
+      return cleanText(title && title.textContent).toLowerCase() === heading.toLowerCase();
+    });
+    return cleanText(block && block.textContent);
+  }
+
   function publicPrice() {
-    const content = cleanText(document.querySelector('.page_content') && document.querySelector('.page_content').textContent);
+    const content = seoBlockText('Costs') || cleanText(document.querySelector('.page_content') && document.querySelector('.page_content').textContent);
     const match = content.match(/non-members?\s*:\s*€\s*(\d+(?:[.,]\d{1,2})?)/i);
     return match ? match[1].replace(',', '.') : '';
+  }
+
+  function bookingDetails() {
+    const costs = seoBlockText('Costs');
+    const booking = seoBlockText('Booking');
+
+    return {
+      membersFree: /free\s+for\s+members/i.test(costs),
+      bookingEssential: /booking\s+essential/i.test(costs),
+      membersUseApp: /members?\s*:\s*book\s+through\s+the\s+club\s+app/i.test(booking),
+      nonMembersUseSocial: /non-members?\s*:\s*book\s+by\s+social\s+dm/i.test(booking),
+      nonMembersUseEmail: /non-members?[\s\S]*email/i.test(booking),
+      nonMembersUsePhone: /non-members?[\s\S]*(?:call|phone)/i.test(booking),
+    };
+  }
+
+  function classOffers(url, price, details) {
+    const offers = [];
+
+    if (price) {
+      offers.push({
+        '@type': 'Offer',
+        name: 'Non-member class admission',
+        price: price,
+        priceCurrency: 'EUR',
+        description: 'Non-members pay €' + price + ' per class.' + (details.bookingEssential ? ' Booking essential.' : ''),
+        category: 'Non-member',
+        availability: 'https://schema.org/InStock',
+        url: url,
+      });
+    }
+
+    if (details.membersFree) {
+      offers.push({
+        '@type': 'Offer',
+        name: 'Member class admission',
+        price: '0',
+        priceCurrency: 'EUR',
+        description: 'Classes are free for members.' + (details.bookingEssential ? ' Booking essential.' : ''),
+        category: 'Member',
+        availability: 'https://schema.org/InStock',
+        url: url,
+      });
+    }
+
+    return offers;
+  }
+
+  function bookingChannels(details) {
+    const channels = [];
+
+    if (details.membersUseApp) {
+      channels.push({
+        '@type': 'ServiceChannel',
+        name: 'Member booking',
+        description: 'Members book through the club app.',
+      });
+    }
+
+    if (details.nonMembersUseSocial || details.nonMembersUseEmail || details.nonMembersUsePhone) {
+      channels.push({
+        '@type': 'ServiceChannel',
+        name: 'Non-member booking',
+        description: 'Non-members book by social direct message, email, or phone.',
+        servicePhone: details.nonMembersUsePhone
+          ? { '@type': 'ContactPoint', telephone: '+3532643492', contactType: 'class bookings' }
+          : undefined,
+        serviceUrl: details.nonMembersUseEmail ? 'mailto:info@themovement.ie' : undefined,
+      });
+    }
+
+    return channels;
   }
 
   function timetablePrice() {
