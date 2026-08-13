@@ -1,4 +1,4 @@
-// Last updated: 2026-08-13 12:43:29
+// Last updated: 2026-08-13 12:43:34
 
 (function () {
   'use strict';
@@ -289,7 +289,7 @@
     };
   }
 
-  function scheduledEvents(schedules, url, price) {
+  function scheduledEvents(schedules, url, price, details) {
     return schedules.map(function (schedule, index) {
       const eventId = url + '#class-' + slug(schedule.name + '-' + schedule.day + '-' + schedule.startTime) + '-' + (index + 1);
       return {
@@ -312,9 +312,7 @@
           ? { '@type': 'Place', name: schedule.room, containedInPlace: { '@id': BUSINESS_ID } }
           : { '@id': BUSINESS_ID },
         organizer: { '@id': BUSINESS_ID },
-        offers: price
-          ? { '@type': 'Offer', price: price, priceCurrency: 'EUR', availability: 'https://schema.org/InStock', url: url }
-          : undefined,
+        offers: classOffers(url, price, details || {}).length ? classOffers(url, price, details || {}) : undefined,
       };
     });
   }
@@ -327,9 +325,10 @@
     const locality = areaServed();
     const schedules = classSchedule();
     const price = publicPrice();
+    const booking = bookingDetails();
     const serviceId = url + '#service';
 
-    const classEvents = scheduledEvents(schedules, url, price);
+    const classEvents = scheduledEvents(schedules, url, price, booking);
     const business = businessSchema(image);
 
     const service = {
@@ -346,16 +345,8 @@
       areaServed: locality
         ? { '@type': 'Place', name: locality }
         : undefined,
-      offers: price
-        ? {
-            '@type': 'Offer',
-            price: price,
-            priceCurrency: 'EUR',
-            description: 'Non-member price per class. Booking essential.',
-            availability: 'https://schema.org/InStock',
-            url: url,
-          }
-        : undefined,
+      offers: classOffers(url, price, booking),
+      availableChannel: bookingChannels(booking),
     };
 
     const webPage = {
