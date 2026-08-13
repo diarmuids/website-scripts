@@ -1,4 +1,4 @@
-// Last updated: 2026-08-13 18:29:01
+// Last updated: 2026-08-13 18:29:35
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -2647,7 +2647,6 @@ function generateProductDetailSchema() {
   const imageUrl = imageElement
     ? new URL(imageElement.getAttribute('src'), pageUrl).href
     : '';
-  const properties = [];
   const propertyValues = {};
 
   productSection.querySelectorAll('.product-detail_item').forEach(function (item) {
@@ -2671,11 +2670,6 @@ function generateProductDetailSchema() {
     ) return;
 
     propertyValues[label.toLowerCase()] = value;
-    properties.push({
-      '@type': 'PropertyValue',
-      name: label,
-      value: value
-    });
   });
 
   const description = metaDescription || propertyValues.description || '';
@@ -2719,12 +2713,12 @@ function generateProductDetailSchema() {
 
   const isSupplement = /supplement/i.test(propertyValues['product category'] || '');
   const medicine = {
-    '@type': isSupplement ? 'DietarySupplement' : 'Drug',
+    '@type': 'MedicalEntity',
     '@id': medicineId,
+    additionalType: isSupplement ? 'Animal dietary supplement' : 'Veterinary medicine',
     url: pageUrl,
     name: productName,
-    mainEntityOfPage: { '@id': webpageId },
-    manufacturer: { '@id': organizationId }
+    mainEntityOfPage: { '@id': webpageId }
   };
 
   if (description) medicine.description = description;
@@ -2736,29 +2730,18 @@ function generateProductDetailSchema() {
       caption: imageElement.alt || productName
     };
   }
-  if (propertyValues['active ingredient']) {
-    medicine.activeIngredient = propertyValues['active ingredient'];
-  }
-  if (!isSupplement && propertyValues.class) {
-    medicine.drugClass = {
-      '@type': 'DrugClass',
-      name: propertyValues.class
-    };
-  }
-  if (!isSupplement && propertyValues['admin route']) {
-    medicine.administrationRoute = propertyValues['admin route'];
-  }
-  if (!isSupplement && propertyValues['dose rate']) {
-    medicine.dosageForm = propertyValues['dose rate'];
-  }
   if (!isSupplement && propertyValues['legal category']) {
     medicine.legalStatus = propertyValues['legal category'];
   }
-  if (propertyValues.species) {
-    medicine.audience = {
-      '@type': 'Audience',
-      audienceType: propertyValues.species
-    };
+  const identifyingDetails = [
+    propertyValues['active ingredient'],
+    propertyValues.class,
+    propertyValues.species,
+    propertyValues['admin route']
+  ].filter(Boolean);
+
+  if (identifyingDetails.length) {
+    medicine.disambiguatingDescription = identifyingDetails.join('; ');
   }
 
   const webPage = {
