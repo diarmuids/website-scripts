@@ -1,4 +1,4 @@
-// Last updated: 2026-08-13 12:47:21
+// Last updated: 2026-08-13 12:47:29
 
 (function () {
   'use strict';
@@ -297,7 +297,7 @@
     };
   }
 
-  function scheduledEvents(schedules, url, price, details) {
+  function scheduledEvents(schedules, url, offers) {
     return schedules.map(function (schedule, index) {
       const eventId = url + '#class-' + slug(schedule.name + '-' + schedule.day + '-' + schedule.startTime) + '-' + (index + 1);
       return {
@@ -320,7 +320,7 @@
           ? { '@type': 'Place', name: schedule.room, containedInPlace: { '@id': BUSINESS_ID } }
           : { '@id': BUSINESS_ID },
         organizer: { '@id': BUSINESS_ID },
-        offers: classOffers(url, price, details || {}).length ? classOffers(url, price, details || {}) : undefined,
+        offers: offers.length ? offers : undefined,
       };
     });
   }
@@ -332,11 +332,11 @@
     const image = primaryImage();
     const locality = areaServed();
     const schedules = classSchedule();
-    const price = publicPrice();
     const booking = bookingDetails();
+    const offers = publicOffers(url, booking);
     const serviceId = url + '#service';
 
-    const classEvents = scheduledEvents(schedules, url, price, booking);
+    const classEvents = scheduledEvents(schedules, url, offers);
     const business = businessSchema(image);
 
     const service = {
@@ -353,7 +353,7 @@
       areaServed: locality
         ? { '@type': 'Place', name: locality }
         : undefined,
-      offers: classOffers(url, price, booking),
+      offers: offers,
       availableChannel: bookingChannels(booking),
     };
 
@@ -389,7 +389,11 @@
     const description = getMeta('meta[name="description"]');
     const image = primaryImage();
     const price = timetablePrice();
-    const events = scheduledEvents(timetableSchedule(), url, price);
+    const events = scheduledEvents(
+      timetableSchedule(),
+      url,
+      price ? [{ '@type': 'Offer', price: price, priceCurrency: 'EUR', availability: 'https://schema.org/InStock', url: url }] : []
+    );
     const timetableId = url + '#timetable';
     const faqId = url + '#faq';
     const questions = faqEntities('.fll-timetable .faq-list-item');
