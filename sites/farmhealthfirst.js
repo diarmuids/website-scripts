@@ -1,4 +1,4 @@
-// Last updated: 2026-08-12 08:56:40
+// Last updated: 2026-08-13 18:29:01
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -2625,7 +2625,7 @@ function generateProductDetailSchema() {
   const organizationId = siteUrl + '#organization';
   const websiteId = siteUrl + '#website';
   const webpageId = pageUrl + '#webpage';
-  const productId = pageUrl + '#product';
+  const medicineId = pageUrl + '#medicine';
   const breadcrumbId = pageUrl + '#breadcrumb';
   const productSection = document.querySelector('.section_product-detail');
 
@@ -2717,25 +2717,49 @@ function generateProductDetailSchema() {
   }
   if (socialUrls.length) organization.sameAs = socialUrls;
 
-  const product = {
-    '@type': 'Product',
-    '@id': productId,
+  const isSupplement = /supplement/i.test(propertyValues['product category'] || '');
+  const medicine = {
+    '@type': isSupplement ? 'DietarySupplement' : 'Drug',
+    '@id': medicineId,
     url: pageUrl,
     name: productName,
-    mainEntityOfPage: { '@id': webpageId }
+    mainEntityOfPage: { '@id': webpageId },
+    manufacturer: { '@id': organizationId }
   };
 
-  if (description) product.description = description;
+  if (description) medicine.description = description;
   if (imageUrl) {
-    product.image = {
+    medicine.image = {
       '@type': 'ImageObject',
       url: imageUrl,
       contentUrl: imageUrl,
       caption: imageElement.alt || productName
     };
   }
-  if (propertyValues.class) product.category = propertyValues.class;
-  if (properties.length) product.additionalProperty = properties;
+  if (propertyValues['active ingredient']) {
+    medicine.activeIngredient = propertyValues['active ingredient'];
+  }
+  if (!isSupplement && propertyValues.class) {
+    medicine.drugClass = {
+      '@type': 'DrugClass',
+      name: propertyValues.class
+    };
+  }
+  if (!isSupplement && propertyValues['admin route']) {
+    medicine.administrationRoute = propertyValues['admin route'];
+  }
+  if (!isSupplement && propertyValues['dose rate']) {
+    medicine.dosageForm = propertyValues['dose rate'];
+  }
+  if (!isSupplement && propertyValues['legal category']) {
+    medicine.legalStatus = propertyValues['legal category'];
+  }
+  if (propertyValues.species) {
+    medicine.audience = {
+      '@type': 'Audience',
+      audienceType: propertyValues.species
+    };
+  }
 
   const webPage = {
     '@type': 'WebPage',
@@ -2744,7 +2768,7 @@ function generateProductDetailSchema() {
     name: document.title,
     headline: productName,
     isPartOf: { '@id': websiteId },
-    mainEntity: { '@id': productId },
+    mainEntity: { '@id': medicineId },
     publisher: { '@id': organizationId },
     breadcrumb: { '@id': breadcrumbId },
     inLanguage: document.documentElement.lang || 'en'
@@ -2770,7 +2794,8 @@ function generateProductDetailSchema() {
 
         return item && (
           types.includes('Product') ||
-          item['@id'] === productId
+          item['@id'] === pageUrl + '#product' ||
+          item['@id'] === medicineId
         );
       })) {
         script.remove();
@@ -2796,7 +2821,7 @@ function generateProductDetailSchema() {
         inLanguage: document.documentElement.lang || 'en'
       },
       webPage,
-      product,
+      medicine,
       {
         '@type': 'BreadcrumbList',
         '@id': breadcrumbId,
