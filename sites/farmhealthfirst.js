@@ -1,4 +1,4 @@
-// Last updated: 2026-08-13 18:33:12
+// Last updated: 2026-08-13 18:33:31
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -2648,9 +2648,8 @@ function generateProductDetailSchema() {
     ? new URL(imageElement.getAttribute('src'), pageUrl).href
     : '';
   const propertyValues = {};
-  const detailSections = [];
 
-  productSection.querySelectorAll('.product-detail_item').forEach(function (item, index) {
+  productSection.querySelectorAll('.product-detail_item').forEach(function (item) {
     const label = item.querySelector('.product-detail_title')
       ?.textContent.replace(/\s+/g, ' ').trim();
     const valueElement = item.querySelector(
@@ -2671,29 +2670,7 @@ function generateProductDetailSchema() {
     ) return;
 
     propertyValues[label.toLowerCase()] = value;
-    detailSections.push({
-      '@type': 'WebPageElement',
-      '@id': pageUrl + '#detail-' + (index + 1),
-      name: label,
-      text: value,
-      isPartOf: { '@id': webpageId },
-      about: { '@id': medicineId }
-    });
   });
-
-  const warning = productSection.querySelector('.product-detail_warning-wrap')
-    ?.textContent.replace(/\s+/g, ' ').trim();
-
-  if (warning) {
-    detailSections.push({
-      '@type': 'WebPageElement',
-      '@id': pageUrl + '#responsible-use-warning',
-      name: 'Responsible use warning',
-      text: warning,
-      isPartOf: { '@id': webpageId },
-      about: { '@id': medicineId }
-    });
-  }
 
   const description = metaDescription || propertyValues.description || '';
   const logo = document.querySelector('.footer_logo[src]');
@@ -2767,21 +2744,8 @@ function generateProductDetailSchema() {
     medicine.disambiguatingDescription = identifyingDetails.join('; ');
   }
 
-  const supplierLink = productSection.querySelector(
-    'a[href*="/online-retailers-and-stores"]'
-  );
-
-  if (supplierLink) {
-    medicine.potentialAction = {
-      '@type': 'FindAction',
-      name: 'Find an online or local supplier',
-      object: { '@id': medicineId },
-      target: new URL(supplierLink.getAttribute('href'), pageUrl).href
-    };
-  }
-
   const webPage = {
-    '@type': 'MedicalWebPage',
+    '@type': 'WebPage',
     '@id': webpageId,
     url: pageUrl,
     name: document.title,
@@ -2790,15 +2754,10 @@ function generateProductDetailSchema() {
     mainEntity: { '@id': medicineId },
     publisher: { '@id': organizationId },
     breadcrumb: { '@id': breadcrumbId },
-    inLanguage: 'en-GB'
+    inLanguage: document.documentElement.lang || 'en'
   };
 
   if (description) webPage.description = description;
-  if (detailSections.length) {
-    webPage.hasPart = detailSections.map(function (section) {
-      return { '@id': section['@id'] };
-    });
-  }
   if (imageUrl) {
     webPage.primaryImageOfPage = {
       '@type': 'ImageObject',
@@ -2846,7 +2805,6 @@ function generateProductDetailSchema() {
       },
       webPage,
       medicine,
-      ...detailSections,
       {
         '@type': 'BreadcrumbList',
         '@id': breadcrumbId,
