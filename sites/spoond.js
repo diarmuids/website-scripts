@@ -1,6 +1,42 @@
-// Last updated: 2026-07-17 17:45:37
+// Last updated: 2026-08-14 12:55:49
 
 // console.log("TEST")
+
+// HIDE COLLECTION SHIPPING METHOD
+function hideCollectionShippingMethod() {
+  document.querySelectorAll(
+    '.w-commerce-commercecheckoutshippingmethodslist .w-commerce-commercecheckoutshippingmethoditem'
+  ).forEach(function (shippingMethod) {
+    const name = shippingMethod.querySelector(
+      '.w-commerce-commercecheckoutshippingmethoddescriptionblock .w-commerce-commerceboldtextblock'
+    )?.textContent.replace(/\s+/g, ' ').trim();
+
+    if (name?.toLowerCase() !== 'collection') return;
+
+    shippingMethod.style.setProperty('display', 'none', 'important');
+    shippingMethod.setAttribute('aria-hidden', 'true');
+
+    const input = shippingMethod.querySelector('input[name="shipping-method-choice"]');
+
+    if (input) {
+      input.checked = false;
+      input.disabled = true;
+    }
+  });
+}
+
+function initCollectionShippingMethodHiding() {
+  hideCollectionShippingMethod();
+
+  const observer = new MutationObserver(hideCollectionShippingMethod);
+  observer.observe(document.body, { childList: true, subtree: true });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initCollectionShippingMethodHiding);
+} else {
+  initCollectionShippingMethodHiding();
+}
 
 $(document).on('click', '[data-node-type="commerce-add-to-cart-option-select"]', function () {
   $(this).find('option:disabled').each(function () {
