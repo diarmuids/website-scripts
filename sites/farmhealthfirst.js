@@ -1,4 +1,4 @@
-// Last updated: 2026-08-13 18:33:31
+// Last updated: 2026-08-15 08:56:08
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -1784,7 +1784,12 @@ function generateDiseaseDetailSchema() {
   if (description) webPage.description = description;
   if (articleBody) webPage.text = articleBody;
 
-  document.querySelectorAll('script[type="application/ld+json"]').forEach(function (script) {
+  function removeLegacyProductSchema(root) {
+    const scripts = root.matches?.('script[type="application/ld+json"]')
+      ? [root]
+      : root.querySelectorAll?.('script[type="application/ld+json"]') || [];
+
+    scripts.forEach(function (script) {
     try {
       const existingSchema = JSON.parse(script.textContent);
       const graph = Array.isArray(existingSchema['@graph'])
@@ -1804,7 +1809,26 @@ function generateDiseaseDetailSchema() {
     } catch (error) {
       // Leave unrelated invalid JSON-LD untouched.
     }
+    });
+  }
+
+  removeLegacyProductSchema(document);
+
+  const productSchemaObserver = new MutationObserver(function (mutations) {
+    mutations.forEach(function (mutation) {
+      mutation.addedNodes.forEach(function (node) {
+        if (node.nodeType === Node.ELEMENT_NODE) removeLegacyProductSchema(node);
+      });
+    });
   });
+
+  productSchemaObserver.observe(document.documentElement, {
+    childList: true,
+    subtree: true
+  });
+  window.setTimeout(function () {
+    productSchemaObserver.disconnect();
+  }, 10000);
 
   const schema = document.createElement('script');
   schema.id = 'disease-detail-schema';
