@@ -1,4 +1,4 @@
-// Last updated: 2026-08-17 09:51:11
+// Last updated: 2026-08-17 09:51:32
 
 (function () {
   'use strict';
@@ -351,7 +351,7 @@
   const specificationSection = sectionNodes.find(function (section) {
     return /^specification$/i.test(section.name);
   });
-  const partNumberMatch = specificationSection?.text.match(/Part No:\s*([^;]+?)(?=\s+Dimensions:|$)/i);
+  const partNumberMatch = specificationSection?.text.match(/Part No:\s*(.+?)(?=Dimensions:|$)/i);
   const item = {
     '@type': 'Thing',
     '@id': itemId,
