@@ -1,4 +1,4 @@
-// Last updated: 2026-08-17 09:45:53
+// Last updated: 2026-08-17 09:47:24
 
 (function () {
   'use strict';
@@ -206,6 +206,217 @@
       })
     }
   ].concat(reviews);
+
+  const existingSchema = document.getElementById(SCHEMA_ID);
+  if (existingSchema) existingSchema.remove();
+
+  const schema = document.createElement('script');
+  schema.id = SCHEMA_ID;
+  schema.type = 'application/ld+json';
+  schema.textContent = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@graph': graph
+  });
+  document.head.appendChild(schema);
+}());
+
+(function () {
+  'use strict';
+
+  const PRODUCT_RANGE_PAGE_ID = '68b969ba939d3612724d32bb';
+  const SCHEMA_ID = 'fogbandit-product-range-schema';
+
+  if (
+    document.documentElement.dataset.wfPage !== PRODUCT_RANGE_PAGE_ID &&
+    !/^\/product\/product-range\/?$/.test(window.location.pathname)
+  ) return;
+
+  function cleanText(value) {
+    return (value || '').replace(/\s+/g, ' ').trim();
+  }
+
+  function absoluteUrl(value, baseUrl) {
+    if (!value) return '';
+
+    try {
+      return new URL(value, baseUrl).href;
+    } catch (error) {
+      return '';
+    }
+  }
+
+  const canonical = document.querySelector('link[rel="canonical"][href]');
+  const pageUrlObject = new URL(canonical?.href || window.location.href);
+  pageUrlObject.search = '';
+  pageUrlObject.hash = '';
+
+  const pageUrl = pageUrlObject.href;
+  const siteUrl = new URL('/', pageUrl).href;
+  const organizationId = siteUrl + '#organization';
+  const websiteId = siteUrl + '#website';
+  const webpageId = pageUrl + '#webpage';
+  const breadcrumbId = pageUrl + '#breadcrumb';
+  const productListId = pageUrl + '#product-list';
+  const pageHeading = cleanText(document.querySelector('h1')?.textContent);
+  const description = cleanText(document.querySelector('meta[name="description"]')?.content);
+  const siteName = cleanText(
+    document.querySelector('.footer_credit-text')?.textContent
+      .replace(/^\s*©\s*\d{4}\s*/, '')
+      .replace(/\s*All rights reserved\.?.*$/i, '')
+  ) || 'Fog Bandit Ireland';
+  const logo = document.querySelector(
+    '.nav_logo-image[src], .nav_logo img[src], a[href="/"] img[src]'
+  );
+  const emailLink = document.querySelector('.footer_component a[href^="mailto:"]');
+  const phoneLink = document.querySelector('.footer_component a[href^="tel:"]');
+  const locationHeading = Array.from(document.querySelectorAll('.footer_heading')).find(function (heading) {
+    return /location/i.test(heading.textContent);
+  });
+  const locationColumn = locationHeading?.closest('.footer_column');
+  const locationLink = locationColumn?.querySelector('a[href*="google.com/maps"]');
+  const addressText = cleanText(locationLink?.textContent);
+  const socialUrls = Array.from(document.querySelectorAll(
+    '.footer_social-link[href^="http"], .nav_social-link[href^="http"]'
+  ))
+    .map(function (link) {
+      return absoluteUrl(link.getAttribute('href'), pageUrl);
+    })
+    .filter(function (url, index, urls) {
+      return url && urls.indexOf(url) === index;
+    });
+  const organization = {
+    '@type': ['Organization', 'LocalBusiness'],
+    '@id': organizationId,
+    name: siteName,
+    url: siteUrl
+  };
+
+  if (logo) {
+    const logoUrl = absoluteUrl(logo.getAttribute('src'), pageUrl);
+
+    if (logoUrl) {
+      organization.logo = {
+        '@type': 'ImageObject',
+        '@id': siteUrl + '#logo',
+        url: logoUrl,
+        contentUrl: logoUrl,
+        caption: siteName
+      };
+      organization.image = { '@id': siteUrl + '#logo' };
+    }
+  }
+  if (emailLink) organization.email = emailLink.href.replace(/^mailto:/i, '').split('?')[0];
+  if (phoneLink) organization.telephone = cleanText(phoneLink.textContent) || phoneLink.href.replace(/^tel:/i, '');
+  if (addressText) {
+    organization.address = {
+      '@type': 'PostalAddress',
+      streetAddress: addressText,
+      addressCountry: 'IE'
+    };
+  }
+  if (locationLink) organization.hasMap = locationLink.href;
+  if (socialUrls.length) organization.sameAs = socialUrls;
+
+  const productEntries = [];
+
+  document.querySelectorAll('.prod-list_item').forEach(function (card, index) {
+    const titleElement = card.querySelector('h2, h3');
+    const link = titleElement?.closest('a[href]') || card.querySelector('a[href*="/product-detail/"]');
+    const image = card.querySelector('.prod-list_img[src]');
+    const subtitle = cleanText(card.querySelector('.prod-list_subheader')?.textContent);
+    const title = cleanText(titleElement?.textContent || image?.alt);
+    const url = absoluteUrl(link?.getAttribute('href'), pageUrl);
+    const textCandidates = Array.from(card.querySelectorAll('.layout_column > div'))
+      .map(function (element) {
+        return cleanText(element.textContent);
+      })
+      .filter(function (text) {
+        return text && text !== title && text !== subtitle && !/^learn more$/i.test(text);
+      });
+    const summary = textCandidates.find(function (text) {
+      return text.length > subtitle.length && !text.includes(title);
+    }) || subtitle;
+
+    if (!title || !url) return;
+
+    const listItem = {
+      '@type': 'ListItem',
+      '@id': pageUrl + '#item-' + (index + 1),
+      position: productEntries.length + 1,
+      name: title,
+      url: url
+    };
+
+    if (summary) listItem.description = summary;
+    if (image) {
+      const imageUrl = absoluteUrl(image.getAttribute('src'), pageUrl);
+      if (imageUrl) listItem.image = imageUrl;
+    }
+
+    productEntries.push(listItem);
+  });
+
+  const graph = [
+    organization,
+    {
+      '@type': 'WebSite',
+      '@id': websiteId,
+      url: siteUrl,
+      name: siteName,
+      publisher: { '@id': organizationId },
+      inLanguage: document.documentElement.lang || 'en'
+    },
+    {
+      '@type': 'CollectionPage',
+      '@id': webpageId,
+      url: pageUrl,
+      name: document.title,
+      headline: pageHeading || document.title,
+      description: description,
+      isPartOf: { '@id': websiteId },
+      about: {
+        '@type': 'Thing',
+        name: pageHeading || 'Security fogging systems'
+      },
+      publisher: { '@id': organizationId },
+      breadcrumb: { '@id': breadcrumbId },
+      mainEntity: { '@id': productListId },
+      inLanguage: document.documentElement.lang || 'en'
+    },
+    {
+      '@type': 'BreadcrumbList',
+      '@id': breadcrumbId,
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'Home',
+          item: siteUrl
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: 'Product',
+          item: new URL('/product/features', siteUrl).href
+        },
+        {
+          '@type': 'ListItem',
+          position: 3,
+          name: pageHeading || 'Product Range',
+          item: pageUrl
+        }
+      ]
+    },
+    {
+      '@type': 'ItemList',
+      '@id': productListId,
+      name: pageHeading || 'Product Range',
+      description: description,
+      numberOfItems: productEntries.length,
+      itemListOrder: 'https://schema.org/ItemListOrderAscending',
+      itemListElement: productEntries
+    }
+  ];
 
   const existingSchema = document.getElementById(SCHEMA_ID);
   if (existingSchema) existingSchema.remove();
