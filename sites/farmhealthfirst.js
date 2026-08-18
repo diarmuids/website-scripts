@@ -1,4 +1,4 @@
-// Last updated: 2026-08-15 08:56:08
+// Last updated: 2026-08-18 17:29:36
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -2789,28 +2789,53 @@ function generateProductDetailSchema() {
     };
   }
 
-  document.querySelectorAll('script[type="application/ld+json"]').forEach(function (script) {
-    try {
-      const existingSchema = JSON.parse(script.textContent);
-      const graph = Array.isArray(existingSchema['@graph'])
-        ? existingSchema['@graph']
-        : [existingSchema];
+  function removeLegacyProductSchema(root) {
+    const scripts = root.matches?.('script[type="application/ld+json"]')
+      ? [root]
+      : root.querySelectorAll?.('script[type="application/ld+json"]') || [];
 
-      if (graph.some(function (item) {
-        const types = Array.isArray(item?.['@type']) ? item['@type'] : [item?.['@type']];
+    scripts.forEach(function (script) {
+      try {
+        const existingSchema = JSON.parse(script.textContent);
+        const graph = Array.isArray(existingSchema['@graph'])
+          ? existingSchema['@graph']
+          : [existingSchema];
 
-        return item && (
-          types.includes('Product') ||
-          item['@id'] === pageUrl + '#product' ||
-          item['@id'] === medicineId
-        );
-      })) {
-        script.remove();
+        if (graph.some(function (item) {
+          const types = Array.isArray(item?.['@type']) ? item['@type'] : [item?.['@type']];
+
+          return item && (
+            types.includes('Product') ||
+            types.includes('Drug') ||
+            item['@id'] === pageUrl + '#product' ||
+            item['@id'] === medicineId
+          );
+        })) {
+          script.remove();
+        }
+      } catch (error) {
+        // Leave unrelated invalid JSON-LD untouched.
       }
-    } catch (error) {
-      // Leave unrelated invalid JSON-LD untouched.
-    }
+    });
+  }
+
+  removeLegacyProductSchema(document);
+
+  const productSchemaObserver = new MutationObserver(function (mutations) {
+    mutations.forEach(function (mutation) {
+      mutation.addedNodes.forEach(function (node) {
+        if (node.nodeType === Node.ELEMENT_NODE) removeLegacyProductSchema(node);
+      });
+    });
   });
+
+  productSchemaObserver.observe(document.documentElement, {
+    childList: true,
+    subtree: true
+  });
+  window.setTimeout(function () {
+    productSchemaObserver.disconnect();
+  }, 10000);
 
   const schema = document.createElement('script');
   schema.id = 'product-detail-schema';
