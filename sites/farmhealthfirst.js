@@ -1,4 +1,4 @@
-// Last updated: 2026-08-18 17:29:36
+// Last updated: 2026-08-18 17:30:08
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -2795,6 +2795,8 @@ function generateProductDetailSchema() {
       : root.querySelectorAll?.('script[type="application/ld+json"]') || [];
 
     scripts.forEach(function (script) {
+      if (script.id === 'product-detail-schema') return;
+
       try {
         const existingSchema = JSON.parse(script.textContent);
         const graph = Array.isArray(existingSchema['@graph'])
@@ -2807,8 +2809,7 @@ function generateProductDetailSchema() {
           return item && (
             types.includes('Product') ||
             types.includes('Drug') ||
-            item['@id'] === pageUrl + '#product' ||
-            item['@id'] === medicineId
+            item['@id'] === pageUrl + '#product'
           );
         })) {
           script.remove();
