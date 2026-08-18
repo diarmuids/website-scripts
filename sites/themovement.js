@@ -1,4 +1,4 @@
-// Last updated: 2026-08-13 12:47:29
+// Last updated: 2026-08-18 17:23:02
 
 (function () {
   'use strict';
@@ -297,30 +297,20 @@
     };
   }
 
-  function scheduledEvents(schedules, url, offers) {
+  function recurringSchedules(schedules, url) {
     return schedules.map(function (schedule, index) {
-      const eventId = url + '#class-' + slug(schedule.name + '-' + schedule.day + '-' + schedule.startTime) + '-' + (index + 1);
+      const scheduleId = url + '#schedule-' + slug(schedule.name + '-' + schedule.day + '-' + schedule.startTime) + '-' + (index + 1);
       return {
-        '@type': 'Event',
-        '@id': eventId,
+        '@type': 'Schedule',
+        '@id': scheduleId,
         name: schedule.name,
-        description: schedule.name + ' recurring class at The Movement Fitness Club.',
+        description: schedule.name + ' weekly class schedule at The Movement Fitness Club.',
         url: url,
-        eventStatus: 'https://schema.org/EventScheduled',
-        eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-        eventSchedule: {
-          '@type': 'Schedule',
-          repeatFrequency: 'P1W',
-          byDay: schemaDay(schedule.day),
-          startTime: schedule.startTime,
-          endTime: schedule.endTime,
-          scheduleTimezone: 'Europe/Dublin',
-        },
-        location: schedule.room
-          ? { '@type': 'Place', name: schedule.room, containedInPlace: { '@id': BUSINESS_ID } }
-          : { '@id': BUSINESS_ID },
-        organizer: { '@id': BUSINESS_ID },
-        offers: offers.length ? offers : undefined,
+        repeatFrequency: 'P1W',
+        byDay: schemaDay(schedule.day),
+        startTime: schedule.startTime,
+        endTime: schedule.endTime,
+        scheduleTimezone: 'Europe/Dublin',
       };
     });
   }
@@ -336,8 +326,18 @@
     const offers = publicOffers(url, booking);
     const serviceId = url + '#service';
 
-    const classEvents = scheduledEvents(schedules, url, offers);
+    const recurringClassSchedules = recurringSchedules(schedules, url);
     const business = businessSchema(image);
+    const scheduleListId = url + '#class-schedules';
+    const scheduleList = {
+      '@type': 'ItemList',
+      '@id': scheduleListId,
+      name: name + ' weekly class schedule',
+      numberOfItems: recurringClassSchedules.length,
+      itemListElement: recurringClassSchedules.map(function (schedule, index) {
+        return { '@type': 'ListItem', position: index + 1, item: { '@id': schedule['@id'] } };
+      }),
+    };
 
     const service = {
       '@type': 'Service',
@@ -347,9 +347,7 @@
       url: url,
       image: image || undefined,
       provider: { '@id': BUSINESS_ID },
-      subjectOf: classEvents.map(function (event) {
-        return { '@id': event['@id'] };
-      }),
+      subjectOf: recurringClassSchedules.length ? { '@id': scheduleListId } : undefined,
       areaServed: locality
         ? { '@type': 'Place', name: locality }
         : undefined,
@@ -379,7 +377,7 @@
 
     return {
       '@context': 'https://schema.org',
-      '@graph': [webPage, business, service, breadcrumb].concat(classEvents),
+      '@graph': [webPage, business, service, breadcrumb, scheduleList].concat(recurringClassSchedules),
     };
   }
 
@@ -389,11 +387,7 @@
     const description = getMeta('meta[name="description"]');
     const image = primaryImage();
     const price = timetablePrice();
-    const events = scheduledEvents(
-      timetableSchedule(),
-      url,
-      price ? [{ '@type': 'Offer', price: price, priceCurrency: 'EUR', availability: 'https://schema.org/InStock', url: url }] : []
-    );
+    const schedules = recurringSchedules(timetableSchedule(), url);
     const timetableId = url + '#timetable';
     const faqId = url + '#faq';
     const questions = faqEntities('.fll-timetable .faq-list-item');
@@ -403,9 +397,9 @@
       '@id': timetableId,
       name: 'The Movement Fitness Club weekly class timetable',
       description: description || undefined,
-      numberOfItems: events.length,
-      itemListElement: events.map(function (event, index) {
-        return { '@type': 'ListItem', position: index + 1, item: { '@id': event['@id'] } };
+      numberOfItems: schedules.length,
+      itemListElement: schedules.map(function (schedule, index) {
+        return { '@type': 'ListItem', position: index + 1, item: { '@id': schedule['@id'] } };
       }),
     };
 
@@ -430,7 +424,7 @@
       ],
     };
 
-    const graph = [webPage, businessSchema(image), timetable, breadcrumb].concat(events);
+    const graph = [webPage, businessSchema(image), timetable, breadcrumb].concat(schedules);
     if (questions.length) graph.push({ '@type': 'FAQPage', '@id': faqId, mainEntity: questions });
     return { '@context': 'https://schema.org', '@graph': graph };
   }
