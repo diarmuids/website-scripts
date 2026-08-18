@@ -1,4 +1,4 @@
-// Last updated: 2026-08-18 17:23:02
+// Last updated: 2026-08-18 17:23:15
 
 (function () {
   'use strict';
@@ -375,9 +375,11 @@
       ],
     };
 
+    const graph = [webPage, business, service, breadcrumb];
+    if (recurringClassSchedules.length) graph.push(scheduleList);
     return {
       '@context': 'https://schema.org',
-      '@graph': [webPage, business, service, breadcrumb, scheduleList].concat(recurringClassSchedules),
+      '@graph': graph.concat(recurringClassSchedules),
     };
   }
 
@@ -389,6 +391,20 @@
     const price = timetablePrice();
     const schedules = recurringSchedules(timetableSchedule(), url);
     const timetableId = url + '#timetable';
+    const timetableOffer = price ? {
+      '@type': 'Offer',
+      '@id': url + '#class-offer',
+      name: 'Non-member class admission',
+      price: price,
+      priceCurrency: 'EUR',
+      availability: 'https://schema.org/InStock',
+      url: url,
+      itemOffered: {
+        '@type': 'Service',
+        name: 'Fitness class admission at The Movement Fitness Club',
+        provider: { '@id': BUSINESS_ID },
+      },
+    } : null;
     const faqId = url + '#faq';
     const questions = faqEntities('.fll-timetable .faq-list-item');
 
@@ -425,6 +441,7 @@
     };
 
     const graph = [webPage, businessSchema(image), timetable, breadcrumb].concat(schedules);
+    if (timetableOffer) graph.push(timetableOffer);
     if (questions.length) graph.push({ '@type': 'FAQPage', '@id': faqId, mainEntity: questions });
     return { '@context': 'https://schema.org', '@graph': graph };
   }
