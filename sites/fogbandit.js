@@ -1,4 +1,4 @@
-// Last updated: 2026-08-18 17:19:54
+// Last updated: 2026-08-18 17:20:03
 
 (function () {
   'use strict';
@@ -45,11 +45,14 @@
   const headerDescription = cleanText(document.querySelector('.header_subtitle')?.textContent);
   const metaDescription = cleanText(document.querySelector('meta[name="description"]')?.content);
   const description = headerDescription || metaDescription;
-  const siteName = cleanText(
+  const extractedSiteName = cleanText(
     document.querySelector('.footer_credit-text')?.textContent
       .replace(/^\s*©\s*\d{4}\s*/, '')
       .replace(/\s*All rights reserved\.?.*$/i, '')
-  ) || 'Fog Bandit Ireland';
+  );
+  const siteName = extractedSiteName
+    .replace(/^.*?Fog Bandit Ireland/i, 'Fog Bandit Ireland')
+    .replace(/\s*All rights reserved\.?\s*$/i, '') || 'Fog Bandit Ireland';
   const logo = document.querySelector(
     '.nav_logo-image[src], .nav_logo img[src], a[href="/"] img[src]'
   );
