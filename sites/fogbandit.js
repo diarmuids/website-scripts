@@ -1,4 +1,4 @@
-// Last updated: 2026-08-18 17:20:03
+// Last updated: 2026-08-18 17:21:18
 
 (function () {
   'use strict';
@@ -50,9 +50,9 @@
       .replace(/^\s*©\s*\d{4}\s*/, '')
       .replace(/\s*All rights reserved\.?.*$/i, '')
   );
-  const siteName = extractedSiteName
-    .replace(/^.*?Fog Bandit Ireland/i, 'Fog Bandit Ireland')
-    .replace(/\s*All rights reserved\.?\s*$/i, '') || 'Fog Bandit Ireland';
+  const siteName = /Fog Bandit Ireland/i.test(extractedSiteName)
+    ? 'Fog Bandit Ireland'
+    : extractedSiteName || 'Fog Bandit Ireland';
   const logo = document.querySelector(
     '.nav_logo-image[src], .nav_logo img[src], a[href="/"] img[src]'
   );
