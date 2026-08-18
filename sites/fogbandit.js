@@ -1,4 +1,4 @@
-// Last updated: 2026-08-17 10:29:54
+// Last updated: 2026-08-18 17:19:54
 
 (function () {
   'use strict';
@@ -40,7 +40,7 @@
   const websiteId = siteUrl + '#website';
   const webpageId = pageUrl + '#webpage';
   const breadcrumbId = pageUrl + '#breadcrumb';
-  const reviewListId = pageUrl + '#reviews';
+  const testimonialListId = pageUrl + '#testimonials';
   const pageHeading = cleanText(document.querySelector('h1')?.textContent);
   const headerDescription = cleanText(document.querySelector('.header_subtitle')?.textContent);
   const metaDescription = cleanText(document.querySelector('meta[name="description"]')?.content);
@@ -104,44 +104,38 @@
   if (locationLink) organization.hasMap = locationLink.href;
   if (socialUrls.length) organization.sameAs = socialUrls;
 
-  const reviews = [];
+  const testimonials = [];
 
   document.querySelectorAll('.testimonial_item').forEach(function (item, index) {
     const authorName = cleanText(item.querySelector('.testimonial_name')?.textContent);
     const companyName = cleanText(item.querySelector('.testimonial_company')?.textContent);
-    const reviewBody = cleanText(item.querySelector('.text-rich-text')?.textContent);
+    const testimonialText = cleanText(item.querySelector('.text-rich-text')?.textContent);
 
-    if (!authorName || !reviewBody) return;
+    if (!authorName || !testimonialText) return;
 
-    const review = {
-      '@type': 'Review',
-      '@id': pageUrl + '#review-' + (index + 1),
+    const testimonial = {
+      '@type': 'Quotation',
+      '@id': pageUrl + '#testimonial-' + (index + 1),
       name: 'Testimonial from ' + authorName + (companyName ? ', ' + companyName : ''),
-      reviewBody: reviewBody,
-      author: {
+      text: testimonialText,
+      creator: {
         '@type': 'Person',
         name: authorName
       },
-      itemReviewed: { '@id': organizationId },
+      about: { '@id': organizationId },
       publisher: { '@id': organizationId },
       inLanguage: document.documentElement.lang || 'en'
     };
 
     if (companyName) {
-      review.author.affiliation = {
+      testimonial.creator.affiliation = {
         '@type': 'Organization',
         name: companyName
       };
     }
 
-    reviews.push(review);
+    testimonials.push(testimonial);
   });
-
-  if (reviews.length) {
-    organization.review = reviews.map(function (review) {
-      return { '@id': review['@id'] };
-    });
-  }
 
   const graph = [
     organization,
@@ -164,7 +158,7 @@
       about: { '@id': organizationId },
       publisher: { '@id': organizationId },
       breadcrumb: { '@id': breadcrumbId },
-      mainEntity: { '@id': reviewListId },
+      mainEntity: { '@id': testimonialListId },
       inLanguage: document.documentElement.lang || 'en'
     },
     {
@@ -193,19 +187,19 @@
     },
     {
       '@type': 'ItemList',
-      '@id': reviewListId,
+      '@id': testimonialListId,
       name: pageHeading || 'Testimonials',
-      numberOfItems: reviews.length,
+      numberOfItems: testimonials.length,
       itemListOrder: 'https://schema.org/ItemListOrderAscending',
-      itemListElement: reviews.map(function (review, index) {
+      itemListElement: testimonials.map(function (testimonial, index) {
         return {
           '@type': 'ListItem',
           position: index + 1,
-          item: { '@id': review['@id'] }
+          item: { '@id': testimonial['@id'] }
         };
       })
     }
-  ].concat(reviews);
+  ].concat(testimonials);
 
   const existingSchema = document.getElementById(SCHEMA_ID);
   if (existingSchema) existingSchema.remove();
@@ -665,4 +659,3 @@
   });
   document.head.appendChild(schema);
 }());
-
