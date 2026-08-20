@@ -1,4 +1,4 @@
-// Last updated: 2026-08-20 09:51:55
+// Last updated: 2026-08-20 09:55:28
 
 (() => {
   'use strict';
@@ -90,50 +90,18 @@
       socialUrls.push('https://www.instagram.com/itchyfeetcreative/', 'https://vimeo.com/user30372706');
     }
 
-    const serviceGroupsByName = {};
     const services = [];
-    serviceGroups.forEach(function (group, groupIndex) {
+    serviceGroups.forEach(function (group) {
       const groupName = cleanText(group.querySelector('.services_title')?.textContent);
-      const groupId = url + '#service-group-' + (slug(groupName) || (groupIndex + 1));
       const serviceNames = Array.from(group.querySelectorAll('.services_sub-text'))
         .map(function (service) { return cleanText(service.textContent); })
         .filter(Boolean);
 
       if (!groupName || !serviceNames.length) return;
 
-      serviceGroupsByName[groupName.toLowerCase()] = groupId;
-      serviceNames.forEach(function (serviceName, serviceIndex) {
-        services.push({
-          '@type': 'Service',
-          '@id': url + '#service-' + (slug(serviceName) || (groupIndex + '-' + serviceIndex)),
-          name: serviceName,
-          serviceType: groupName,
-          category: groupName,
-          provider: { '@id': organizationId },
-          url: url + '#what-i-do',
-          inLanguage: document.documentElement.lang || 'en'
-        });
+      serviceNames.forEach(function (serviceName) {
+        services.push({ name: serviceName, category: groupName });
       });
-    });
-
-    const serviceGroupsSchema = Object.keys(serviceGroupsByName).map(function (groupName) {
-      const groupId = serviceGroupsByName[groupName];
-      const groupServices = services.filter(function (service) { return service.serviceType.toLowerCase() === groupName; });
-      return {
-        '@type': 'Service',
-        '@id': groupId,
-        name: groupServices[0].serviceType + ' services',
-        serviceType: groupServices[0].serviceType,
-        provider: { '@id': organizationId },
-        url: url + '#what-i-do',
-        isRelatedTo: groupServices.map(function (service) { return { '@id': service['@id'] }; })
-      };
-    });
-
-    services.forEach(function (service) {
-      service.isRelatedTo = services
-        .filter(function (otherService) { return otherService['@id'] !== service['@id']; })
-        .map(function (otherService) { return { '@id': otherService['@id'] }; });
     });
 
     const videos = projectItems.map(function (project, index) {
@@ -162,13 +130,11 @@
         inLanguage: document.documentElement.lang || 'en'
       };
       const embedUrl = videoEmbedUrl(media);
-      const serviceGroupId = serviceGroupsByName.video;
 
       if (category) video.genre = category;
       if (role) video.keywords = role.split(/\s*\/\s*/).filter(Boolean);
       if (thumbnail) video.thumbnailUrl = thumbnail;
       if (embedUrl) video.embedUrl = embedUrl;
-      if (serviceGroupId) video.about = { '@id': serviceGroupId };
       return video;
     }).filter(Boolean);
 
@@ -256,7 +222,12 @@
         name: 'What I Do services',
         numberOfItems: services.length,
         itemListElement: services.map(function (service, index) {
-          return { '@type': 'ListItem', position: index + 1, item: { '@id': service['@id'] } };
+          return {
+            '@type': 'ListItem',
+            position: index + 1,
+            name: service.name,
+            description: service.category + ' service'
+          };
         })
       });
     }
@@ -272,7 +243,7 @@
       });
     }
 
-    graph.push(...serviceGroupsSchema, ...services, ...videos);
+    graph.push(...videos);
     return { '@context': 'https://schema.org', '@graph': graph };
   }
 
