@@ -1,4 +1,4 @@
-// Last updated: 2026-08-20 09:55:28
+// Last updated: 2026-08-20 10:17:28
 
 (() => {
   'use strict';
@@ -76,7 +76,11 @@
     const servicesListId = url + '#services';
     const videosListId = url + '#videos';
     const pageTitle = cleanText(document.title);
-    const description = cleanText(document.querySelector('meta[name="description"]')?.content);
+    const collectionName = cleanText(document.querySelector('.heading-style-h1.is-work')?.textContent);
+    const collectionIntro = cleanText(document.querySelector('.work_intro-wrapper .text-rich-text')?.textContent);
+    const metaDescription = cleanText(document.querySelector('meta[name="description"]')?.content);
+    const description = collectionIntro || metaDescription;
+    const collectionServiceId = collectionName && collectionIntro ? url + '#collection-service' : '';
     const email = document.querySelector('a[href^="mailto:"]')?.getAttribute('href')?.replace(/^mailto:/i, '').split('?')[0]
       || 'adrian@itchyfeet.ie';
     const telephone = document.querySelector('a[href^="tel:"]')?.getAttribute('href')?.replace(/^tel:/i, '')
@@ -207,6 +211,7 @@
         description: description || undefined,
         isPartOf: { '@id': websiteId },
         mainEntity: [
+          collectionServiceId ? { '@id': collectionServiceId } : null,
           services.length ? { '@id': servicesListId } : null,
           videos.length ? { '@id': videosListId } : null
         ].filter(Boolean),
@@ -240,6 +245,20 @@
         itemListElement: videos.map(function (video, index) {
           return { '@type': 'ListItem', position: index + 1, item: { '@id': video['@id'] } };
         })
+      });
+    }
+
+    if (collectionServiceId) {
+      graph.push({
+        '@type': 'Service',
+        '@id': collectionServiceId,
+        name: collectionName + ' creative services',
+        serviceType: collectionName,
+        description: collectionIntro,
+        provider: { '@id': organizationId },
+        areaServed: { '@type': 'City', name: 'Dublin' },
+        url: url,
+        inLanguage: document.documentElement.lang || 'en'
       });
     }
 
