@@ -1,4 +1,4 @@
-// Last updated: 2026-08-20 09:44:25
+// Last updated: 2026-08-20 09:44:31
 
 (() => {
   'use strict';
@@ -141,14 +141,17 @@
       const role = cleanText(project.querySelector('.work_overlay:not(.is-what-i-do) .work_role')?.textContent);
       if (!title || title === '-') return null;
 
-      const workLink = absoluteUrl(project.querySelector('.work_page-link')?.getAttribute('href'), url);
+      const workLinkValue = project.querySelector('.work_page-link')?.getAttribute('href');
+      const workLink = workLinkValue && workLinkValue !== '#'
+        ? absoluteUrl(workLinkValue, url)
+        : '';
       const thumbnail = absoluteUrl(project.querySelector('.work_image[src]')?.getAttribute('src'), url);
       const video = {
         '@type': 'VideoObject',
         '@id': url + '#video-' + (slug(title) || (index + 1)),
         name: title,
         description: [category, role].filter(Boolean).join('. '),
-        url: workLink && !workLink.endsWith('/#') ? workLink : media,
+        url: workLink || media,
         contentUrl: media,
         creator: { '@id': personId },
         publisher: { '@id': organizationId },
@@ -235,7 +238,7 @@
       });
     }
 
-    graph.push.apply(graph, serviceGroupsSchema, services, videos);
+    graph.push(...serviceGroupsSchema, ...services, ...videos);
     return { '@context': 'https://schema.org', '@graph': graph };
   }
 
