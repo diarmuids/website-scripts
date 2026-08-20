@@ -1,4 +1,4 @@
-// Last updated: 2026-08-20 09:48:09
+// Last updated: 2026-08-20 09:51:55
 
 (() => {
   'use strict';
@@ -126,11 +126,7 @@
         serviceType: groupServices[0].serviceType,
         provider: { '@id': organizationId },
         url: url + '#what-i-do',
-        hasOfferCatalog: {
-          '@type': 'OfferCatalog',
-          name: groupServices[0].serviceType + ' services',
-          itemListElement: groupServices.map(function (service) { return { '@id': service['@id'] }; })
-        }
+        isRelatedTo: groupServices.map(function (service) { return { '@id': service['@id'] }; })
       };
     });
 
@@ -176,7 +172,7 @@
       return video;
     }).filter(Boolean);
 
-    if (showreelSources.length) {
+    if (showreelSources.length && new URL(url).pathname === '/') {
       const headerText = cleanText(document.querySelector('.header_text.is-showreel')?.textContent);
       const thumbnail = absoluteUrl(document.querySelector('meta[property="og:image"]')?.getAttribute('content'), url);
       const showreel = {
