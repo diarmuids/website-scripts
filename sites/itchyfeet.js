@@ -1,4 +1,4 @@
-// Last updated: 2026-08-20 10:17:28
+// Last updated: 2026-08-20 10:19:15
 
 (() => {
   'use strict';
@@ -257,8 +257,7 @@
         description: collectionIntro,
         provider: { '@id': organizationId },
         areaServed: { '@type': 'City', name: 'Dublin' },
-        url: url,
-        inLanguage: document.documentElement.lang || 'en'
+        url: url
       });
     }
 
