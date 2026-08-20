@@ -1,4 +1,4 @@
-// Last updated: 2026-08-20 09:44:31
+// Last updated: 2026-08-20 09:48:09
 
 (() => {
   'use strict';
@@ -62,7 +62,10 @@
   function buildSchema() {
     const projectItems = Array.from(document.querySelectorAll('.work_wrapper'));
     const serviceGroups = Array.from(document.querySelectorAll('.services_item'));
-    if (!projectItems.length && !serviceGroups.length) return;
+    const showreelSources = Array.from(document.querySelectorAll('.showreel_embed video source[src]'))
+      .map(function (source) { return absoluteUrl(source.getAttribute('src'), window.location.href); })
+      .filter(function (source, index, sources) { return source && sources.indexOf(source) === index; });
+    if (!projectItems.length && !serviceGroups.length && !showreelSources.length) return;
 
     const url = pageUrl();
     const siteUrl = new URL('/', url).href;
@@ -74,13 +77,18 @@
     const videosListId = url + '#videos';
     const pageTitle = cleanText(document.title);
     const description = cleanText(document.querySelector('meta[name="description"]')?.content);
-    const email = document.querySelector('a[href^="mailto:"]')?.getAttribute('href')?.replace(/^mailto:/i, '').split('?')[0];
-    const telephone = document.querySelector('a[href^="tel:"]')?.getAttribute('href')?.replace(/^tel:/i, '');
+    const email = document.querySelector('a[href^="mailto:"]')?.getAttribute('href')?.replace(/^mailto:/i, '').split('?')[0]
+      || 'adrian@itchyfeet.ie';
+    const telephone = document.querySelector('a[href^="tel:"]')?.getAttribute('href')?.replace(/^tel:/i, '')
+      || '+353 83 832 4832';
     const socialUrls = Array.from(document.querySelectorAll('a[href^="https://"]'))
       .map(function (link) { return absoluteUrl(link.getAttribute('href'), url); })
       .filter(function (link, index, links) {
         return /(?:instagram\.com|vimeo\.com)/i.test(link) && links.indexOf(link) === index;
       });
+    if (!socialUrls.length) {
+      socialUrls.push('https://www.instagram.com/itchyfeetcreative/', 'https://vimeo.com/user30372706');
+    }
 
     const serviceGroupsByName = {};
     const services = [];
@@ -168,6 +176,34 @@
       return video;
     }).filter(Boolean);
 
+    if (showreelSources.length) {
+      const headerText = cleanText(document.querySelector('.header_text.is-showreel')?.textContent);
+      const thumbnail = absoluteUrl(document.querySelector('meta[property="og:image"]')?.getAttribute('content'), url);
+      const showreel = {
+        '@type': 'VideoObject',
+        '@id': url + '#showreel',
+        name: "Adrian O'Connell Showreel",
+        description: headerText || description || 'Director, Cinematographer, Photographer, and Editor showreel.',
+        url: url,
+        contentUrl: showreelSources[0],
+        creator: { '@id': personId },
+        publisher: { '@id': organizationId },
+        inLanguage: document.documentElement.lang || 'en'
+      };
+
+      if (thumbnail) showreel.thumbnailUrl = thumbnail;
+      if (showreelSources.length > 1) {
+        showreel.encoding = showreelSources.slice(1).map(function (source) {
+          return {
+            '@type': 'MediaObject',
+            contentUrl: source,
+            encodingFormat: 'video/mp4'
+          };
+        });
+      }
+      videos.push(showreel);
+    }
+
     const graph = [
       {
         '@type': 'Organization',
@@ -175,10 +211,10 @@
         name: 'Itchy Feet Creative',
         alternateName: 'Itchy Feet Productions',
         url: siteUrl,
-        email: email || undefined,
-        telephone: telephone || undefined,
+        email: email,
+        telephone: telephone,
         areaServed: { '@type': 'City', name: 'Dublin' },
-        sameAs: socialUrls.length ? socialUrls : undefined,
+        sameAs: socialUrls,
         founder: { '@id': personId }
       },
       {
@@ -186,10 +222,12 @@
         '@id': personId,
         name: "Adrian O'Connell",
         url: siteUrl,
+        email: email,
+        telephone: telephone,
         jobTitle: 'Director, Cinematographer, Photographer, and Editor',
         worksFor: { '@id': organizationId },
         homeLocation: { '@type': 'City', name: 'Dublin' },
-        sameAs: socialUrls.length ? socialUrls : undefined
+        sameAs: socialUrls
       },
       {
         '@type': 'WebSite',
