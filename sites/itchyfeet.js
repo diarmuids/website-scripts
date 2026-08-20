@@ -1,4 +1,262 @@
-// Last updated: 2026-08-19 14:21:04
+// Last updated: 2026-08-20 09:44:25
+
+(() => {
+  'use strict';
+
+  const SCHEMA_ID = 'itchyfeet-portfolio-schema';
+  const VIDEO_PROVIDER = /(?:vimeo\.com|youtube\.com|youtu\.be)/i;
+
+  function cleanText(value) {
+    return String(value || '').replace(/\s+/g, ' ').trim();
+  }
+
+  function absoluteUrl(value, baseUrl) {
+    if (!value) return '';
+
+    try {
+      return new URL(value, baseUrl).href;
+    } catch (error) {
+      return '';
+    }
+  }
+
+  function slug(value) {
+    return cleanText(value)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+  }
+
+  function pageUrl() {
+    const canonical = document.querySelector('link[rel="canonical"][href]');
+    const url = new URL(canonical?.href || window.location.href);
+    url.search = '';
+    url.hash = '';
+    return url.href;
+  }
+
+  function videoEmbedUrl(source) {
+    try {
+      const url = new URL(source);
+      const vimeoMatch = url.pathname.match(/\/(\d+)/);
+
+      if (/vimeo\.com$/i.test(url.hostname) && vimeoMatch) {
+        return 'https://player.vimeo.com/video/' + vimeoMatch[1];
+      }
+
+      if (/youtu\.be$/i.test(url.hostname)) {
+        return 'https://www.youtube.com/embed/' + url.pathname.slice(1);
+      }
+
+      if (/youtube\.com$/i.test(url.hostname)) {
+        const videoId = url.searchParams.get('v') || url.pathname.match(/\/embed\/([^/]+)/)?.[1];
+        return videoId ? 'https://www.youtube.com/embed/' + videoId : '';
+      }
+    } catch (error) {
+      return '';
+    }
+
+    return '';
+  }
+
+  function buildSchema() {
+    const projectItems = Array.from(document.querySelectorAll('.work_wrapper'));
+    const serviceGroups = Array.from(document.querySelectorAll('.services_item'));
+    if (!projectItems.length && !serviceGroups.length) return;
+
+    const url = pageUrl();
+    const siteUrl = new URL('/', url).href;
+    const organizationId = siteUrl + '#organization';
+    const personId = siteUrl + '#adrian-oconnell';
+    const websiteId = siteUrl + '#website';
+    const webpageId = url + '#webpage';
+    const servicesListId = url + '#services';
+    const videosListId = url + '#videos';
+    const pageTitle = cleanText(document.title);
+    const description = cleanText(document.querySelector('meta[name="description"]')?.content);
+    const email = document.querySelector('a[href^="mailto:"]')?.getAttribute('href')?.replace(/^mailto:/i, '').split('?')[0];
+    const telephone = document.querySelector('a[href^="tel:"]')?.getAttribute('href')?.replace(/^tel:/i, '');
+    const socialUrls = Array.from(document.querySelectorAll('a[href^="https://"]'))
+      .map(function (link) { return absoluteUrl(link.getAttribute('href'), url); })
+      .filter(function (link, index, links) {
+        return /(?:instagram\.com|vimeo\.com)/i.test(link) && links.indexOf(link) === index;
+      });
+
+    const serviceGroupsByName = {};
+    const services = [];
+    serviceGroups.forEach(function (group, groupIndex) {
+      const groupName = cleanText(group.querySelector('.services_title')?.textContent);
+      const groupId = url + '#service-group-' + (slug(groupName) || (groupIndex + 1));
+      const serviceNames = Array.from(group.querySelectorAll('.services_sub-text'))
+        .map(function (service) { return cleanText(service.textContent); })
+        .filter(Boolean);
+
+      if (!groupName || !serviceNames.length) return;
+
+      serviceGroupsByName[groupName.toLowerCase()] = groupId;
+      serviceNames.forEach(function (serviceName, serviceIndex) {
+        services.push({
+          '@type': 'Service',
+          '@id': url + '#service-' + (slug(serviceName) || (groupIndex + '-' + serviceIndex)),
+          name: serviceName,
+          serviceType: groupName,
+          category: groupName,
+          provider: { '@id': organizationId },
+          url: url + '#what-i-do',
+          inLanguage: document.documentElement.lang || 'en'
+        });
+      });
+    });
+
+    const serviceGroupsSchema = Object.keys(serviceGroupsByName).map(function (groupName) {
+      const groupId = serviceGroupsByName[groupName];
+      const groupServices = services.filter(function (service) { return service.serviceType.toLowerCase() === groupName; });
+      return {
+        '@type': 'Service',
+        '@id': groupId,
+        name: groupServices[0].serviceType + ' services',
+        serviceType: groupServices[0].serviceType,
+        provider: { '@id': organizationId },
+        url: url + '#what-i-do',
+        hasOfferCatalog: {
+          '@type': 'OfferCatalog',
+          name: groupServices[0].serviceType + ' services',
+          itemListElement: groupServices.map(function (service) { return { '@id': service['@id'] }; })
+        }
+      };
+    });
+
+    services.forEach(function (service) {
+      service.isRelatedTo = services
+        .filter(function (otherService) { return otherService['@id'] !== service['@id']; })
+        .map(function (otherService) { return { '@id': otherService['@id'] }; });
+    });
+
+    const videos = projectItems.map(function (project, index) {
+      const media = absoluteUrl(project.querySelector('[data-work]')?.getAttribute('data-work'), url);
+      if (!VIDEO_PROVIDER.test(media)) return null;
+
+      const title = cleanText(project.querySelector('.work_overlay:not(.is-what-i-do) .work_title')?.textContent);
+      const category = cleanText(project.querySelector('.work_overlay:not(.is-what-i-do) .work_type')?.textContent);
+      const role = cleanText(project.querySelector('.work_overlay:not(.is-what-i-do) .work_role')?.textContent);
+      if (!title || title === '-') return null;
+
+      const workLink = absoluteUrl(project.querySelector('.work_page-link')?.getAttribute('href'), url);
+      const thumbnail = absoluteUrl(project.querySelector('.work_image[src]')?.getAttribute('src'), url);
+      const video = {
+        '@type': 'VideoObject',
+        '@id': url + '#video-' + (slug(title) || (index + 1)),
+        name: title,
+        description: [category, role].filter(Boolean).join('. '),
+        url: workLink && !workLink.endsWith('/#') ? workLink : media,
+        contentUrl: media,
+        creator: { '@id': personId },
+        publisher: { '@id': organizationId },
+        inLanguage: document.documentElement.lang || 'en'
+      };
+      const embedUrl = videoEmbedUrl(media);
+      const serviceGroupId = serviceGroupsByName.video;
+
+      if (category) video.genre = category;
+      if (role) video.keywords = role.split(/\s*\/\s*/).filter(Boolean);
+      if (thumbnail) video.thumbnailUrl = thumbnail;
+      if (embedUrl) video.embedUrl = embedUrl;
+      if (serviceGroupId) video.about = { '@id': serviceGroupId };
+      return video;
+    }).filter(Boolean);
+
+    const graph = [
+      {
+        '@type': 'Organization',
+        '@id': organizationId,
+        name: 'Itchy Feet Creative',
+        alternateName: 'Itchy Feet Productions',
+        url: siteUrl,
+        email: email || undefined,
+        telephone: telephone || undefined,
+        areaServed: { '@type': 'City', name: 'Dublin' },
+        sameAs: socialUrls.length ? socialUrls : undefined,
+        founder: { '@id': personId }
+      },
+      {
+        '@type': 'Person',
+        '@id': personId,
+        name: "Adrian O'Connell",
+        url: siteUrl,
+        jobTitle: 'Director, Cinematographer, Photographer, and Editor',
+        worksFor: { '@id': organizationId },
+        homeLocation: { '@type': 'City', name: 'Dublin' },
+        sameAs: socialUrls.length ? socialUrls : undefined
+      },
+      {
+        '@type': 'WebSite',
+        '@id': websiteId,
+        url: siteUrl,
+        name: 'Itchy Feet Creative',
+        publisher: { '@id': organizationId },
+        inLanguage: document.documentElement.lang || 'en'
+      },
+      {
+        '@type': 'CollectionPage',
+        '@id': webpageId,
+        url: url,
+        name: pageTitle,
+        description: description || undefined,
+        isPartOf: { '@id': websiteId },
+        mainEntity: [
+          services.length ? { '@id': servicesListId } : null,
+          videos.length ? { '@id': videosListId } : null
+        ].filter(Boolean),
+        about: { '@id': organizationId },
+        inLanguage: document.documentElement.lang || 'en'
+      }
+    ];
+
+    if (services.length) {
+      graph.push({
+        '@type': 'ItemList',
+        '@id': servicesListId,
+        name: 'What I Do services',
+        numberOfItems: services.length,
+        itemListElement: services.map(function (service, index) {
+          return { '@type': 'ListItem', position: index + 1, item: { '@id': service['@id'] } };
+        })
+      });
+    }
+    if (videos.length) {
+      graph.push({
+        '@type': 'ItemList',
+        '@id': videosListId,
+        name: 'Portfolio videos',
+        numberOfItems: videos.length,
+        itemListElement: videos.map(function (video, index) {
+          return { '@type': 'ListItem', position: index + 1, item: { '@id': video['@id'] } };
+        })
+      });
+    }
+
+    graph.push.apply(graph, serviceGroupsSchema, services, videos);
+    return { '@context': 'https://schema.org', '@graph': graph };
+  }
+
+  function injectSchema() {
+    const data = buildSchema();
+    if (!data) return;
+
+    document.getElementById(SCHEMA_ID)?.remove();
+    const script = document.createElement('script');
+    script.id = SCHEMA_ID;
+    script.type = 'application/ld+json';
+    script.textContent = JSON.stringify(data);
+    document.head.append(script);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', injectSchema, { once: true });
+  } else {
+    injectSchema();
+  }
+})();
 
 // $(document).ready(function () {
 
