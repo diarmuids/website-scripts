@@ -1,4 +1,4 @@
-// Last updated: 2026-07-30 16:20:00
+// Last updated: 2026-08-21 11:05:00
 
 (() => {
   const CALCULATORS = {
@@ -164,12 +164,7 @@
         });
       });
 
-      resultFooter.replaceChildren(
-        document.createTextNode(
-          "Calculated using the values entered above. ",
-        ),
-        clearButton,
-      );
+      resultFooter.replaceChildren(clearButton);
     };
 
     const updateResult = () => {
