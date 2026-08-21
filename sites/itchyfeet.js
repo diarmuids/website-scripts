@@ -1,4 +1,4 @@
-// Last updated: 2026-08-21 13:03:08
+// Last updated: 2026-08-21 13:15:49
 
 (() => {
   'use strict';
@@ -206,7 +206,7 @@
         inLanguage: document.documentElement.lang || 'en'
       },
       {
-        '@type': isServiceLocationPage ? ['WebPage', 'ServicePage'] : 'CollectionPage',
+        '@type': isServiceLocationPage ? 'WebPage' : 'CollectionPage',
         '@id': webpageId,
         url: url,
         name: pageTitle,
