@@ -1,4 +1,4 @@
-// Last updated: 2026-08-21 12:58:33
+// Last updated: 2026-08-21 13:03:08
 
 (() => {
   'use strict';
@@ -322,7 +322,7 @@
       return item.classList.contains('work_item');
     });
     const legacyRandomisationRan = Boolean(
-      placeholderItems.length && !placeholderList?.querySelector('.work_random, .work-random, [data-work-random]')
+      placeholderList && !placeholderList.querySelector('.work_random, .work-random, [data-work-random]')
     );
     const shouldRandomise = document.documentElement.dataset.itchyfeetRandomise === 'true'
       || /random/i.test(cleanText(randomSetting?.textContent))
