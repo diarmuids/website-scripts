@@ -1,4 +1,4 @@
-// Last updated: 2026-08-21 12:58:04
+// Last updated: 2026-08-21 12:58:33
 
 (() => {
   'use strict';
@@ -318,14 +318,19 @@
     const projectList = document.querySelector('.section_content-waterfall .work_list-wrapper:not(.is-multiple-list) > .work_list');
     const targetList = projectList || placeholderList;
     const randomSetting = document.querySelector('.work_random, .work-random, [data-work-random]');
+    const placeholderItems = Array.from(placeholderList?.children || []).filter(function (item) {
+      return item.classList.contains('work_item');
+    });
+    const legacyRandomisationRan = Boolean(
+      placeholderItems.length && !placeholderList?.querySelector('.work_random, .work-random, [data-work-random]')
+    );
     const shouldRandomise = document.documentElement.dataset.itchyfeetRandomise === 'true'
-      || /random/i.test(cleanText(randomSetting?.textContent));
+      || /random/i.test(cleanText(randomSetting?.textContent))
+      || legacyRandomisationRan;
     if (!targetList) return;
 
     if (placeholderList && projectList && placeholderList !== projectList) {
-      Array.from(placeholderList.children).filter(function (item) {
-        return item.classList.contains('work_item');
-      }).forEach(function (item) {
+      placeholderItems.forEach(function (item) {
         projectList.append(item);
       });
       placeholderList.remove();
