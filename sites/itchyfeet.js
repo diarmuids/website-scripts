@@ -1,4 +1,4 @@
-// Last updated: 2026-08-21 12:49:11
+// Last updated: 2026-08-21 12:50:14
 
 (() => {
   'use strict';
@@ -83,8 +83,6 @@
     const description = collectionIntro || metaDescription;
     const collectionServiceId = collectionName && collectionIntro ? url + '#collection-service' : '';
     const isServiceLocationPage = /^\/page\/[^/]+\/?$/.test(pathname);
-    const serviceAreaMatch = collectionName.match(/^(?:videographer|photographer)\s+(.+)$/i);
-    const serviceArea = cleanText(serviceAreaMatch?.[1]);
     const email = document.querySelector('a[href^="mailto:"]')?.getAttribute('href')?.replace(/^mailto:/i, '').split('?')[0]
       || 'adrian@itchyfeet.ie';
     const telephone = document.querySelector('a[href^="tel:"]')?.getAttribute('href')?.replace(/^tel:/i, '')
@@ -260,7 +258,6 @@
         serviceType: collectionName,
         description: collectionIntro,
         provider: { '@id': organizationId },
-        areaServed: { '@type': 'City', name: serviceArea || 'Dublin' },
         url: url
       });
     }
