@@ -1,4 +1,4 @@
-// Last updated: 2026-08-21 12:53:24
+// Last updated: 2026-08-21 12:55:44
 
 (() => {
   'use strict';
@@ -316,28 +316,36 @@
   function combineWorkGalleryItems() {
     const placeholderList = document.querySelector('.section_content-waterfall .work_list.is-one-list');
     const projectList = document.querySelector('.section_content-waterfall .work_list-wrapper:not(.is-multiple-list) > .work_list');
-    if (!placeholderList || !projectList || placeholderList === projectList) return;
+    const targetList = projectList || placeholderList;
+    if (!targetList) return;
 
-    const galleryItems = Array.from(placeholderList.children).filter(function (item) {
+    if (placeholderList && projectList && placeholderList !== projectList) {
+      Array.from(placeholderList.children).filter(function (item) {
+        return item.classList.contains('work_item');
+      }).forEach(function (item) {
+        projectList.append(item);
+      });
+      placeholderList.remove();
+    }
+
+    const randomSetting = document.querySelector('.work_random, .work-random, [data-work-random]');
+    const shouldRandomise = /random/i.test(cleanText(randomSetting?.textContent));
+    const items = Array.from(targetList.children).filter(function (item) {
       return item.classList.contains('work_item');
     });
-    if (!galleryItems.length) return;
 
-    galleryItems.forEach(function (item) {
-      projectList.append(item);
-    });
-    placeholderList.remove();
-
-    if (cleanText(document.querySelector('.work_random')?.textContent).toLowerCase().includes('random')) {
-      const items = Array.from(projectList.children).filter(function (item) {
-        return item.classList.contains('work_item');
-      });
-      items.sort(function () { return Math.random() - 0.5; });
-      items.forEach(function (item) { projectList.append(item); });
+    if (shouldRandomise && items.length > 1) {
+      for (let index = items.length - 1; index > 0; index -= 1) {
+        const randomIndex = Math.floor(Math.random() * (index + 1));
+        const item = items[index];
+        items[index] = items[randomIndex];
+        items[randomIndex] = item;
+      }
+      items.forEach(function (item) { targetList.append(item); });
     }
 
     if (window.jQuery?.fn?.masonry) {
-      window.jQuery(projectList).masonry('reloadItems').masonry('layout');
+      window.jQuery(targetList).masonry('reloadItems').masonry('layout');
     }
   }
 
