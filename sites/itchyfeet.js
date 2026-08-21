@@ -1,4 +1,4 @@
-// Last updated: 2026-08-20 10:19:15
+// Last updated: 2026-08-21 12:48:45
 
 (() => {
   'use strict';
@@ -68,6 +68,7 @@
     if (!projectItems.length && !serviceGroups.length && !showreelSources.length) return;
 
     const url = pageUrl();
+    const pathname = new URL(url).pathname;
     const siteUrl = new URL('/', url).href;
     const organizationId = siteUrl + '#organization';
     const personId = siteUrl + '#adrian-oconnell';
@@ -81,6 +82,9 @@
     const metaDescription = cleanText(document.querySelector('meta[name="description"]')?.content);
     const description = collectionIntro || metaDescription;
     const collectionServiceId = collectionName && collectionIntro ? url + '#collection-service' : '';
+    const isServiceLocationPage = /^\/page\/[^/]+\/?$/.test(pathname);
+    const serviceAreaMatch = collectionName.match(/^(?:videographer|photographer)\s+(.+)$/i);
+    const serviceArea = cleanText(serviceAreaMatch?.[1]);
     const email = document.querySelector('a[href^="mailto:"]')?.getAttribute('href')?.replace(/^mailto:/i, '').split('?')[0]
       || 'adrian@itchyfeet.ie';
     const telephone = document.querySelector('a[href^="tel:"]')?.getAttribute('href')?.replace(/^tel:/i, '')
@@ -142,7 +146,7 @@
       return video;
     }).filter(Boolean);
 
-    if (showreelSources.length && new URL(url).pathname === '/') {
+    if (showreelSources.length && pathname === '/') {
       const headerText = cleanText(document.querySelector('.header_text.is-showreel')?.textContent);
       const thumbnail = absoluteUrl(document.querySelector('meta[property="og:image"]')?.getAttribute('content'), url);
       const showreel = {
@@ -204,7 +208,7 @@
         inLanguage: document.documentElement.lang || 'en'
       },
       {
-        '@type': 'CollectionPage',
+        '@type': isServiceLocationPage ? ['WebPage', 'ServicePage'] : 'CollectionPage',
         '@id': webpageId,
         url: url,
         name: pageTitle,
@@ -256,7 +260,7 @@
         serviceType: collectionName,
         description: collectionIntro,
         provider: { '@id': organizationId },
-        areaServed: { '@type': 'City', name: 'Dublin' },
+        areaServed: { '@type': 'City', name: serviceArea || 'Dublin' },
         url: url
       });
     }
@@ -277,10 +281,47 @@
     document.head.append(script);
   }
 
+  function removeLoadingIndicator(wrapper) {
+    const loadingIndicator = wrapper.querySelector('.work_loading');
+    if (loadingIndicator) loadingIndicator.style.display = 'none';
+  }
+
+  function clearGalleryLoaders() {
+    document.querySelectorAll('.work_wrapper').forEach(function (wrapper) {
+      const image = wrapper.querySelector('.work_image');
+      if (!image) return;
+
+      if (image.complete) {
+        removeLoadingIndicator(wrapper);
+        return;
+      }
+
+      image.addEventListener('load', function () { removeLoadingIndicator(wrapper); }, { once: true });
+      image.addEventListener('error', function () { removeLoadingIndicator(wrapper); }, { once: true });
+    });
+
+    document.querySelectorAll('.showreel_wrapper').forEach(function (wrapper) {
+      const video = wrapper.querySelector('video');
+      if (!video) return;
+
+      if (video.readyState > HTMLMediaElement.HAVE_NOTHING) {
+        removeLoadingIndicator(wrapper);
+        return;
+      }
+
+      video.addEventListener('loadeddata', function () { removeLoadingIndicator(wrapper); }, { once: true });
+      video.addEventListener('error', function () { removeLoadingIndicator(wrapper); }, { once: true });
+    });
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', injectSchema, { once: true });
+    document.addEventListener('DOMContentLoaded', function () {
+      injectSchema();
+      clearGalleryLoaders();
+    }, { once: true });
   } else {
     injectSchema();
+    clearGalleryLoaders();
   }
 })();
 
