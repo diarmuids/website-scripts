@@ -1,4 +1,4 @@
-// Last updated: 2026-08-21 12:55:49
+// Last updated: 2026-08-21 12:58:04
 
 (() => {
   'use strict';
@@ -318,7 +318,8 @@
     const projectList = document.querySelector('.section_content-waterfall .work_list-wrapper:not(.is-multiple-list) > .work_list');
     const targetList = projectList || placeholderList;
     const randomSetting = document.querySelector('.work_random, .work-random, [data-work-random]');
-    const shouldRandomise = /random/i.test(cleanText(randomSetting?.textContent));
+    const shouldRandomise = document.documentElement.dataset.itchyfeetRandomise === 'true'
+      || /random/i.test(cleanText(randomSetting?.textContent));
     if (!targetList) return;
 
     if (placeholderList && projectList && placeholderList !== projectList) {
@@ -352,7 +353,9 @@
   function initialisePageEnhancements() {
     injectSchema();
     clearGalleryLoaders();
-    window.setTimeout(combineWorkGalleryItems, 0);
+    const randomSetting = document.querySelector('.work_random, .work-random, [data-work-random]');
+    document.documentElement.dataset.itchyfeetRandomise = String(/random/i.test(cleanText(randomSetting?.textContent)));
+    window.setTimeout(combineWorkGalleryItems, 50);
   }
 
   if (document.readyState === 'loading') {
