@@ -1,4 +1,4 @@
-// Last updated: 2026-08-21 12:50:14
+// Last updated: 2026-08-21 12:53:24
 
 (() => {
   'use strict';
@@ -313,14 +313,44 @@
     });
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () {
-      injectSchema();
-      clearGalleryLoaders();
-    }, { once: true });
-  } else {
+  function combineWorkGalleryItems() {
+    const placeholderList = document.querySelector('.section_content-waterfall .work_list.is-one-list');
+    const projectList = document.querySelector('.section_content-waterfall .work_list-wrapper:not(.is-multiple-list) > .work_list');
+    if (!placeholderList || !projectList || placeholderList === projectList) return;
+
+    const galleryItems = Array.from(placeholderList.children).filter(function (item) {
+      return item.classList.contains('work_item');
+    });
+    if (!galleryItems.length) return;
+
+    galleryItems.forEach(function (item) {
+      projectList.append(item);
+    });
+    placeholderList.remove();
+
+    if (cleanText(document.querySelector('.work_random')?.textContent).toLowerCase().includes('random')) {
+      const items = Array.from(projectList.children).filter(function (item) {
+        return item.classList.contains('work_item');
+      });
+      items.sort(function () { return Math.random() - 0.5; });
+      items.forEach(function (item) { projectList.append(item); });
+    }
+
+    if (window.jQuery?.fn?.masonry) {
+      window.jQuery(projectList).masonry('reloadItems').masonry('layout');
+    }
+  }
+
+  function initialisePageEnhancements() {
     injectSchema();
     clearGalleryLoaders();
+    window.setTimeout(combineWorkGalleryItems, 0);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initialisePageEnhancements, { once: true });
+  } else {
+    initialisePageEnhancements();
   }
 })();
 
