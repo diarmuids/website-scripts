@@ -1,4 +1,4 @@
-// Last updated: 2026-08-21 12:55:44
+// Last updated: 2026-08-21 12:55:49
 
 (() => {
   'use strict';
@@ -317,6 +317,8 @@
     const placeholderList = document.querySelector('.section_content-waterfall .work_list.is-one-list');
     const projectList = document.querySelector('.section_content-waterfall .work_list-wrapper:not(.is-multiple-list) > .work_list');
     const targetList = projectList || placeholderList;
+    const randomSetting = document.querySelector('.work_random, .work-random, [data-work-random]');
+    const shouldRandomise = /random/i.test(cleanText(randomSetting?.textContent));
     if (!targetList) return;
 
     if (placeholderList && projectList && placeholderList !== projectList) {
@@ -328,8 +330,6 @@
       placeholderList.remove();
     }
 
-    const randomSetting = document.querySelector('.work_random, .work-random, [data-work-random]');
-    const shouldRandomise = /random/i.test(cleanText(randomSetting?.textContent));
     const items = Array.from(targetList.children).filter(function (item) {
       return item.classList.contains('work_item');
     });
