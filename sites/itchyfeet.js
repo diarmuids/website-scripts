@@ -1,4 +1,4 @@
-// Last updated: 2026-08-21 12:48:45
+// Last updated: 2026-08-21 12:49:11
 
 (() => {
   'use strict';
@@ -298,6 +298,7 @@
 
       image.addEventListener('load', function () { removeLoadingIndicator(wrapper); }, { once: true });
       image.addEventListener('error', function () { removeLoadingIndicator(wrapper); }, { once: true });
+      window.setTimeout(function () { removeLoadingIndicator(wrapper); }, 5000);
     });
 
     document.querySelectorAll('.showreel_wrapper').forEach(function (wrapper) {
@@ -311,6 +312,7 @@
 
       video.addEventListener('loadeddata', function () { removeLoadingIndicator(wrapper); }, { once: true });
       video.addEventListener('error', function () { removeLoadingIndicator(wrapper); }, { once: true });
+      window.setTimeout(function () { removeLoadingIndicator(wrapper); }, 5000);
     });
   }
 
