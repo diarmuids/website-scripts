@@ -1,6 +1,98 @@
-// Last updated: 2026-08-21 11:05:00
+// Last updated: 2026-09-09 16:15:04
 
 (() => {
+  const PHYSICIAN_SCHEMAS = {
+    "/team/katie-weichman-md": {
+      "@context": "https://schema.org",
+      "@type": "Physician",
+      name: "Katie Weichman, MD",
+      givenName: "Katie",
+      familyName: "Weichman",
+      honorificSuffix: "MD",
+      image:
+        "https://cdn.prod.website-files.com/69ea5215c41b3dc3b7d8caf2/6a02c554084ec1e2644515ae_69fe055ff79d89f2971c38d9_Dr%20Katie%20Weichman.avif",
+      url: "https://www.altrisreconstructivewellness.com/team/katie-weichman-md",
+      medicalSpecialty: "PlasticSurgery",
+      description:
+        "Board certified plastic surgeon specializing in microsurgical breast reconstruction, revision reconstruction, and survivorship care.",
+      worksFor: {
+        "@type": "MedicalOrganization",
+        name: "Altris Reconstructive Wellness",
+        url: "https://www.altrisreconstructivewellness.com",
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: "125 East 69th Street, Ground Floor",
+          addressLocality: "New York",
+          addressRegion: "NY",
+          postalCode: "10021",
+          addressCountry: "US",
+        },
+        telephone: "+19176335750",
+      },
+      alumniOf: {
+        "@type": "CollegeOrUniversity",
+        name: "Creighton University School of Medicine",
+      },
+      sameAs: [
+        "https://www.linkedin.com/in/katie-weichman-a6b4313bb",
+      ],
+    },
+    "/team/vishal-thanik-md": {
+      "@context": "https://schema.org",
+      "@type": "Physician",
+      name: "Vishal Thanik, MD",
+      givenName: "Vishal",
+      familyName: "Thanik",
+      honorificSuffix: "MD",
+      image:
+        "https://cdn.prod.website-files.com/69ea5215c41b3dc3b7d8caf2/6a02c54524bdaa6bf11ca246_69fe055f2e78b0e422663fc8_Dr%20Vishal%20Thanik.avif",
+      url: "https://www.altrisreconstructivewellness.com/team/vishal-thanik-md",
+      medicalSpecialty: "PlasticSurgery",
+      description:
+        "Board certified plastic surgeon specializing in breast reconstruction, revision reconstruction, and survivorship care.",
+      worksFor: {
+        "@type": "MedicalOrganization",
+        name: "Altris Reconstructive Wellness",
+        url: "https://www.altrisreconstructivewellness.com",
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: "125 East 69th Street, Ground Floor",
+          addressLocality: "New York",
+          addressRegion: "NY",
+          postalCode: "10021",
+          addressCountry: "US",
+        },
+        telephone: "+19176335750",
+      },
+      alumniOf: {
+        "@type": "CollegeOrUniversity",
+        name: "NYU Grossman School of Medicine",
+      },
+    },
+  };
+
+  const initPhysicianSchema = () => {
+    const pathname = window.location.pathname.replace(/\/$/, "") || "/";
+    const schema = PHYSICIAN_SCHEMAS[pathname.toLowerCase()];
+
+    if (!schema) {
+      return;
+    }
+
+    const schemaId = "altris-physician-schema";
+    const existingSchema = document.getElementById(schemaId);
+    const script = document.createElement("script");
+    script.id = schemaId;
+    script.type = "application/ld+json";
+    script.textContent = JSON.stringify(schema);
+
+    if (existingSchema) {
+      existingSchema.replaceWith(script);
+    } else {
+      document.head.append(script);
+    }
+  };
+
   const CALCULATORS = {
     diep: {
       resultHeading: "DIEP Flap Weight",
@@ -330,8 +422,12 @@
   };
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initFlapCalculator);
+    document.addEventListener("DOMContentLoaded", () => {
+      initPhysicianSchema();
+      initFlapCalculator();
+    });
   } else {
+    initPhysicianSchema();
     initFlapCalculator();
   }
 })();
