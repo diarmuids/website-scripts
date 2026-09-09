@@ -1,74 +1,210 @@
-// Last updated: 2026-09-09 16:15:04
+// Last updated: 2026-09-09 16:24:31
 
 (() => {
-  const PHYSICIAN_SCHEMAS = {
-    "/team/katie-weichman-md": {
+  const SITE_URL = "https://www.altrisreconstructivewellness.com";
+  const ORGANIZATION_ID = `${SITE_URL}/#organization`;
+  const WEBSITE_ID = `${SITE_URL}/#website`;
+  const PRACTICE_ADDRESS = {
+    "@type": "PostalAddress",
+    streetAddress: "125 East 69th Street, Ground Floor",
+    addressLocality: "New York",
+    addressRegion: "NY",
+    postalCode: "10021",
+    addressCountry: {
+      "@type": "Country",
+      name: "US",
+    },
+  };
+
+  const createPhysicianSchema = (profile) => {
+    const pageId = `${profile.url}#webpage`;
+    const physicianId = `${profile.url}#physician`;
+    const imageId = `${profile.url}#primaryimage`;
+
+    return {
       "@context": "https://schema.org",
-      "@type": "Physician",
+      "@graph": [
+        {
+          "@type": "ProfilePage",
+          "@id": pageId,
+          url: profile.url,
+          name: `${profile.name} | Reconstructive Plastic Surgeon, New York`,
+          description: profile.description,
+          isPartOf: { "@id": WEBSITE_ID },
+          mainEntity: { "@id": physicianId },
+          primaryImageOfPage: { "@id": imageId },
+          about: { "@id": physicianId },
+        },
+        {
+          "@type": ["Person", "IndividualPhysician"],
+          "@id": physicianId,
+          name: profile.name,
+          givenName: profile.givenName,
+          familyName: profile.familyName,
+          honorificPrefix: "Dr.",
+          honorificSuffix: "MD",
+          url: profile.url,
+          image: { "@id": imageId },
+          mainEntityOfPage: { "@id": pageId },
+          description: profile.description,
+          jobTitle: "Co-Founder and Board-Certified Plastic Surgeon",
+          hasOccupation: {
+            "@type": "Occupation",
+            name: "Plastic Surgeon",
+            description: profile.occupationDescription,
+          },
+          medicalSpecialty: "https://schema.org/PlasticSurgery",
+          occupationalCategory: "Plastic Surgeon",
+          knowsAbout: profile.knowsAbout,
+          hasCredential: profile.credentials,
+          worksFor: { "@id": ORGANIZATION_ID },
+          practicesAt: { "@id": ORGANIZATION_ID },
+          alumniOf: profile.alumniOf,
+          sameAs: profile.sameAs,
+        },
+        {
+          "@type": "ImageObject",
+          "@id": imageId,
+          url: profile.image,
+          contentUrl: profile.image,
+          encodingFormat: "image/avif",
+          caption: `${profile.name}, reconstructive plastic surgeon at Altris Reconstructive Wellness in New York`,
+          representativeOfPage: true,
+        },
+        {
+          "@type": "MedicalOrganization",
+          "@id": ORGANIZATION_ID,
+          name: "Altris Reconstructive Wellness",
+          legalName: "Altris Reconstructive Wellness PLLC",
+          url: SITE_URL,
+          telephone: "+19176335750",
+          address: PRACTICE_ADDRESS,
+          medicalSpecialty: "https://schema.org/PlasticSurgery",
+          founder: [
+            {
+              "@type": "Person",
+              "@id": `${SITE_URL}/team/katie-weichman-md#physician`,
+              name: "Katie Weichman, MD",
+              url: `${SITE_URL}/team/katie-weichman-md`,
+            },
+            {
+              "@type": "Person",
+              "@id": `${SITE_URL}/team/vishal-thanik-md#physician`,
+              name: "Vishal Thanik, MD",
+              url: `${SITE_URL}/team/vishal-thanik-md`,
+            },
+          ],
+          contactPoint: {
+            "@type": "ContactPoint",
+            contactType: "patient inquiries",
+            telephone: "+19176335750",
+            url: `${SITE_URL}/contact`,
+          },
+          sameAs: [
+            "https://www.linkedin.com/company/altris-reconstructive-wellness/about/",
+          ],
+        },
+        {
+          "@type": "WebSite",
+          "@id": WEBSITE_ID,
+          url: SITE_URL,
+          name: "Altris Reconstructive Wellness",
+          publisher: { "@id": ORGANIZATION_ID },
+        },
+      ],
+    };
+  };
+
+  const PHYSICIAN_SCHEMAS = {
+    "/team/katie-weichman-md": createPhysicianSchema({
       name: "Katie Weichman, MD",
       givenName: "Katie",
       familyName: "Weichman",
-      honorificSuffix: "MD",
       image:
         "https://cdn.prod.website-files.com/69ea5215c41b3dc3b7d8caf2/6a02c554084ec1e2644515ae_69fe055ff79d89f2971c38d9_Dr%20Katie%20Weichman.avif",
-      url: "https://www.altrisreconstructivewellness.com/team/katie-weichman-md",
-      medicalSpecialty: "PlasticSurgery",
+      url: `${SITE_URL}/team/katie-weichman-md`,
       description:
-        "Board certified plastic surgeon specializing in microsurgical breast reconstruction, revision reconstruction, and survivorship care.",
-      worksFor: {
-        "@type": "MedicalOrganization",
-        name: "Altris Reconstructive Wellness",
-        url: "https://www.altrisreconstructivewellness.com",
-        address: {
-          "@type": "PostalAddress",
-          streetAddress: "125 East 69th Street, Ground Floor",
-          addressLocality: "New York",
-          addressRegion: "NY",
-          postalCode: "10021",
-          addressCountry: "US",
+        "Board-certified plastic surgeon specializing in microsurgical breast reconstruction, autologous reconstruction, revision reconstruction, and survivorship care.",
+      occupationDescription:
+        "Board-certified plastic surgeon focused on microsurgical, autologous, secondary, and revision breast reconstruction.",
+      knowsAbout: [
+        "Microsurgical breast reconstruction",
+        "Autologous breast reconstruction",
+        "Secondary breast reconstruction",
+        "Revision breast reconstruction",
+        "Breast reconstruction outcomes",
+        "Survivorship care",
+      ],
+      credentials: [
+        {
+          "@type": "EducationalOccupationalCredential",
+          name: "Board certification in plastic surgery",
+          credentialCategory: "Board certification",
         },
-        telephone: "+19176335750",
-      },
-      alumniOf: {
-        "@type": "CollegeOrUniversity",
-        name: "Creighton University School of Medicine",
-      },
+        {
+          "@type": "EducationalOccupationalCredential",
+          name: "Microsurgery fellowship training",
+          credentialCategory: "Fellowship training",
+        },
+      ],
+      alumniOf: [
+        {
+          "@type": "CollegeOrUniversity",
+          name: "Creighton University School of Medicine",
+        },
+        {
+          "@type": "CollegeOrUniversity",
+          name: "NYU Grossman School of Medicine",
+        },
+        {
+          "@type": "Hospital",
+          name: "Memorial Sloan Kettering Cancer Center",
+        },
+      ],
       sameAs: [
         "https://www.linkedin.com/in/katie-weichman-a6b4313bb",
       ],
-    },
-    "/team/vishal-thanik-md": {
-      "@context": "https://schema.org",
-      "@type": "Physician",
+    }),
+    "/team/vishal-thanik-md": createPhysicianSchema({
       name: "Vishal Thanik, MD",
       givenName: "Vishal",
       familyName: "Thanik",
-      honorificSuffix: "MD",
       image:
         "https://cdn.prod.website-files.com/69ea5215c41b3dc3b7d8caf2/6a02c54524bdaa6bf11ca246_69fe055f2e78b0e422663fc8_Dr%20Vishal%20Thanik.avif",
-      url: "https://www.altrisreconstructivewellness.com/team/vishal-thanik-md",
-      medicalSpecialty: "PlasticSurgery",
+      url: `${SITE_URL}/team/vishal-thanik-md`,
       description:
-        "Board certified plastic surgeon specializing in breast reconstruction, revision reconstruction, and survivorship care.",
-      worksFor: {
-        "@type": "MedicalOrganization",
-        name: "Altris Reconstructive Wellness",
-        url: "https://www.altrisreconstructivewellness.com",
-        address: {
-          "@type": "PostalAddress",
-          streetAddress: "125 East 69th Street, Ground Floor",
-          addressLocality: "New York",
-          addressRegion: "NY",
-          postalCode: "10021",
-          addressCountry: "US",
+        "Board-certified plastic surgeon specializing in secondary and revision breast reconstruction, complex primary reconstruction, and survivorship care.",
+      occupationDescription:
+        "Board-certified plastic surgeon focused on secondary, revision, and complex primary breast reconstruction.",
+      knowsAbout: [
+        "Secondary breast reconstruction",
+        "Revision breast reconstruction",
+        "Complex primary breast reconstruction",
+        "Peripheral nerve anatomy",
+        "Nerve-related pain after breast surgery",
+        "Functional recovery after breast surgery",
+        "Survivorship care",
+      ],
+      credentials: [
+        {
+          "@type": "EducationalOccupationalCredential",
+          name: "Board certification in plastic surgery",
+          credentialCategory: "Board certification",
         },
-        telephone: "+19176335750",
-      },
-      alumniOf: {
-        "@type": "CollegeOrUniversity",
-        name: "NYU Grossman School of Medicine",
-      },
-    },
+        {
+          "@type": "EducationalOccupationalCredential",
+          name: "Hand surgery fellowship training",
+          credentialCategory: "Fellowship training",
+        },
+      ],
+      alumniOf: [
+        {
+          "@type": "CollegeOrUniversity",
+          name: "NYU Grossman School of Medicine",
+        },
+      ],
+      sameAs: ["https://www.linkedin.com/in/vishal-thanik-31a4991"],
+    }),
   };
 
   const initPhysicianSchema = () => {
