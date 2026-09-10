@@ -1,4 +1,4 @@
-// Last updated: 2026-09-10 21:09:39
+// Last updated: 2026-09-10 21:11:21
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
@@ -572,7 +572,8 @@ function addMindwavePageSections(graph, context, sectionSelector, aboutId) {
 }
 
 function addMindwaveProcess(graph, context, aboutId) {
-  const processSection = document.querySelector('.section_process');
+  const processSection = document.querySelector('.process_content-item')?.closest('section') ||
+    document.querySelector('.section_process');
   const heading = cleanMindwaveText(
     processSection?.querySelector('.heading-style-h2, h2')
   );
@@ -683,7 +684,7 @@ function addMindwaveNewsList(graph, context, listName) {
   };
 }
 
-function addMindwaveServiceList(graph, context, listName) {
+function addMindwaveServiceList(graph, context, listName, excludedUrl) {
   const references = [];
   const urls = [];
   const seenUrls = new Set();
@@ -695,7 +696,7 @@ function addMindwaveServiceList(graph, context, listName) {
       item.querySelector('.service-list_title') || link
     );
 
-    if (!url || !name || seenUrls.has(url)) return;
+    if (!url || !name || url === excludedUrl || seenUrls.has(url)) return;
 
     seenUrls.add(url);
 
@@ -948,7 +949,12 @@ function generateMindwaveServiceSchema(graph, context) {
   const catalog = addMindwaveSubserviceCatalog(graph, context, service);
   const process = addMindwaveProcess(graph, context, serviceId);
   const news = addMindwaveNewsList(graph, context, 'Related News & Views');
-  const relatedServices = addMindwaveServiceList(graph, context, 'More services');
+  const relatedServices = addMindwaveServiceList(
+    graph,
+    context,
+    'More services',
+    context.pageUrl
+  );
 
   if (catalog) parts.push(catalog);
   if (process) parts.push(process);
@@ -957,11 +963,7 @@ function generateMindwaveServiceSchema(graph, context) {
     parts.push(news.reference);
   }
   if (relatedServices) {
-    const filteredUrls = relatedServices.urls.filter(function (url) {
-      return url !== context.pageUrl;
-    });
-
-    if (filteredUrls.length) page.relatedLink = filteredUrls;
+    if (relatedServices.urls.length) page.relatedLink = relatedServices.urls;
     parts.push(relatedServices.reference);
   }
 
