@@ -1,4 +1,4 @@
-// Last updated: 2026-09-10 21:01:23
+// Last updated: 2026-09-10 21:02:44
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
@@ -85,7 +85,7 @@ function generateMindwaveServiceLocationSchema() {
   const locationMatch = headline.match(/\s+in\s+(.+)$/i);
   const locationName = locationMatch ? locationMatch[1].trim() : '';
   const serviceType = locationMatch
-    ? headline.slice(0, locationMatch.index).replace(/\s+agency$/i, '').trim()
+    ? headline.slice(0, locationMatch.index).trim()
     : headline;
   const logo = getMindwaveImageObject(
     document.querySelector('.nav_logo-image[src], .global_animation-logo[src]'),
