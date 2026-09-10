@@ -1,4 +1,4 @@
-// Last updated: 2026-09-10 21:07:38
+// Last updated: 2026-09-10 21:09:39
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
@@ -402,6 +402,867 @@ function generateMindwaveServiceLocationSchema() {
   document.head.appendChild(schema);
 }
 
+function getMindwavePageContext() {
+  const canonical = document.querySelector('link[rel="canonical"]');
+  const pageUrl = getMindwaveAbsoluteUrl(
+    canonical?.getAttribute('href') || location.href,
+    MINDWAVE_SITE_URL
+  );
+  const siteUrl = new URL('/', pageUrl).href;
+  const titleParts = document.title.split('|');
+  const footerName = cleanMindwaveText(document.querySelector('.footer_credit-text'))
+    .replace(/^\u00a9\s*\d{4}\s*/, '');
+
+  return {
+    pageUrl: pageUrl,
+    siteUrl: siteUrl,
+    organizationId: siteUrl + '#organization',
+    websiteId: siteUrl + '#website',
+    pageId: pageUrl + '#webpage',
+    breadcrumbId: pageUrl + '#breadcrumb',
+    headline: cleanMindwaveText(document.querySelector('h1')),
+    description: document.querySelector('meta[name="description"]')?.content.trim() || '',
+    language: document.documentElement.lang || 'en',
+    organizationName: footerName || titleParts[titleParts.length - 1].trim()
+  };
+}
+
+function addMindwaveFoundation(graph, context) {
+  const logo = getMindwaveImageObject(
+    document.querySelector('.nav_logo-image[src], .global_animation-logo[src]'),
+    context.siteUrl + '#logo',
+    context.pageUrl,
+    context.organizationName
+  );
+  const emailLink = document.querySelector('a[href^="mailto:"]');
+  const email = emailLink
+    ? decodeURIComponent(emailLink.href.replace(/^mailto:/i, '').split('?')[0])
+    : '';
+  const socialUrls = getUniqueMindwaveValues(
+    Array.from(document.querySelectorAll('footer .social_link[href^="http"]'))
+      .map(function (link) {
+        return getMindwaveAbsoluteUrl(link.getAttribute('href'), context.pageUrl);
+      })
+  );
+  const knowsAbout = getUniqueMindwaveValues(
+    Array.from(document.querySelectorAll('.nav_dd-link-text'))
+      .map(cleanMindwaveText)
+  );
+  const organization = {
+    '@type': 'Organization',
+    '@id': context.organizationId,
+    name: context.organizationName,
+    url: context.siteUrl
+  };
+
+  if (logo) {
+    organization.logo = { '@id': logo['@id'] };
+    organization.image = { '@id': logo['@id'] };
+  }
+  if (email) {
+    organization.email = email;
+    organization.contactPoint = {
+      '@type': 'ContactPoint',
+      contactType: 'new business enquiries',
+      email: email,
+      availableLanguage: context.language
+    };
+  }
+  if (socialUrls.length) organization.sameAs = socialUrls;
+  if (knowsAbout.length) organization.knowsAbout = knowsAbout;
+
+  graph.push(organization);
+  if (logo) graph.push(logo);
+  graph.push({
+    '@type': 'WebSite',
+    '@id': context.websiteId,
+    url: context.siteUrl,
+    name: context.organizationName,
+    publisher: { '@id': context.organizationId },
+    inLanguage: context.language
+  });
+
+  return organization;
+}
+
+function getMindwaveBreadcrumb(context, levels) {
+  return {
+    '@type': 'BreadcrumbList',
+    '@id': context.breadcrumbId,
+    itemListElement: levels.map(function (level, index) {
+      return {
+        '@type': 'ListItem',
+        position: index + 1,
+        name: level.name,
+        item: getMindwaveAbsoluteUrl(level.url, context.siteUrl)
+      };
+    })
+  };
+}
+
+function addMindwavePrimaryImage(graph, page, context, image) {
+  const primaryImage = image
+    ? getMindwaveImageObject(
+      image,
+      context.pageUrl + '#primaryimage',
+      context.pageUrl,
+      context.headline
+    )
+    : null;
+  const ogImageUrl = document.querySelector('meta[property="og:image"]')?.content.trim();
+  const fallbackImage = !primaryImage && ogImageUrl
+    ? {
+      '@type': 'ImageObject',
+      '@id': context.pageUrl + '#primaryimage',
+      url: getMindwaveAbsoluteUrl(ogImageUrl, context.pageUrl),
+      contentUrl: getMindwaveAbsoluteUrl(ogImageUrl, context.pageUrl),
+      caption: context.headline
+    }
+    : null;
+  const selectedImage = primaryImage || fallbackImage;
+
+  if (!selectedImage) return;
+
+  graph.push(selectedImage);
+  page.primaryImageOfPage = { '@id': selectedImage['@id'] };
+}
+
+function addMindwavePageSections(graph, context, sectionSelector, aboutId) {
+  const references = [];
+
+  document.querySelectorAll(sectionSelector).forEach(function (section, index) {
+    const heading = cleanMindwaveText(section.querySelector('h2, h3'));
+    const textElement = Array.from(
+      section.querySelectorAll('.text-rich-text, .text-size-medium, .h2-subheader')
+    ).find(function (element) {
+      return cleanMindwaveText(element);
+    });
+    const text = cleanMindwaveText(textElement);
+
+    if (!heading || !text) return;
+
+    const sectionId = context.pageUrl + '#section-' + (index + 1);
+    const node = {
+      '@type': 'WebPageElement',
+      '@id': sectionId,
+      name: heading,
+      text: text,
+      isPartOf: { '@id': context.pageId }
+    };
+
+    if (aboutId) node.about = { '@id': aboutId };
+
+    const image = getMindwaveImageObject(
+      section.querySelector('img[src]'),
+      sectionId + '-image',
+      context.pageUrl,
+      heading
+    );
+
+    if (image) {
+      graph.push(image);
+      node.image = { '@id': image['@id'] };
+    }
+
+    graph.push(node);
+    references.push({ '@id': sectionId });
+  });
+
+  return references;
+}
+
+function addMindwaveProcess(graph, context, aboutId) {
+  const processSection = document.querySelector('.section_process');
+  const heading = cleanMindwaveText(
+    processSection?.querySelector('.heading-style-h2, h2')
+  );
+  const steps = processSection
+    ? Array.from(processSection.querySelectorAll('.process_content-item'))
+      .map(function (item, index) {
+        const name = cleanMindwaveText(item.querySelector('h3, h4, h5'));
+        const text = cleanMindwaveText(item.querySelector('.text-rich-text'));
+
+        if (!name || !text) return null;
+
+        return {
+          '@type': 'HowToStep',
+          position: index + 1,
+          name: name,
+          text: text
+        };
+      })
+      .filter(Boolean)
+    : [];
+
+  if (!heading || !steps.length) return null;
+
+  const process = {
+    '@type': 'HowTo',
+    '@id': context.pageUrl + '#process',
+    name: heading,
+    isPartOf: { '@id': context.pageId },
+    step: steps
+  };
+
+  if (aboutId) process.about = { '@id': aboutId };
+
+  graph.push(process);
+  return { '@id': process['@id'] };
+}
+
+function addMindwaveNewsList(graph, context, listName) {
+  const references = [];
+  const seenUrls = new Set();
+
+  document.querySelectorAll('.news-list_item').forEach(function (item) {
+    const titleLink = item.querySelector('.news-list_title[href]');
+    const url = getMindwaveAbsoluteUrl(titleLink?.getAttribute('href'), context.pageUrl);
+    const headline = cleanMindwaveText(titleLink);
+
+    if (!url || !headline || seenUrls.has(url)) return;
+
+    seenUrls.add(url);
+
+    const articleId = url + '#article';
+    const article = {
+      '@type': 'BlogPosting',
+      '@id': articleId,
+      url: url,
+      headline: headline,
+      publisher: { '@id': context.organizationId },
+      isPartOf: { '@id': context.websiteId },
+      inLanguage: context.language
+    };
+    const category = cleanMindwaveText(item.querySelector('.page_type'));
+    const dateText = cleanMindwaveText(item.querySelector('.news-list_date'));
+    const parsedDate = dateText ? new Date(dateText) : null;
+    const image = getMindwaveImageObject(
+      item.querySelector('.news-list_image[src], img[src]'),
+      articleId + '-image',
+      context.pageUrl,
+      headline
+    );
+
+    if (category) {
+      article.articleSection = category;
+      article.keywords = category;
+    }
+    if (parsedDate && !Number.isNaN(parsedDate.getTime())) {
+      article.datePublished = parsedDate.toISOString().slice(0, 10);
+    }
+    if (image) {
+      graph.push(image);
+      article.image = { '@id': image['@id'] };
+    }
+
+    graph.push(article);
+    references.push({ '@id': articleId });
+  });
+
+  if (!references.length) return null;
+
+  const list = {
+    '@type': 'ItemList',
+    '@id': context.pageUrl + '#news-list',
+    name: listName || 'News & Views',
+    numberOfItems: references.length,
+    itemListOrder: 'https://schema.org/ItemListOrderDescending',
+    itemListElement: references.map(function (reference, index) {
+      return {
+        '@type': 'ListItem',
+        position: index + 1,
+        item: reference
+      };
+    })
+  };
+
+  graph.push(list);
+  return {
+    reference: { '@id': list['@id'] },
+    articles: references
+  };
+}
+
+function addMindwaveServiceList(graph, context, listName) {
+  const references = [];
+  const urls = [];
+  const seenUrls = new Set();
+
+  document.querySelectorAll('.service-list_item').forEach(function (item) {
+    const link = item.querySelector('.service-list_link[href], a[href]');
+    const url = getMindwaveAbsoluteUrl(link?.getAttribute('href'), context.pageUrl);
+    const name = cleanMindwaveText(
+      item.querySelector('.service-list_title') || link
+    );
+
+    if (!url || !name || seenUrls.has(url)) return;
+
+    seenUrls.add(url);
+
+    const serviceId = url + '#service';
+    const service = {
+      '@type': 'Service',
+      '@id': serviceId,
+      name: name,
+      url: url,
+      provider: { '@id': context.organizationId }
+    };
+    const image = getMindwaveImageObject(
+      item.querySelector('.service-list_img[src], img[src]'),
+      serviceId + '-image',
+      context.pageUrl,
+      name
+    );
+
+    if (image) {
+      graph.push(image);
+      service.image = { '@id': image['@id'] };
+    }
+
+    graph.push(service);
+    references.push({ '@id': serviceId });
+    urls.push(url);
+  });
+
+  if (!references.length) return null;
+
+  const list = {
+    '@type': 'ItemList',
+    '@id': context.pageUrl + '#service-list',
+    name: listName || 'Mindwave services',
+    numberOfItems: references.length,
+    itemListOrder: 'https://schema.org/ItemListOrderAscending',
+    itemListElement: references.map(function (reference, index) {
+      return {
+        '@type': 'ListItem',
+        position: index + 1,
+        item: reference
+      };
+    })
+  };
+
+  graph.push(list);
+  return {
+    reference: { '@id': list['@id'] },
+    services: references,
+    urls: urls
+  };
+}
+
+function getMindwaveBasePage(type, context) {
+  return {
+    '@type': type,
+    '@id': context.pageId,
+    url: context.pageUrl,
+    name: document.title,
+    headline: context.headline,
+    description: context.description || undefined,
+    isPartOf: { '@id': context.websiteId },
+    publisher: { '@id': context.organizationId },
+    breadcrumb: { '@id': context.breadcrumbId },
+    inLanguage: context.language
+  };
+}
+
+function addMindwaveContactActions(page, context) {
+  const actions = [];
+  const messageTarget = document.getElementById('message-us')
+    ? context.pageUrl + '#message-us'
+    : getMindwaveAbsoluteUrl('/contact#message-us', context.siteUrl);
+  const emailLink = document.querySelector('a[href^="mailto:"]');
+
+  if (messageTarget) {
+    actions.push({
+      '@type': 'CommunicateAction',
+      name: 'Message Mindwave',
+      target: messageTarget
+    });
+  }
+  if (emailLink) {
+    actions.push({
+      '@type': 'CommunicateAction',
+      name: 'Email Mindwave',
+      target: emailLink.href
+    });
+  }
+
+  if (actions.length) page.potentialAction = actions;
+}
+
+function addMindwaveSubserviceCatalog(graph, context, mainService) {
+  const offers = [];
+
+  document.querySelectorAll('.subservices_column').forEach(function (column, index) {
+    const name = cleanMindwaveText(
+      column.querySelector('.heading-style-h5') ||
+      column.querySelector('.subservices_column-horiztonal-text') ||
+      column.querySelector('h3')
+    );
+    const descriptionElement = Array.from(
+      column.querySelectorAll('.subservices_content-wrapper .text-rich-text, .text-rich-text')
+    ).find(function (element) {
+      return cleanMindwaveText(element);
+    });
+
+    if (!name) return;
+
+    const subserviceId = context.pageUrl + '#subservice-' + (index + 1);
+    const subservice = {
+      '@type': 'Service',
+      '@id': subserviceId,
+      name: name,
+      url: context.pageUrl,
+      provider: { '@id': context.organizationId }
+    };
+    const description = cleanMindwaveText(descriptionElement);
+    const image = getMindwaveImageObject(
+      column.querySelector('.subservices_image[src], img[src]'),
+      subserviceId + '-image',
+      context.pageUrl,
+      name
+    );
+
+    if (description) subservice.description = description;
+    if (image) {
+      graph.push(image);
+      subservice.image = { '@id': image['@id'] };
+    }
+
+    graph.push(subservice);
+    offers.push({
+      '@type': 'Offer',
+      itemOffered: { '@id': subserviceId }
+    });
+  });
+
+  if (!offers.length) return null;
+
+  const catalog = {
+    '@type': 'OfferCatalog',
+    '@id': context.pageUrl + '#service-catalog',
+    name: context.headline + ' services',
+    itemListElement: offers
+  };
+
+  graph.push(catalog);
+  mainService.hasOfferCatalog = { '@id': catalog['@id'] };
+
+  return { '@id': catalog['@id'] };
+}
+
+function generateMindwaveHomeSchema(graph, context) {
+  const page = getMindwaveBasePage('WebPage', context);
+  const parts = [];
+  const services = addMindwaveServiceList(graph, context, 'Core services');
+  const process = addMindwaveProcess(graph, context);
+  const news = addMindwaveNewsList(graph, context, 'Latest News & Views');
+
+  if (services) {
+    page.mainEntity = services.reference;
+    parts.push(services.reference);
+  }
+  if (process) parts.push(process);
+  if (news) {
+    parts.push(news.reference);
+    page.relatedLink = news.articles.map(function (article) {
+      return article['@id'].replace(/#article$/, '');
+    });
+  }
+  if (parts.length) page.hasPart = parts;
+
+  addMindwaveContactActions(page, context);
+  addMindwavePrimaryImage(graph, page, context);
+  graph.push(page, getMindwaveBreadcrumb(context, [
+    { name: 'Home', url: context.siteUrl }
+  ]));
+}
+
+function generateMindwaveAboutSchema(graph, context) {
+  const page = getMindwaveBasePage('AboutPage', context);
+  const parts = addMindwavePageSections(
+    graph,
+    context,
+    'main section:not(.section_cta)',
+    context.organizationId
+  );
+  const careerLinks = getUniqueMindwaveValues(
+    Array.from(document.querySelectorAll('.career-list_item a[href]'))
+      .map(function (link) {
+        return getMindwaveAbsoluteUrl(link.getAttribute('href'), context.pageUrl);
+      })
+  );
+
+  page.about = { '@id': context.organizationId };
+  page.mainEntity = { '@id': context.organizationId };
+  if (parts.length) page.hasPart = parts;
+  if (careerLinks.length) page.significantLink = careerLinks;
+
+  addMindwaveContactActions(page, context);
+  addMindwavePrimaryImage(graph, page, context);
+  graph.push(page, getMindwaveBreadcrumb(context, [
+    { name: 'Home', url: context.siteUrl },
+    { name: context.headline || 'Who We Are', url: context.pageUrl }
+  ]));
+}
+
+function generateMindwaveServicesIndexSchema(graph, context) {
+  const page = getMindwaveBasePage('CollectionPage', context);
+  const services = addMindwaveServiceList(graph, context, 'Mindwave services');
+
+  if (services) {
+    page.mainEntity = services.reference;
+    page.hasPart = [services.reference];
+  }
+
+  addMindwaveContactActions(page, context);
+  addMindwavePrimaryImage(graph, page, context);
+  graph.push(page, getMindwaveBreadcrumb(context, [
+    { name: 'Home', url: context.siteUrl },
+    { name: context.headline || 'What We Do', url: context.pageUrl }
+  ]));
+}
+
+function generateMindwaveServiceSchema(graph, context) {
+  const serviceId = context.pageUrl + '#service';
+  const service = {
+    '@type': 'Service',
+    '@id': serviceId,
+    name: context.headline,
+    serviceType: context.headline,
+    description: context.description,
+    url: context.pageUrl,
+    provider: { '@id': context.organizationId },
+    availableChannel: {
+      '@type': 'ServiceChannel',
+      serviceUrl: context.pageUrl,
+      availableLanguage: context.language
+    }
+  };
+  const page = getMindwaveBasePage('WebPage', context);
+  const parts = addMindwavePageSections(
+    graph,
+    context,
+    '.section_service-why .service-why_content',
+    serviceId
+  );
+  const catalog = addMindwaveSubserviceCatalog(graph, context, service);
+  const process = addMindwaveProcess(graph, context, serviceId);
+  const news = addMindwaveNewsList(graph, context, 'Related News & Views');
+  const relatedServices = addMindwaveServiceList(graph, context, 'More services');
+
+  if (catalog) parts.push(catalog);
+  if (process) parts.push(process);
+  if (news) {
+    service.subjectOf = news.articles;
+    parts.push(news.reference);
+  }
+  if (relatedServices) {
+    const filteredUrls = relatedServices.urls.filter(function (url) {
+      return url !== context.pageUrl;
+    });
+
+    if (filteredUrls.length) page.relatedLink = filteredUrls;
+    parts.push(relatedServices.reference);
+  }
+
+  graph.push(service);
+  page.about = { '@id': serviceId };
+  page.mainEntity = { '@id': serviceId };
+  if (parts.length) page.hasPart = parts;
+
+  addMindwaveContactActions(page, context);
+  addMindwavePrimaryImage(
+    graph,
+    page,
+    context,
+    document.querySelector('.service-why_image[src], .service-header_content-right img[src]')
+  );
+  graph.push(page, getMindwaveBreadcrumb(context, [
+    { name: 'Home', url: context.siteUrl },
+    { name: 'What We Do', url: '/what-we-do' },
+    { name: context.headline, url: context.pageUrl }
+  ]));
+}
+
+function generateMindwaveNewsListSchema(graph, context, isCategory) {
+  const page = getMindwaveBasePage('CollectionPage', context);
+  const displayHeadline = isCategory
+    ? document.title.split('|')[0].trim()
+    : context.headline;
+  const news = addMindwaveNewsList(
+    graph,
+    context,
+    isCategory ? displayHeadline + ' articles' : 'News & Views'
+  );
+
+  page.headline = displayHeadline;
+  if (news) {
+    page.mainEntity = news.reference;
+    page.hasPart = [news.reference];
+  }
+
+  addMindwaveContactActions(page, context);
+  addMindwavePrimaryImage(graph, page, context);
+
+  const levels = [
+    { name: 'Home', url: context.siteUrl },
+    { name: 'News & Views', url: '/news-and-views' }
+  ];
+
+  if (isCategory) levels.push({ name: displayHeadline, url: context.pageUrl });
+
+  graph.push(page, getMindwaveBreadcrumb(context, levels));
+}
+
+function generateMindwaveArticleSchema(graph, context) {
+  const articleId = context.pageUrl + '#article';
+  const category = cleanMindwaveText(document.querySelector('.section_header .page_type'));
+  const authorText = cleanMindwaveText(
+    document.querySelector('.news_details:not(.w-condition-invisible) .news_detail-text:not(.is-date)')
+  );
+  const authorName = authorText.replace(/\s*@\s*Mindwave\s*$/i, '').trim();
+  const dateText = cleanMindwaveText(
+    document.querySelector('.news_details:not(.w-condition-invisible) .news_detail-text.is-date')
+  );
+  const parsedDate = dateText ? new Date(dateText) : null;
+  const articleBody = Array.from(
+    document.querySelectorAll('.section_news-article .text-rich-text')
+  ).map(cleanMindwaveText).sort(function (a, b) {
+    return b.length - a.length;
+  })[0] || '';
+  const article = {
+    '@type': 'BlogPosting',
+    '@id': articleId,
+    url: context.pageUrl,
+    headline: context.headline,
+    description: context.description,
+    articleBody: articleBody || undefined,
+    articleSection: category || undefined,
+    keywords: category || undefined,
+    publisher: { '@id': context.organizationId },
+    mainEntityOfPage: { '@id': context.pageId },
+    isPartOf: { '@id': context.websiteId },
+    inLanguage: context.language
+  };
+
+  if (parsedDate && !Number.isNaN(parsedDate.getTime())) {
+    article.datePublished = parsedDate.toISOString().slice(0, 10);
+  }
+  if (authorName) {
+    const authorId = context.siteUrl + '#author-' + authorName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+
+    graph.push({
+      '@type': 'Person',
+      '@id': authorId,
+      name: authorName,
+      affiliation: { '@id': context.organizationId }
+    });
+    article.author = { '@id': authorId };
+  }
+
+  const articleImage = getMindwaveImageObject(
+    document.querySelector('.news_main-image[src]'),
+    context.pageUrl + '#primaryimage',
+    context.pageUrl,
+    context.headline
+  );
+
+  if (articleImage) {
+    graph.push(articleImage);
+    article.image = { '@id': articleImage['@id'] };
+  }
+
+  graph.push(article);
+
+  const page = getMindwaveBasePage('WebPage', context);
+  const relatedNews = addMindwaveNewsList(graph, context, 'More News & Views');
+
+  page.mainEntity = { '@id': articleId };
+  page.about = category || undefined;
+  if (articleImage) page.primaryImageOfPage = { '@id': articleImage['@id'] };
+  if (relatedNews) {
+    page.relatedLink = relatedNews.articles.map(function (relatedArticle) {
+      return relatedArticle['@id'].replace(/#article$/, '');
+    });
+    page.hasPart = [relatedNews.reference];
+  }
+  addMindwaveContactActions(page, context);
+
+  graph.push(page, getMindwaveBreadcrumb(context, [
+    { name: 'Home', url: context.siteUrl },
+    { name: 'News & Views', url: '/news-and-views' },
+    { name: context.headline, url: context.pageUrl }
+  ]));
+}
+
+function generateMindwaveContactSchema(graph, context, organization) {
+  const page = getMindwaveBasePage('ContactPage', context);
+  const locationsBlock = Array.from(document.querySelectorAll('.contact_block'))
+    .find(function (block) {
+      return /^locations$/i.test(cleanMindwaveText(block.querySelector('h2, h3')));
+    });
+  const locations = locationsBlock
+    ? getUniqueMindwaveValues(
+      Array.from(locationsBlock.children)
+        .map(cleanMindwaveText)
+        .filter(function (text) {
+          return text && !/^locations$/i.test(text);
+        })
+    )
+    : [];
+
+  if (locations.length) {
+    organization.location = locations.map(function (name) {
+      return {
+        '@type': 'Place',
+        name: name
+      };
+    });
+  }
+
+  page.about = { '@id': context.organizationId };
+  page.mainEntity = { '@id': context.organizationId };
+  addMindwaveContactActions(page, context);
+  addMindwavePrimaryImage(graph, page, context);
+  graph.push(page, getMindwaveBreadcrumb(context, [
+    { name: 'Home', url: context.siteUrl },
+    { name: context.headline || 'Contact', url: context.pageUrl }
+  ]));
+}
+
+function generateMindwaveServiceLocationsIndexSchema(graph, context) {
+  const page = getMindwaveBasePage('CollectionPage', context);
+  const references = [];
+
+  document.querySelectorAll('.locations-list_item').forEach(function (item, index) {
+    const link = item.querySelector('a[href]');
+    const url = getMindwaveAbsoluteUrl(link?.getAttribute('href'), context.pageUrl);
+    const name = cleanMindwaveText(link || item);
+
+    if (!url || !name) return;
+
+    const match = name.match(/^(.*?\sAgency)\s+(.+)$/i);
+    const serviceId = url + '#service';
+    const service = {
+      '@type': 'Service',
+      '@id': serviceId,
+      name: name,
+      serviceType: match ? match[1] : name,
+      url: url,
+      provider: { '@id': context.organizationId }
+    };
+
+    if (match) {
+      service.areaServed = {
+        '@type': 'City',
+        name: match[2]
+      };
+    }
+
+    graph.push(service);
+    references.push({
+      '@type': 'ListItem',
+      position: index + 1,
+      item: { '@id': serviceId }
+    });
+  });
+
+  if (references.length) {
+    const list = {
+      '@type': 'ItemList',
+      '@id': context.pageUrl + '#location-services',
+      name: context.headline,
+      numberOfItems: references.length,
+      itemListOrder: 'https://schema.org/ItemListOrderAscending',
+      itemListElement: references
+    };
+
+    graph.push(list);
+    page.mainEntity = { '@id': list['@id'] };
+    page.hasPart = [{ '@id': list['@id'] }];
+  }
+
+  const services = addMindwaveServiceList(graph, context, 'Mindwave services');
+  const news = addMindwaveNewsList(graph, context, 'Latest News & Views');
+
+  if (services) page.hasPart = (page.hasPart || []).concat(services.reference);
+  if (news) {
+    page.hasPart = (page.hasPart || []).concat(news.reference);
+    page.relatedLink = news.articles.map(function (article) {
+      return article['@id'].replace(/#article$/, '');
+    });
+  }
+
+  addMindwaveContactActions(page, context);
+  addMindwavePrimaryImage(graph, page, context);
+  graph.push(page, getMindwaveBreadcrumb(context, [
+    { name: 'Home', url: context.siteUrl },
+    { name: context.headline || 'Service Locations', url: context.pageUrl }
+  ]));
+}
+
+function generateMindwavePageSchema() {
+  if (
+    document.documentElement.dataset.wfCollection ===
+    MINDWAVE_LOCATION_COLLECTION_ID
+  ) {
+    return;
+  }
+
+  const pageId = document.documentElement.dataset.wfPage;
+  const collectionId = document.documentElement.dataset.wfCollection;
+  const supported = Object.values(MINDWAVE_PAGE_IDS).includes(pageId) ||
+    MINDWAVE_SERVICE_PAGE_IDS.includes(pageId) ||
+    collectionId === MINDWAVE_NEWS_COLLECTION_ID ||
+    collectionId === MINDWAVE_NEWS_CATEGORY_COLLECTION_ID;
+
+  if (!supported) return;
+
+  const context = getMindwavePageContext();
+
+  if (!context.pageUrl || !context.headline) return;
+
+  const graph = [];
+  const organization = addMindwaveFoundation(graph, context);
+
+  if (pageId === MINDWAVE_PAGE_IDS.home) {
+    generateMindwaveHomeSchema(graph, context);
+  } else if (pageId === MINDWAVE_PAGE_IDS.whoWeAre) {
+    generateMindwaveAboutSchema(graph, context);
+  } else if (pageId === MINDWAVE_PAGE_IDS.whatWeDo) {
+    generateMindwaveServicesIndexSchema(graph, context);
+  } else if (MINDWAVE_SERVICE_PAGE_IDS.includes(pageId)) {
+    generateMindwaveServiceSchema(graph, context);
+  } else if (pageId === MINDWAVE_PAGE_IDS.news) {
+    generateMindwaveNewsListSchema(graph, context, false);
+  } else if (collectionId === MINDWAVE_NEWS_CATEGORY_COLLECTION_ID) {
+    generateMindwaveNewsListSchema(graph, context, true);
+  } else if (collectionId === MINDWAVE_NEWS_COLLECTION_ID) {
+    generateMindwaveArticleSchema(graph, context);
+  } else if (pageId === MINDWAVE_PAGE_IDS.contact) {
+    generateMindwaveContactSchema(graph, context, organization);
+  } else if (pageId === MINDWAVE_PAGE_IDS.serviceLocations) {
+    generateMindwaveServiceLocationsIndexSchema(graph, context);
+  }
+
+  if (graph.length <= 3) return;
+
+  document.getElementById(MINDWAVE_PAGE_SCHEMA_ID)?.remove();
+
+  const schema = document.createElement('script');
+
+  schema.id = MINDWAVE_PAGE_SCHEMA_ID;
+  schema.type = 'application/ld+json';
+  schema.textContent = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@graph': graph
+  });
+  document.head.appendChild(schema);
+}
+
 // ALTERNATE SERVICE LINKS
 function addAlternatingServiceLinkClasses() {
   document.querySelectorAll('.service-list_link').forEach(function (link, index) {
@@ -411,6 +1272,7 @@ function addAlternatingServiceLinkClasses() {
 
 function initMindwavePage() {
   generateMindwaveServiceLocationSchema();
+  generateMindwavePageSchema();
   addAlternatingServiceLinkClasses();
 }
 
