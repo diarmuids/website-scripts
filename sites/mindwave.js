@@ -1,4 +1,17 @@
-// Last updated: 2026-07-17 17:45:37
+// Last updated: 2026-09-10 15:41:42
+
+// ALTERNATE SERVICE LINKS
+function addAlternatingServiceLinkClasses() {
+  document.querySelectorAll('.service-list_link').forEach(function (link, index) {
+    if (index % 2 === 1) link.classList.add('is-alt');
+  });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', addAlternatingServiceLinkClasses);
+} else {
+  addAlternatingServiceLinkClasses();
+}
 
 // // INSERT TABLE SCROLL WRAPPER
 // $('.table_component').each(function () {
