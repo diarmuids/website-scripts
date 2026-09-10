@@ -1,4 +1,4 @@
-// Last updated: 2026-08-18 17:30:08
+// Last updated: 2026-09-10 15:18:50
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -63,7 +63,50 @@ generateContactPageSchema();
 
 // COUNTRY LOGIC, THEN LOAD FINSWEET
 const countryContentReady = (async function () {
+  const countryCacheKey = 'farm-health-first-country';
+  const countryCacheLifetime = 24 * 60 * 60 * 1000;
   let selectedCountry = 'UK';
+
+  function readCachedCountry() {
+    try {
+      const cached = JSON.parse(localStorage.getItem(countryCacheKey));
+
+      if (!cached || !['UK', 'IE'].includes(cached.country)) return null;
+
+      return {
+        country: cached.country,
+        isFresh: Date.now() - Number(cached.checkedAt) < countryCacheLifetime
+      };
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function cacheCountry(country) {
+    try {
+      localStorage.setItem(countryCacheKey, JSON.stringify({
+        country: country,
+        checkedAt: Date.now()
+      }));
+    } catch (error) {
+      // Country selection still works when storage is unavailable.
+    }
+  }
+
+  function applyCountry(country, removeOtherCountry) {
+    const isIreland = country === 'IE';
+    const selectedSelector = '[data-country="' + (isIreland ? 'IE' : 'UK') + '"]';
+    const otherSelector = '[data-country="' + (isIreland ? 'UK' : 'IE') + '"]';
+
+    selectedCountry = isIreland ? 'IE' : 'UK';
+    $(otherSelector).hide();
+    $(selectedSelector).show();
+    $('[name="COUNTRY"]').val(isIreland ? 'Ireland' : 'UK');
+
+    if (removeOtherCountry) $(otherSelector).remove();
+  }
+
+  const cachedCountry = readCachedCountry();
 
   try {
     const searchParams = new URLSearchParams(location.search);
@@ -94,18 +137,24 @@ const countryContentReady = (async function () {
       });
     }
 
-    const country = test || (await $.getJSON('https://ipapi.co/json/')).country_code;
-    const isIreland = country === 'IE';
-    selectedCountry = isIreland ? 'IE' : 'UK';
+    if (test) {
+      applyCountry(test === 'IE' ? 'IE' : 'UK', true);
+    } else if (cachedCountry?.isFresh) {
+      applyCountry(cachedCountry.country, true);
+    } else {
+      // Keep the last known selection visible while an expired cache refreshes.
+      // On a first visit, use UK as the immediate fallback instead of showing both.
+      applyCountry(cachedCountry?.country || 'UK', false);
 
-    $('[data-country="' + (isIreland ? 'UK' : 'IE') + '"]').remove();
-    $('[data-country="' + (isIreland ? 'IE' : 'UK') + '"]').show();
-    $('[name="COUNTRY"]').val(isIreland ? 'Ireland' : 'UK');
+      const response = await $.getJSON('https://ipapi.co/json/');
+      const resolvedCountry = response.country_code === 'IE' ? 'IE' : 'UK';
+
+      cacheCountry(resolvedCountry);
+      applyCountry(resolvedCountry, true);
+    }
   } catch (error) {
     console.warn('Country lookup unavailable');
-    $('[data-country="IE"]').remove();
-    $('[data-country="UK"]').show();
-    $('[name="COUNTRY"]').val('UK');
+    applyCountry(cachedCountry?.country || 'UK', true);
   }
 
   const script = document.createElement('script');
