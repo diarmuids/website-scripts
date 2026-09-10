@@ -1,8 +1,26 @@
-// Last updated: 2026-09-10 21:02:44
+// Last updated: 2026-09-10 21:07:38
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
+const MINDWAVE_PAGE_SCHEMA_ID = 'mindwave-page-schema';
 const MINDWAVE_SITE_URL = 'https://www.mindwave.agency/';
+const MINDWAVE_PAGE_IDS = {
+  home: '6825f24fcaddf4a2b5da44fc',
+  whoWeAre: '682b348f79b7b2efc8e6c158',
+  whatWeDo: '682cbb4f905b823bd762352c',
+  news: '682b916ab5eaf87f92aa1aaa',
+  contact: '682b76357d290e9990457bcd',
+  serviceLocations: '6aa2e9196918bc0ab053ed5a'
+};
+const MINDWAVE_SERVICE_PAGE_IDS = [
+  '68506213fd9ef8a15f294ddd',
+  '685cec70704d9c99836720de',
+  '685ce59ff3d741f27c2c6ed3',
+  '685ce98eb10924ff5436c558',
+  '685ce820b27d88d704366eef'
+];
+const MINDWAVE_NEWS_COLLECTION_ID = '682b976d70e048ecf0817883';
+const MINDWAVE_NEWS_CATEGORY_COLLECTION_ID = '685d0a62452c9d10796a5b42';
 
 function cleanMindwaveText(element) {
   return element
