@@ -1,4 +1,4 @@
-// Last updated: 2026-09-10 21:11:21
+// Last updated: 2026-09-11 06:28:59
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
