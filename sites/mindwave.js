@@ -1,4 +1,4 @@
-// Last updated: 2026-09-11 10:37:52
+// Last updated: 2026-09-11 10:37:58
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
@@ -1290,8 +1290,7 @@ function initMindwaveSmoothAnchorScroll() {
 
     if (!id) return null;
 
-    return document.getElementById(id) ||
-      document.querySelector('[name="' + CSS.escape(id) + '"]');
+    return document.getElementById(id) || document.getElementsByName(id)[0] || null;
   }
 
   function getFixedHeaderOffset() {
