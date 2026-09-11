@@ -1,4 +1,4 @@
-// Last updated: 2026-09-11 10:37:58
+// Last updated: 2026-09-11 10:39:26
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
@@ -1265,159 +1265,6 @@ function generateMindwavePageSchema() {
   document.head.appendChild(schema);
 }
 
-// SMOOTH SAME-PAGE ANCHOR LINKS
-function initMindwaveSmoothAnchorScroll() {
-  let animationFrame = null;
-
-  function getScrollDuration() {
-    const seconds = Number.parseFloat(document.body.dataset.scrollTime);
-
-    return Number.isFinite(seconds) && seconds >= 0
-      ? seconds * 1000
-      : 500;
-  }
-
-  function getAnchorTarget(hash) {
-    if (!hash || hash === '#') return null;
-
-    let id = '';
-
-    try {
-      id = decodeURIComponent(hash.slice(1));
-    } catch (error) {
-      id = hash.slice(1);
-    }
-
-    if (!id) return null;
-
-    return document.getElementById(id) || document.getElementsByName(id)[0] || null;
-  }
-
-  function getFixedHeaderOffset() {
-    return Array.from(document.querySelectorAll(
-      '.nav_component, .navbar_component, .nav_wrapper, [role="banner"]'
-    )).reduce(function (largestOffset, element) {
-      const styles = getComputedStyle(element);
-      const rect = element.getBoundingClientRect();
-      const isFixed = styles.position === 'fixed' || styles.position === 'sticky';
-
-      if (!isFixed || rect.bottom <= 0 || rect.top > 1) return largestOffset;
-
-      return Math.max(largestOffset, rect.height);
-    }, 0);
-  }
-
-  function focusAnchorTarget(target) {
-    const hadTabindex = target.hasAttribute('tabindex');
-
-    if (!hadTabindex) target.setAttribute('tabindex', '-1');
-
-    target.focus({ preventScroll: true });
-
-    if (!hadTabindex) {
-      target.addEventListener('blur', function removeTemporaryTabindex() {
-        target.removeAttribute('tabindex');
-      }, { once: true });
-    }
-  }
-
-  function scrollToAnchor(target, hash, updateHistory) {
-    if (animationFrame !== null) cancelAnimationFrame(animationFrame);
-
-    const startY = window.scrollY;
-    const maximumY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-    const targetY = Math.min(
-      maximumY,
-      Math.max(0, target.getBoundingClientRect().top + startY - getFixedHeaderOffset())
-    );
-    const duration = getScrollDuration();
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    if (updateHistory && location.hash !== hash) {
-      history.pushState(null, '', hash);
-    }
-
-    if (reduceMotion || duration === 0 || Math.abs(targetY - startY) < 1) {
-      window.scrollTo(0, targetY);
-      focusAnchorTarget(target);
-      return;
-    }
-
-    const startTime = performance.now();
-    const originalScrollBehavior = document.documentElement.style.scrollBehavior;
-
-    document.documentElement.style.scrollBehavior = 'auto';
-
-    function animateScroll(currentTime) {
-      const progress = Math.min(1, (currentTime - startTime) / duration);
-      const easedProgress = progress < 0.5
-        ? 4 * progress * progress * progress
-        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
-
-      window.scrollTo(0, startY + (targetY - startY) * easedProgress);
-
-      if (progress < 1) {
-        animationFrame = requestAnimationFrame(animateScroll);
-        return;
-      }
-
-      animationFrame = null;
-      document.documentElement.style.scrollBehavior = originalScrollBehavior;
-      focusAnchorTarget(target);
-    }
-
-    animationFrame = requestAnimationFrame(animateScroll);
-  }
-
-  document.addEventListener('click', function (event) {
-    if (
-      event.defaultPrevented ||
-      event.button !== 0 ||
-      event.metaKey ||
-      event.ctrlKey ||
-      event.shiftKey ||
-      event.altKey
-    ) {
-      return;
-    }
-
-    const link = event.target instanceof Element
-      ? event.target.closest('a[href*="#"]')
-      : null;
-
-    if (!link || link.target === '_blank' || link.hasAttribute('download')) return;
-
-    let url;
-
-    try {
-      url = new URL(link.href, location.href);
-    } catch (error) {
-      return;
-    }
-
-    if (
-      url.origin !== location.origin ||
-      url.pathname !== location.pathname ||
-      url.search !== location.search
-    ) {
-      return;
-    }
-
-    const target = getAnchorTarget(url.hash);
-
-    if (!target) return;
-
-    event.preventDefault();
-    scrollToAnchor(target, url.hash, true);
-  }, true);
-
-  window.addEventListener('popstate', function () {
-    const target = getAnchorTarget(location.hash);
-
-    if (target) scrollToAnchor(target, location.hash, false);
-  });
-}
-
 // ALTERNATE SERVICE LINKS
 function addAlternatingServiceLinkClasses() {
   document.querySelectorAll('.service-list_link').forEach(function (link, index) {
@@ -1428,7 +1275,6 @@ function addAlternatingServiceLinkClasses() {
 function initMindwavePage() {
   generateMindwaveServiceLocationSchema();
   generateMindwavePageSchema();
-  initMindwaveSmoothAnchorScroll();
   addAlternatingServiceLinkClasses();
 }
 
