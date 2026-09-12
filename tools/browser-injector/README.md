@@ -20,3 +20,11 @@ jsDelivr files.
 The toolbar badge is green and reads `DEV` when local files are active, blue
 and reads `LIVE` when the published fallback is active, or red and reads `ERR`
 when neither source can be loaded.
+
+## Developer shortcut
+
+On a Plausible page, press **Alt+L** to reload this unpacked extension and then
+reload the current page without opening `chrome://extensions`. A confirmation
+toast appears after the page returns. After adding this feature or changing the
+packaged extension files, reload the extension manually once; subsequent
+reloads can use **Alt+L**.

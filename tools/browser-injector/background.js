@@ -1,4 +1,5 @@
 const SCRIPT_ID = "website-scripts-plausible";
+const PENDING_RELOAD_KEY = "websiteScriptsPendingExtensionReload";
 const MATCHES = ["https://plausible.io/*"];
 const FILES = {
   javascript: "plausible.js",
@@ -133,6 +134,24 @@ function runCheck() {
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.type === "website-scripts-reload-extension") {
+    if (!sender.tab?.id) {
+      sendResponse({ error: "No active Plausible tab was found" });
+      return false;
+    }
+
+    chrome.storage.local
+      .set({
+        [PENDING_RELOAD_KEY]: {
+          tabId: sender.tab.id,
+          timestamp: Date.now(),
+        },
+      })
+      .finally(() => chrome.runtime.reload());
+
+    return true;
+  }
+
   if (message?.type !== "website-scripts-check") return false;
 
   runCheck()
@@ -147,3 +166,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   return true;
 });
+
+async function resumePendingExtensionReload() {
+  const stored = await chrome.storage.local.get(PENDING_RELOAD_KEY);
+  const pending = stored[PENDING_RELOAD_KEY];
+
+  if (!pending?.tabId || Date.now() - Number(pending.timestamp || 0) > 15000) {
+    if (pending) await chrome.storage.local.remove(PENDING_RELOAD_KEY);
+    return;
+  }
+
+  await chrome.storage.local.remove(PENDING_RELOAD_KEY);
+
+  try {
+    const tab = await chrome.tabs.get(pending.tabId);
+    if (!tab.url?.startsWith("https://plausible.io/")) return;
+    await chrome.tabs.reload(tab.id, { bypassCache: true });
+  } catch (error) {
+    console.error("[Website Scripts Live Injector] Reload failed", error);
+  }
+}
+
+resumePendingExtensionReload();
