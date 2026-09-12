@@ -1,7 +1,10 @@
 # Website Scripts Live Injector
 
-This unpacked Chrome extension injects `sites/plausible.js` and
-`sites/plausible.css` into `https://plausible.io/*`.
+This unpacked Chrome extension injects the matching hosted files into supported
+pages:
+
+- `sites/plausible.js` and `sites/plausible.css` on `https://plausible.io/*`
+- `sites/gmail.js` and `sites/gmail.css` on `https://mail.google.com/*`
 
 It checks the development tunnel every 1.5 seconds. When either file changes,
 it updates the registered user script and reloads the matching Plausible tab.
@@ -23,8 +26,8 @@ when neither source can be loaded.
 
 ## Developer shortcut
 
-On a Plausible page, press **Alt+L** to reload this unpacked extension and then
+On a supported page, press **Alt+L** to reload this unpacked extension and then
 reload the current page without opening `chrome://extensions`. A confirmation
-toast appears after the page returns. After adding this feature or changing the
-packaged extension files, reload the extension manually once; subsequent
-reloads can use **Alt+L**.
+toast appears after the page returns. After adding a new supported site or
+changing the packaged extension files, reload the extension manually once;
+subsequent reloads can use **Alt+L**.
