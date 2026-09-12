@@ -4,7 +4,14 @@ $port = if ($env:PORT) { $env:PORT } else { "8787" }
 
 Push-Location $repo
 try {
-  node $server
+  $node = (Get-Command node -ErrorAction Stop).Source
+  $process = Start-Process -FilePath $node `
+    -ArgumentList @($server) `
+    -WorkingDirectory $repo `
+    -WindowStyle Hidden `
+    -PassThru
+
+  "Started Website Scripts dev server on port $port with PID $($process.Id)"
 }
 finally {
   Pop-Location
