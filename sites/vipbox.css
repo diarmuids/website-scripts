@@ -1,0 +1,15 @@
+/* Last updated: 2026-09-12 16:01:10 */
+
+.container-fluid > .row:not(.justify-content-evenly) {
+  display: none !important;
+}
+
+.container-fluid .col-lg-3 {
+  display: none !important;
+}
+
+.container-fluid
+  > .row.mt-1.justify-content-evenly
+  > .col-12.col-lg-4.order-lg-first {
+  display: none !important;
+}
