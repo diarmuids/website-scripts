@@ -9,6 +9,7 @@ pages:
 - `sites/accommodationfortheevent.js` on
   `https://www.accommodationfortheevent.com/*`
 - `sites/sjhfulfilment.js` on `https://portal.sjhfulfilment.com/*`
+- `sites/webflowio.css` on `*://*.webflow.io/*`
 
 It checks the development tunnel every 1.5 seconds. When either file changes,
 it updates the registered user script and reloads the matching Plausible tab.

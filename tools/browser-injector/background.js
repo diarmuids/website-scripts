@@ -35,6 +35,13 @@ const RULES = [
     javascript: "sjhfulfilment.js",
     css: null,
   },
+  {
+    id: "webflowio",
+    matches: ["*://*.webflow.io/*"],
+    hostSuffixes: [".webflow.io"],
+    javascript: null,
+    css: "webflowio.css",
+  },
 ];
 const SOURCES = [
   {
@@ -54,7 +61,16 @@ const activeChecks = new Map();
 function findRule(url) {
   try {
     const hostname = new URL(url).hostname;
-    return RULES.find((rule) => rule.hosts.includes(hostname)) || null;
+    return (
+      RULES.find(
+        (rule) =>
+          rule.hosts?.includes(hostname) ||
+          rule.hostSuffixes?.some(
+            (suffix) =>
+              hostname === suffix.replace(/^\./, "") || hostname.endsWith(suffix),
+          ),
+      ) || null
+    );
   } catch (_) {
     return null;
   }
