@@ -1,0 +1,28 @@
+// Last updated: 2026-09-12 16:03:01
+
+/* SHORTCUTS
+Alt+Q / Alt+U          → Order Upload (auto-clicks "Select")
+Alt+W / Alt+A          → ASNs
+Alt+O                  → Order Overview
+Alt+P                  → Products (auto-sets page size to 50)
+Alt+T                  → Export visible tracking codes (popup + copy)
+Tab then Enter         → Sign in (on /UserAccount/LogOn)
+*/
+
+if(location.href.includes("UserAccount/LogOn")){let t=0;addEventListener("keydown",e=>{e.key==="Tab"&&(t=1),t&&e.key==="Enter"&&document.getElementById("m_login_signin_submit")?.click()})}
+
+(()=>{const setSize=(v,ms=15000,iv=250)=>{const end=Date.now()+ms;const tick=()=>{const s=document.querySelector('select.m-datatable__pager-size');if(s){s.value=String(v);s.dispatchEvent(new Event("change",{bubbles:1}));window.jQuery&&jQuery(s).selectpicker&&jQuery(s).selectpicker("refresh");if(s.value===String(v))return}Date.now()<end?setTimeout(tick,iv):0};tick()};
+
+addEventListener("keydown",e=>{if(!e.altKey||["INPUT","TEXTAREA"].includes(document.activeElement?.tagName))return;const k=e.key.toLowerCase(),m={q:"/Order/Upload/",u:"/Order/Upload/",w:"/Stock/ASNs/",a:"/Stock/ASNs/",o:"/Order/Overview/",p:"/Product/"};if(!m[k])return;(k==="q"||k==="u")&&sessionStorage.setItem("autoClickSelect","1");k==="p"&&sessionStorage.setItem("autoSetProductPageSize","50");document.querySelector(`a[href="${m[k]}"]`)?.click()});
+
+if(location.pathname==="/Order/Upload/"&&sessionStorage.getItem("autoClickSelect")==="1"){sessionStorage.removeItem("autoClickSelect");addEventListener("load",()=>setTimeout(()=>document.querySelector('input[type="submit"][value="Select"]')?.click(),150))}
+if(location.pathname==="/Product/"&&sessionStorage.getItem("autoSetProductPageSize")==="50"){sessionStorage.removeItem("autoSetProductPageSize");addEventListener("load",()=>setTimeout(()=>setSize(50,20000,300),600))}
+})();
+
+// Auto-set Product page size to 50
+(()=>{if(location.pathname!=="/Product/")return;const set50=(ms=20000,iv=250)=>{const end=Date.now()+ms;const tick=()=>{const s=document.querySelector('select.m-datatable__pager-size');if(s){if(s.value!=="50"){s.value="50";s.dispatchEvent(new Event("change",{bubbles:true}));window.jQuery&&jQuery(s).selectpicker&&jQuery(s).selectpicker("refresh")}if(s.value==="50")return}Date.now()<end&&setTimeout(tick,iv)};tick()};addEventListener("load",()=>setTimeout(()=>set50(),400))})();
+
+// Alt+T exports all tracking codes
+(()=>{const id="__trk_modal__";const cssId="__trk_modal_css__";const getCodes=()=>[...document.querySelectorAll('tbody.m-datatable__body tr')].filter(tr=>tr.offsetParent!==null).map(tr=>{const td=tr.querySelector('td[data-field="TrackingBox"]');return (td?td.textContent:"").replace(/\s+/g," ").trim()}).filter(Boolean);const esc=s=>String(s).replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));const ensureCss=()=>{if(document.getElementById(cssId))return;const st=document.createElement("style");st.id=cssId;st.textContent=`#${id}{position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}#${id} .box{width:min(820px,92vw);background:#fff;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden}#${id} .hdr{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #eaeaea}#${id} .ttl{font-size:14px;font-weight:700}#${id} .meta{font-size:12px;color:#666}#${id} .btns{display:flex;gap:8px}#${id} button{border:0;border-radius:10px;padding:10px 12px;font-size:13px;font-weight:650;cursor:pointer}#${id} .copy{background:#2563eb;color:#fff}#${id} .close{background:#e5e7eb;color:#111}#${id} .body{padding:14px 16px}#${id} textarea{width:100%;height:180px;resize:vertical;border:1px solid #e5e7eb;border-radius:10px;padding:12px;font-size:13px;line-height:1.35;outline:none}#${id} .toast{margin-top:10px;font-size:12px;color:#0f766e;display:none}#${id} .toast.show{display:block}`;document.head.appendChild(st)};const close=()=>{const el=document.getElementById(id);if(el)el.remove()};const open=()=>{ensureCss();close();const codes=getCodes();const text=codes.join(",");const wrap=document.createElement("div");wrap.id=id;wrap.innerHTML=`<div class="box" role="dialog" aria-modal="true"><div class="hdr"><div><div class="ttl">Tracking codes</div><div class="meta">${codes.length} found (visible rows)</div></div><div class="btns"><button class="copy" type="button">Copy</button><button class="close" type="button">Close</button></div></div><div class="body"><textarea spellcheck="false">${esc(text)}</textarea><div class="toast">Copied to clipboard</div></div></div>`;wrap.addEventListener("click",e=>{if(e.target===wrap)close()});document.body.appendChild(wrap);const ta=wrap.querySelector("textarea");ta.focus();ta.select();const toast=wrap.querySelector(".toast");wrap.querySelector(".close").onclick=close;wrap.querySelector(".copy").onclick=async()=>{try{await navigator.clipboard.writeText(ta.value);toast.classList.add("show");setTimeout(()=>toast.classList.remove("show"),1200)}catch(_){ta.focus();ta.select();document.execCommand&&document.execCommand("copy");toast.classList.add("show");setTimeout(()=>toast.classList.remove("show"),1200)}};wrap.addEventListener("keydown",e=>{if(e.key==="Escape")close()})};const listener=(e)=>{if(!e.altKey||e.key.toLowerCase()!=="t")return;e.preventDefault();open()};window.removeEventListener("keydown",window.__altTTrackingPopupListener,true);window.__altTTrackingPopupListener=listener;window.addEventListener("keydown",listener,true);console.log("Alt+T popup armed")})();
+
+
