@@ -8,6 +8,7 @@
   "host_permissions": [
     "https://plausible.io/*",
     "https://mail.google.com/*",
+    "https://www.vipbox.sc/*",
     "https://dev.wsitefiles.com/*",
     "https://cdn.jsdelivr.net/*"
   ],
@@ -19,7 +20,11 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://plausible.io/*", "https://mail.google.com/*"],
+      "matches": [
+        "https://plausible.io/*",
+        "https://mail.google.com/*",
+        "https://www.vipbox.sc/*"
+      ],
       "js": ["watcher.js"],
       "run_at": "document_idle"
     }

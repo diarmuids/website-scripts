@@ -5,6 +5,7 @@ pages:
 
 - `sites/plausible.js` and `sites/plausible.css` on `https://plausible.io/*`
 - `sites/gmail.js` and `sites/gmail.css` on `https://mail.google.com/*`
+- `sites/vipbox.css` on `https://www.vipbox.sc/*`
 
 It checks the development tunnel every 1.5 seconds. When either file changes,
 it updates the registered user script and reloads the matching Plausible tab.

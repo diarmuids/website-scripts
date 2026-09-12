@@ -14,6 +14,13 @@ const RULES = [
     javascript: "gmail.js",
     css: "gmail.css",
   },
+  {
+    id: "vipbox",
+    matches: ["https://www.vipbox.sc/*"],
+    hosts: ["www.vipbox.sc"],
+    javascript: null,
+    css: "vipbox.css",
+  },
 ];
 const SOURCES = [
   {
@@ -74,8 +81,8 @@ async function fetchBundle(rule) {
   for (const source of SOURCES) {
     try {
       const [javascript, css] = await Promise.all([
-        fetchFile(source, rule.javascript),
-        fetchFile(source, rule.css),
+        rule.javascript ? fetchFile(source, rule.javascript) : "",
+        rule.css ? fetchFile(source, rule.css) : "",
       ]);
 
       return { javascript, css, source: source.name };
