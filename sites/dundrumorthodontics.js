@@ -1,4 +1,4 @@
-// Last updated: 2026-09-12 14:58:46
+// Last updated: 2026-09-12 15:04:32
 
 (function () {
   'use strict';
@@ -315,6 +315,11 @@
     return { '@id': list['@id'] };
   }
 
+  function addMention(page, reference) {
+    if (!reference) return;
+    page.mentions = (page.mentions || []).concat(reference);
+  }
+
   function addFaqs(graph, page, ctx) {
     const questions = [];
 
@@ -403,7 +408,7 @@
 
     if (!references.length) return null;
     const list = addItemList(graph, ctx, 'patient-reviews', 'Patient reviews', references);
-    page.hasPart = (page.hasPart || []).concat(list);
+    addMention(page, list);
     return list;
   }
 
@@ -445,7 +450,7 @@
       references.push({ '@id': url + '#service' });
     });
     const list = addItemList(graph, ctx, 'related-treatments', 'Related treatments', references);
-    if (list) page.hasPart = (page.hasPart || []).concat(list);
+    addMention(page, list);
     return list;
   }
 
@@ -464,7 +469,7 @@
       references.push({ '@id': id });
     });
     const list = addItemList(graph, ctx, 'related-conditions', 'Related orthodontic conditions', references);
-    if (list) page.hasPart = (page.hasPart || []).concat(list);
+    addMention(page, list);
     return list;
   }
 
@@ -506,7 +511,6 @@
     clinic.employee = references;
     const list = addItemList(graph, ctx, 'team', 'Dundrum Orthodontics team', references);
     page.mainEntity = list;
-    page.hasPart = (page.hasPart || []).concat(list);
     return list;
   }
 
@@ -586,7 +590,7 @@
       references,
       'https://schema.org/ItemListOrderDescending'
     );
-    if (list) page.hasPart = (page.hasPart || []).concat(list);
+    if (ctx.path !== '/blog') addMention(page, list);
     return list;
   }
 
@@ -677,7 +681,6 @@
     const list = addItemList(graph, ctx, 'location-services', ctx.headline, references);
     if (list) {
       page.mainEntity = list;
-      page.hasPart = (page.hasPart || []).concat(list);
     }
     return list;
   }
@@ -703,7 +706,6 @@
     const list = addItemList(graph, ctx, 'gallery-images', 'Before and after gallery', references);
     if (list) {
       page.mainEntity = list;
-      page.hasPart = (page.hasPart || []).concat(list);
     }
     return list;
   }
@@ -797,8 +799,8 @@
       page = basePage('WebPage', ctx);
       page.about = { '@id': CLINIC_ID };
       if (ctx.path === '/') {
-        page.mainEntity = { '@id': CLINIC_ID };
-        if (treatmentCatalog) page.hasPart = [treatmentCatalog.reference];
+        page.mainEntity = [{ '@id': CLINIC_ID }];
+        if (treatmentCatalog) page.mainEntity.push(treatmentCatalog.reference);
       }
       addFaqs(graph, page, ctx);
     }
