@@ -10,6 +10,7 @@
     "https://mail.google.com/*",
     "https://www.vipbox.sc/*",
     "https://www.accommodationfortheevent.com/*",
+    "https://portal.sjhfulfilment.com/*",
     "https://dev.wsitefiles.com/*",
     "https://cdn.jsdelivr.net/*"
   ],
@@ -25,7 +26,8 @@
         "https://plausible.io/*",
         "https://mail.google.com/*",
         "https://www.vipbox.sc/*",
-        "https://www.accommodationfortheevent.com/*"
+        "https://www.accommodationfortheevent.com/*",
+        "https://portal.sjhfulfilment.com/*"
       ],
       "js": ["watcher.js"],
       "run_at": "document_idle"

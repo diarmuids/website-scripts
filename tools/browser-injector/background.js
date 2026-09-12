@@ -28,6 +28,13 @@ const RULES = [
     javascript: "accommodationfortheevent.js",
     css: null,
   },
+  {
+    id: "sjhfulfilment",
+    matches: ["https://portal.sjhfulfilment.com/*"],
+    hosts: ["portal.sjhfulfilment.com"],
+    javascript: "sjhfulfilment.js",
+    css: null,
+  },
 ];
 const SOURCES = [
   {
