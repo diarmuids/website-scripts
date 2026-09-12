@@ -9,6 +9,7 @@
     "https://plausible.io/*",
     "https://mail.google.com/*",
     "https://www.vipbox.sc/*",
+    "https://www.accommodationfortheevent.com/*",
     "https://dev.wsitefiles.com/*",
     "https://cdn.jsdelivr.net/*"
   ],
@@ -23,7 +24,8 @@
       "matches": [
         "https://plausible.io/*",
         "https://mail.google.com/*",
-        "https://www.vipbox.sc/*"
+        "https://www.vipbox.sc/*",
+        "https://www.accommodationfortheevent.com/*"
       ],
       "js": ["watcher.js"],
       "run_at": "document_idle"

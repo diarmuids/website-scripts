@@ -21,6 +21,13 @@ const RULES = [
     javascript: null,
     css: "vipbox.css",
   },
+  {
+    id: "accommodationfortheevent",
+    matches: ["https://www.accommodationfortheevent.com/*"],
+    hosts: ["www.accommodationfortheevent.com"],
+    javascript: "accommodationfortheevent.js",
+    css: null,
+  },
 ];
 const SOURCES = [
   {
