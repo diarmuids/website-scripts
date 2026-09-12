@@ -81,9 +81,7 @@ function createInjectedCode(bundle) {
 ${bundle.javascript}`;
 }
 
-async function registerBundle(bundle) {
-  const existing = await chrome.userScripts.getScripts({ ids: [SCRIPT_ID] });
-
+async function registerBundle(bundle, existing) {
   if (existing.length) {
     await chrome.userScripts.unregister({ ids: [SCRIPT_ID] });
   }
@@ -102,14 +100,17 @@ async function registerBundle(bundle) {
 async function syncBundle() {
   const bundle = await fetchBundle();
   const fingerprint = hash(`${bundle.javascript}\n${bundle.css}`);
-  const stored = await chrome.storage.local.get("plausibleFingerprint");
+  const [stored, existing] = await Promise.all([
+    chrome.storage.local.get("plausibleFingerprint"),
+    chrome.userScripts.getScripts({ ids: [SCRIPT_ID] }),
+  ]);
 
-  if (stored.plausibleFingerprint === fingerprint) {
+  if (stored.plausibleFingerprint === fingerprint && existing.length) {
     setBadge(bundle.source, bundle.source === "DEV" ? "#16803c" : "#2563eb");
     return { changed: false, source: bundle.source };
   }
 
-  await registerBundle(bundle);
+  await registerBundle(bundle, existing);
   await chrome.storage.local.set({ plausibleFingerprint: fingerprint });
   setBadge(bundle.source, bundle.source === "DEV" ? "#16803c" : "#2563eb");
   return { changed: true, source: bundle.source };
@@ -146,4 +147,3 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   return true;
 });
-
