@@ -4,7 +4,6 @@ This unpacked Chrome extension injects the matching hosted files into supported
 pages:
 
 - `sites/plausible.js` and `sites/plausible.css` on `https://plausible.io/*`
-- `sites/gmail.js` and `sites/gmail.css` on `https://mail.google.com/*`
 - `sites/vipbox.css` on `https://www.vipbox.sc/*`
 - `sites/accommodationfortheevent.js` on
   `https://www.accommodationfortheevent.com/*`

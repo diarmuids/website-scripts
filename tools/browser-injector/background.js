@@ -8,13 +8,6 @@ const RULES = [
     css: "plausible.css",
   },
   {
-    id: "gmail",
-    matches: ["https://mail.google.com/*"],
-    hosts: ["mail.google.com"],
-    javascript: "gmail.js",
-    css: "gmail.css",
-  },
-  {
     id: "vipbox",
     matches: ["https://www.vipbox.sc/*"],
     hosts: ["www.vipbox.sc"],
@@ -248,11 +241,31 @@ async function resumePendingExtensionReload() {
 
   try {
     const tab = await chrome.tabs.get(pending.tabId);
-    if (!findRule(tab.url || "")) return;
+    if (!/^https?:\/\//i.test(tab.url || "")) return;
     await chrome.tabs.reload(tab.id, { bypassCache: true });
   } catch (error) {
     console.error("[Website Scripts Live Injector] Reload failed", error);
   }
 }
 
-resumePendingExtensionReload();
+async function removeStaleRegisteredScripts() {
+  const expectedIds = new Set(RULES.map((rule) => `website-scripts-${rule.id}`));
+  const registered = await chrome.userScripts.getScripts();
+  const staleIds = registered
+    .map((script) => script.id)
+    .filter(
+      (id) => id.startsWith("website-scripts-") && !expectedIds.has(id),
+    );
+
+  if (!staleIds.length) return;
+  await chrome.userScripts.unregister({ ids: staleIds });
+  await chrome.storage.local.remove(
+    staleIds.map((id) => `${id.replace("website-scripts-", "")}Fingerprint`),
+  );
+}
+
+removeStaleRegisteredScripts()
+  .catch((error) =>
+    console.error("[Website Scripts Live Injector] Cleanup failed", error),
+  )
+  .finally(() => resumePendingExtensionReload());
