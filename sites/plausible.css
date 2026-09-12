@@ -1,0 +1,35 @@
+/* Last updated: 2026-09-12 15:37:24 */
+
+html.o [data-testid="dashboard-options-menu"] + div,
+html.o [id^="headlessui-popover-panel"] {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+#ogt {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 999999;
+  background: #111827;
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font: 13px system-ui;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: 0.15s;
+  pointer-events: none;
+}
+
+html.o [data-testid="dashboard-options-menu"],
+html.o [data-testid="dashboard-options-menu"]:hover,
+html.o [data-testid="dashboard-options-menu"]:focus,
+html.o [data-testid="dashboard-options-menu"]:active,
+html.o [data-testid="dashboard-options-menu"][aria-expanded="true"] {
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+}
