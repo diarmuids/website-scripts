@@ -1,9 +1,12 @@
-// Last updated: 2026-09-12 15:36:04
+// Last updated: 2026-09-12 15:55:20
 
 (()=>{
   let d=document,h=d.documentElement,b='[data-testid="dashboard-options-menu"]';
   addEventListener('keydown',e=>{
-    if(!e.shiftKey||e.key.toLowerCase()!='v'||e.target.closest('input,textarea,select,[contenteditable="true"]'))return;
+    let plain=!e.shiftKey&&!e.altKey&&!e.ctrlKey&&!e.metaKey,
+        shift=e.shiftKey&&!e.altKey&&!e.ctrlKey&&!e.metaKey,
+        alt=e.altKey&&!e.shiftKey&&!e.ctrlKey&&!e.metaKey;
+    if(e.key.toLowerCase()!='v'||(!plain&&!shift&&!alt)||e.target.closest('input,textarea,select,[contenteditable="true"]'))return;
     e.preventDefault();
     let m=d.querySelector(b);
     if(!m)return;
