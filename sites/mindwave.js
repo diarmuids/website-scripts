@@ -1,4 +1,4 @@
-// Last updated: 2026-09-14 12:56:56
+// Last updated: 2026-09-14 13:35:03
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
@@ -1784,6 +1784,49 @@ function initMindwavePulse() {
       ],
       { duration: 2400, easing: 'ease-out', iterations: Infinity }
     );
+  });
+}
+
+// GENTLE HOVER ROCK
+// Add data-hover-rock to any element in Webflow to make it ease in and out
+// very slightly while hovered. A looping motion like this can't be set with
+// Webflow's native hover state, so it uses the Web Animations API.
+function initMindwaveHoverRock() {
+  const reduceMotion = window.matchMedia(
+    '(prefers-reduced-motion: reduce)'
+  ).matches;
+  const canHover = window.matchMedia('(hover: hover)').matches;
+
+  if (reduceMotion || !canHover || !('animate' in Element.prototype)) return;
+
+  document.querySelectorAll('[data-hover-rock]').forEach(function (element) {
+    let rock = null;
+
+    element.addEventListener('pointerenter', function () {
+      if (rock) rock.cancel();
+      rock = element.animate(
+        [
+          { transform: 'scale(1)' },
+          { transform: 'scale(1.015)' },
+          { transform: 'scale(1)' }
+        ],
+        { duration: 2200, easing: 'ease-in-out', iterations: Infinity }
+      );
+    });
+
+    // Ease back to rest from wherever the loop is, rather than snapping.
+    element.addEventListener('pointerleave', function () {
+      if (!rock) return;
+      const current = getComputedStyle(element).transform;
+      rock.cancel();
+      rock = element.animate(
+        [
+          { transform: current === 'none' ? 'scale(1)' : current },
+          { transform: 'scale(1)' }
+        ],
+        { duration: 300, easing: 'ease-out' }
+      );
+    });
   });
 }
 
