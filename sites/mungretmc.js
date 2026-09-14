@@ -1,4 +1,4 @@
-// Last updated: 2026-09-14 19:55:13
+// Last updated: 2026-09-14 19:56:27
 
 (function () {
   'use strict';
@@ -9,6 +9,11 @@
   const WEBSITE_ID = SITE_URL + '/#website';
   const LOGO_URL = 'https://cdn.prod.website-files.com/61f90bb02448edd5799cff74/68de5a98227915f8d021a1cc_mungre-medical-centre_logo.jpg';
   const DEFAULT_IMAGE_URL = 'https://cdn.prod.website-files.com/61f90bb02448edd5799cff74/6206a01d6c3a5a4245ac5528_OG%20Image.webp';
+  const NEWS_DATES = {
+    '/news-october-2025': ['2025-10-14T08:55:10.675Z', '2025-10-14T16:40:34.586Z'],
+    '/news-june-26': ['2026-06-02T06:36:41.824Z', '2026-06-18T13:12:49.397Z'],
+    '/practice-expansion': ['2026-08-10T18:42:12.031Z', '2026-08-10T19:03:15.423Z'],
+  };
 
   function cleanText(value) {
     return String(value || '').replace(/\s+/g, ' ').trim();
@@ -173,7 +178,15 @@
     };
     const crumbs = breadcrumb(url, name);
     if (crumbs) page.breadcrumb = { '@id': crumbs['@id'] };
-    if (type === 'NewsArticle') page.mainEntityOfPage = { '@id': url + '#webpage' };
+    if (type === 'NewsArticle') {
+      const dates = NEWS_DATES[pathname()];
+      page.mainEntityOfPage = { '@id': url + '#webpage' };
+      page.author = { '@id': ORGANIZATION_ID };
+      if (dates) {
+        page.datePublished = dates[0];
+        page.dateModified = dates[1];
+      }
+    }
     return page;
   }
 
