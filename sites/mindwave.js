@@ -1,4 +1,4 @@
-// Last updated: 2026-09-14 16:32:23
+// Last updated: 2026-09-14 16:42:17
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
@@ -230,10 +230,12 @@ function generateMindwaveServiceLocationSchema() {
     processSection?.querySelector('.heading-style-h2, h2')
   );
   const processSteps = processSection
-    ? Array.from(processSection.querySelectorAll('.process_content-item'))
+    ? Array.from(processSection.querySelectorAll('.process_card, .process_content-item'))
       .map(function (item, index) {
         const name = cleanMindwaveText(item.querySelector('h3, h4, h5'));
-        const text = cleanMindwaveText(item.querySelector('.text-rich-text'));
+        const text = cleanMindwaveText(
+          item.querySelector('.process_card-text, .text-rich-text')
+        );
 
         if (!name || !text) return null;
 
@@ -578,10 +580,12 @@ function addMindwaveProcess(graph, context, aboutId) {
     processSection?.querySelector('.heading-style-h2, h2')
   );
   const steps = processSection
-    ? Array.from(processSection.querySelectorAll('.process_content-item'))
+    ? Array.from(processSection.querySelectorAll('.process_card, .process_content-item'))
       .map(function (item, index) {
         const name = cleanMindwaveText(item.querySelector('h3, h4, h5'));
-        const text = cleanMindwaveText(item.querySelector('.text-rich-text'));
+        const text = cleanMindwaveText(
+          item.querySelector('.process_card-text, .text-rich-text')
+        );
 
         if (!name || !text) return null;
 
