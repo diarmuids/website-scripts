@@ -28,7 +28,7 @@ The current implementation should always use the permanent production class name
 
 ### Item-specific combo classes
 
-Every combo class must use the `is-` convention. For example:
+Every combo class must use the `is-` convention.![alt text](image.png) For example:
 
 `pricing_google-layout is-klaviyo`
 
