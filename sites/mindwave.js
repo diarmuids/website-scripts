@@ -1,4 +1,4 @@
-// Last updated: 2026-09-14 16:27:03
+// Last updated: 2026-09-14 16:27:10
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
@@ -1337,7 +1337,7 @@ function initMindwavePricingNavigation() {
         white-space: nowrap;
       }
 
-      #google-ads,
+      #google-search,
       #klaviyo,
       #both-channels,
       #calculator,
