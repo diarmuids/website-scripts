@@ -72,6 +72,28 @@ that its class name is shown instead.
 Give every structural element a clear, permanent Client-First class so it can
 be identified in the Navigator without a custom name.
 
+### Semantic HTML tags
+
+Always use the correct semantic HTML element wherever one matches the content's
+purpose. Set the actual HTML tag through Webflow's native element or tag controls;
+a class name or Navigator label does not replace the correct tag.
+
+- Use `<section>` for every distinct thematic content section, normally with a heading.
+- Use `<footer>` for the page footer or a footer belonging to an article or section.
+- Use `<header>` for introductory content and `<nav>` for major navigation groups.
+- Use one `<main>` for the page's primary content.
+- Use `<article>` for self-contained content and `<aside>` for related supporting content.
+- Use `<h1>` through `<h6>` in a logical hierarchy and `<p>` for paragraphs.
+- Use `<a>` for navigation and `<button>` for actions.
+- Use semantic list and table elements when the content is a list or tabular data,
+  as described below.
+- Use other relevant semantic elements, such as `<figure>`, `<figcaption>` and
+  `<label>`, whenever appropriate to the content.
+
+Use `<div>` and `<span>` only for generic layout or styling wrappers that have no
+more appropriate semantic element. Choose tags by meaning, not visual appearance,
+and preserve the required Client-First classes and native Webflow styling.
+
 ## 3. SVG icons
 
 Always use SVG files or SVG markup for icons.
@@ -97,48 +119,31 @@ Use `currentColor` for SVG fills and strokes where practical so the icon colour 
 
 ## 4. Visual lists
 
-Build visual lists using div elements.
+Use `<ul>` for unordered lists, `<ol>` for ordered lists and `<li>` for each
+list item whenever the content is semantically a list, including styled visual lists.
+Use generic div layouts only when the content is not actually a list.
 
 Name containers that wrap a list with the `-list-wrapper` suffix, the list
 itself with the `-list` suffix, and direct entries with the matching `-item`
 suffix. For example:
 
-`pricing_check-list-wrapper`
+- `pricing_check-list-wrapper`
+- `pricing_check-list`
+- `pricing_check-item`
 
-`pricing_check-list`
-
-`pricing_check-item`
-
-Use a structure such as:
-
-- List wrapper div
-- List item div
-- Icon wrapper div, if required
-- Content wrapper div
-
-Do not use:
-
-- `ul`
-- `ol`
-- `li`
-
-Use appropriate ARIA attributes or roles when additional accessibility information is needed.
+A generic outer wrapper, icon wrapper or content wrapper may still use a div
+where appropriate. Use native HTML semantics first; add ARIA only when needed
+for accessibility information not already provided by the element.
 
 ## 5. Tables
 
-Always use `div` elements instead of native table elements unless explicitly instructed to use a table.
+Use native `<table>` elements for genuinely tabular data, with appropriate
+`<thead>`, `<tbody>`, `<tfoot>`, `<tr>`, `<th>` and `<td>` elements as required.
+Identify row and column headers correctly, using `scope` where appropriate.
 
-Do not use the following elements by default:
-
-- `table`
-- `thead`
-- `tbody`
-- `tfoot`
-- `tr`
-- `th`
-- `td`
-
-When presenting tabular-looking content without an explicit instruction to use a table, build it from clearly named `div` wrappers and items using native Webflow Flexbox or Grid controls.
+Use div wrappers with native Webflow Flexbox or Grid controls for layouts that
+only look like tables but do not represent tabular data. Choose the structure
+based on the content's meaning rather than its appearance.
 
 ## 6. Existing Webflow variables
 
@@ -280,8 +285,10 @@ Before completing any Webflow task, verify that:
 - All classes use permanent Client-First names
 - No temporary `v1` or `v2` classes remain
 - Every section has a descriptive permanent class and no custom Navigator name
-- Visual lists use div elements
-- Native table elements are only used when explicitly requested
+- Every thematic content section uses `<section>` and footers use `<footer>`
+- All other elements use the correct semantic tags wherever applicable
+- Lists use `<ul>` or `<ol>` with `<li>` items when semantically appropriate
+- Tabular data uses native table elements with correctly identified headers
 - Icons are SVGs inside Code Embeds
 - Existing Webflow variables are used
 - Every supported CSS declaration is set through native Webflow Style-panel controls
