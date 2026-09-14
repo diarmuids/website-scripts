@@ -138,9 +138,10 @@ Use `currentColor` for SVG fills and strokes where practical so the icon colour 
 
 ## 4. Visual lists
 
-Use `<ul>` for unordered lists, `<ol>` for ordered lists and `<li>` for each
-list item whenever the content is semantically a list, including styled visual lists.
-Use generic div layouts only when the content is not actually a list.
+Build styled visual lists with div elements, using native Webflow Flexbox or Grid
+controls. Do not convert them to `<ul>`, `<ol>` or `<li>` elements.
+
+Use `<ul>`, `<ol>` and `<li>` only for lists inside Rich Text elements.
 
 Name containers that wrap a list with the `-list-wrapper` suffix, the list
 itself with the `-list` suffix, and direct entries with the matching `-item`
