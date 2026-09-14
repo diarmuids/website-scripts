@@ -1,4 +1,4 @@
-// Last updated: 2026-09-14 12:50:41
+// Last updated: 2026-09-14 12:55:30
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
@@ -1284,14 +1284,10 @@ function initMindwavePricingNavigation() {
   if (!pricingNavSection || !pricingNav || !finalPricingSection) return;
 
   const googleAdsSection = document.querySelector('.section_pricing-ads');
-  const googleAdsLink = pricingNav.querySelector('a[href="#google-ads"]');
 
-  if (googleAdsSection && !document.getElementById('pricing-google-ads')) {
-    googleAdsSection.id = 'pricing-google-ads';
-  }
-
-  if (googleAdsLink) {
-    googleAdsLink.setAttribute('href', '#pricing-google-ads');
+  // Fallback for pages published before the section had its own id.
+  if (googleAdsSection && !googleAdsSection.id) {
+    googleAdsSection.id = 'google-ads';
   }
 
   if (!document.getElementById('mindwave-pricing-navigation-styles')) {
