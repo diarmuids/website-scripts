@@ -1,4 +1,4 @@
-// Last updated: 2026-09-14 19:56:27
+// Last updated: 2026-09-14 19:59:33
 
 (function () {
   'use strict';
@@ -223,12 +223,17 @@
   function linkedItems(url) {
     const path = pathname();
     if (!['/gp-services', '/occupational-health', '/occupational-health-online-forms'].includes(path)) return null;
-    const links = Array.from(document.querySelectorAll('main a[href], .main-wrapper a[href]'))
+    const links = Array.from(document.querySelectorAll('a[href]'))
       .map(function (link) {
         return { name: cleanText(link.textContent), url: absoluteUrl(link.getAttribute('href')) };
       })
       .filter(function (item) {
-        return item.name && item.url.startsWith(SITE_URL + '/') && item.url !== url;
+        if (!item.name || !item.url.startsWith(SITE_URL + '/') || item.url === url) return false;
+        const itemPath = new URL(item.url).pathname;
+        if (path === '/occupational-health-online-forms') {
+          return /^\/(?:pre-|request-|hr)/.test(itemPath);
+        }
+        return itemPath.startsWith('/service/');
       })
       .filter(function (item, index, items) {
         return items.findIndex(function (candidate) { return candidate.url === item.url; }) === index;
