@@ -238,6 +238,13 @@ Check every page and component against
 - Gaps use `grid-column-gap` and `grid-row-gap`; variables and `rem` units are
   used.
 - SVG icons are in Code Embeds using `currentColor` with the required settings.
+- Background values are valid CSS and editable in the Designer: radial gradients
+  use keyword syntax, and no layer has been rewritten into invalid CSS by the
+  Designer.
+- No id, class or anchor link matches ad-blocker filter words (`ad`, `ads`,
+  `google-ads`, `sponsor` and similar); spot-check pages with an ad blocker on.
+- Fixed or full-screen elements (loaders, overlays, modals) do not block
+  scrolling or clicks once inactive, and every page scrolls to the bottom.
 - Unused styles, components, interactions and assets are flagged for clean-up.
 
 ## 4. Severity

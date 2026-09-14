@@ -45,7 +45,7 @@ The class should follow this structure:
 
 Examples:
 
-- `section_pricing-google-ads`
+- `section_pricing-google-search`
 - `section_pricing-klaviyo`
 - `section_pricing-calculator`
 - `section_pricing-onboarding`
@@ -453,6 +453,9 @@ Before completing any Webflow task, verify that:
 - Grid and Flex gaps use `grid-column-gap` and `grid-row-gap`
 - Gap controls appear natively in the Designer
 - Gap overrides exist only where values change; unchanged values inherit across breakpoints
+- Backgrounds use native layers in the order overlay, glows, base; radial gradients use keyword syntax; every gradient or multi-layer value is confirmed valid in a browser and editable in the Designer
+- No id, class or anchor link uses words that ad blockers hide
+- Fixed or full-screen elements do not block scrolling or clicks once they are inactive
 - All affected styles are reviewed across every breakpoint and the work is mobile-optimised
 - Responsive adjustments use native controls and unchanged values inherit
 - Existing JavaScript hooks, attributes and integrations remain intact
