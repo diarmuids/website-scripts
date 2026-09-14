@@ -47,6 +47,25 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(port, () => {
+let waitingForPort = false;
+
+server.on('error', (error) => {
+  if (error.code !== 'EADDRINUSE') {
+    throw error;
+  }
+
+  if (!waitingForPort) {
+    console.log(`Port ${port} is already in use. Waiting to start when it becomes available.`);
+    waitingForPort = true;
+  }
+
+  // Keep this window's task available to take over when the owning window closes.
+  setTimeout(() => server.listen(port), 2000);
+});
+
+server.on('listening', () => {
+  waitingForPort = false;
   console.log(`Website Scripts dev server: http://localhost:${port}`);
 });
+
+server.listen(port);
