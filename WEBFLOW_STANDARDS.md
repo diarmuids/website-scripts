@@ -224,12 +224,19 @@ Never use:
 
 Use existing Webflow spacing variables for gap values whenever suitable variables are available.
 
-Set gap values independently at each required breakpoint:
+Set the required desktop gap values and let them inherit through tablet,
+mobile landscape and mobile portrait. Add a breakpoint override only when the
+required value differs from the value inherited at that breakpoint. Check the
+horizontal and vertical gaps separately; override only the axis that changes.
 
-- Desktop
-- Tablet
-- Mobile landscape
-- Mobile portrait
+If the desktop gap is unset or shown as `none`, leave the smaller-breakpoint gap
+controls unset unless the design requires a change. Do not repeat `none`, zero,
+or any other unchanged value at every breakpoint.
+
+For example, if desktop uses `2rem` and tablet needs `1rem`, set the tablet override
+to `1rem`. Leave both mobile breakpoints unset if they should also use `1rem`.
+Remove redundant gap overrides when editing the affected styles, preserving the
+intended appearance and allowing inheritance to work.
 
 After applying the styles, verify that both the horizontal and vertical gap controls are visible and editable in the Webflow Designer.
 
@@ -283,7 +290,8 @@ Build and verify every section across Webflow's standard breakpoints:
 - Mobile landscape
 - Mobile portrait
 
-Do not rely only on inherited desktop styling.
+Verify the inherited styling at every breakpoint. Add overrides only where the
+required value changes; verification does not require duplicating inherited values.
 
 Check:
 
@@ -331,6 +339,7 @@ Before completing any Webflow task, verify that:
 - Custom Properties and custom CSS are used only for behaviour unavailable natively
 - Grid and Flex gaps use `grid-column-gap` and `grid-row-gap`
 - Gap controls appear natively in the Designer
+- Gap overrides exist only where values change; unchanged values inherit across breakpoints
 - Responsive styles exist at the required breakpoints
 - Existing JavaScript hooks, attributes and integrations remain intact
 - The Navigator displays class names rather than custom renamed labels
