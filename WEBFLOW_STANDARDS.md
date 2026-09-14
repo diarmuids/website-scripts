@@ -387,7 +387,7 @@ Do not mark mobile optimisation complete without checking the affected work on
 both mobile landscape and mobile portrait. Report any breakpoint or behaviour
 that could not be verified.
 
-## 11. Existing structure and reusable classes
+## 12. Existing structure and reusable classes
 
 Inspect the existing page and style system before adding new elements or classes.
 
