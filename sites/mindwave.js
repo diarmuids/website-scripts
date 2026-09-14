@@ -1,4 +1,4 @@
-// Last updated: 2026-09-14 12:45:41
+// Last updated: 2026-09-14 12:50:41
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
@@ -1727,12 +1727,43 @@ function initMindwavePricingCalculator() {
   });
 }
 
+// GENTLE PULSE
+// Add data-pulse to any element in Webflow to give it a slow, soft pulse.
+// Uses the Web Animations API so no custom CSS keyframes are needed.
+function initMindwavePulse() {
+  const reduceMotion = window.matchMedia(
+    '(prefers-reduced-motion: reduce)'
+  ).matches;
+
+  if (reduceMotion || !('animate' in Element.prototype)) return;
+
+  document.querySelectorAll('[data-pulse]').forEach(function (element) {
+    element.animate(
+      [
+        {
+          offset: 0,
+          transform: 'scale(1)',
+          boxShadow: '0 0 0 0 rgba(110, 133, 255, 0.45)'
+        },
+        { offset: 0.5, transform: 'scale(1.08)' },
+        {
+          offset: 1,
+          transform: 'scale(1)',
+          boxShadow: '0 0 0 0.5rem rgba(110, 133, 255, 0)'
+        }
+      ],
+      { duration: 2400, easing: 'ease-out', iterations: Infinity }
+    );
+  });
+}
+
 function initMindwavePage() {
   generateMindwaveServiceLocationSchema();
   generateMindwavePageSchema();
   addAlternatingServiceLinkClasses();
   initMindwavePricingNavigation();
   initMindwavePricingCalculator();
+  initMindwavePulse();
 }
 
 if (document.readyState === 'loading') {
