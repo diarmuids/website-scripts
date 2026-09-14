@@ -112,7 +112,7 @@ If an icon has a coloured, circular or shaped background:
 
 1. Create a div wrapper for the background.
 2. Place the SVG Code Embed inside that div.
-3. Set the SVG or Code Embed height using an explicit pixel value or percentage.
+3. Set the SVG or Code Embed height using an explicit `rem` value, or a percentage when relative sizing is required. Keep `1px` as `1px`.
 4. Centre the Code Embed within the wrapper using native Webflow Flexbox controls.
 
 Use `currentColor` for SVG fills and strokes where practical so the icon colour remains editable through Webflow styles.
@@ -167,6 +167,21 @@ Use existing variables for:
 Do not hard-code a CSS value when a suitable Webflow variable already exists.
 
 Only create a new variable when no suitable existing variable is available and the value is intended to be reused.
+
+### Units and rem values
+
+Always use `rem` wherever possible for length values, including font sizes,
+spacing, padding, margins, gaps, dimensions, border radii and border widths.
+Keep values intended to be exactly `1px` as `1px`; do not convert them to `rem`.
+
+Convert pixel measurements using the site's actual root font size rather than
+assuming a fixed conversion. Reuse suitable existing Webflow variables and use
+`rem` for new length variables wherever possible. Do not change shared variables
+without checking their existing uses.
+
+Retain percentages, viewport units, `fr`, unitless values and keywords such as
+`auto` when they are appropriate to the required layout or behaviour. Apply units
+through Webflow's native controls wherever supported.
 
 ## 7. Flexbox and Grid gaps
 
@@ -291,6 +306,7 @@ Before completing any Webflow task, verify that:
 - Tabular data uses native table elements with correctly identified headers
 - Icons are SVGs inside Code Embeds
 - Existing Webflow variables are used
+- Length values use `rem` wherever possible, with exact `1px` values kept as `1px`
 - Every supported CSS declaration is set through native Webflow Style-panel controls
 - Custom Properties and custom CSS are used only for behaviour unavailable natively
 - Grid and Flex gaps use `grid-column-gap` and `grid-row-gap`
