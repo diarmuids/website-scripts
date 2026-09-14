@@ -1,4 +1,4 @@
-// Last updated: 2026-09-14 17:11:44
+// Last updated: 2026-09-14 17:59:05
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
@@ -1929,6 +1929,40 @@ function initMindwaveMotivationTabs() {
       attributeFilter: ['class'],
       attributeOldValue: true
     });
+  });
+}
+
+// SERVICE PAGES: WHY-SECTION IMAGE FADE
+// Fades the sticky "why" image in once as it scrolls into view. This replaces
+// the old Webflow scroll interactions on the text blocks, which faded the image
+// back out as each block left the screen. The Webflow MCP can't create
+// Interactions, so the fade is done here. Without JavaScript, or with reduced
+// motion, the image simply shows.
+function initMindwaveServiceWhyFade() {
+  const images = document.querySelectorAll('.section_service-why .service-why_image');
+
+  if (!images.length || !('IntersectionObserver' in window)) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const easing = 'cubic-bezier(0.22, 1, 0.36, 1)';
+  const observer = new IntersectionObserver(
+    function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+
+        entry.target.style.opacity = '';
+        entry.target.style.transform = '';
+        observer.unobserve(entry.target);
+      });
+    },
+    { threshold: 0.2 }
+  );
+
+  images.forEach(function (image) {
+    image.style.opacity = '0';
+    image.style.transform = 'translateY(1.5rem)';
+    image.style.transition = `opacity 800ms ease, transform 800ms ${easing}`;
+    observer.observe(image);
   });
 }
 
