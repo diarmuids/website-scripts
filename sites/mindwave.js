@@ -1,4 +1,4 @@
-// Last updated: 2026-09-14 09:27:01
+// Last updated: 2026-09-14 11:28:33
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
@@ -1442,11 +1442,241 @@ function initMindwavePricingNavigation() {
   updatePricingNavigation();
 }
 
+// PRICING CALCULATOR
+const MINDWAVE_PRICING_CONFIG = {
+  MIN_SPEND: 3000,
+  COMBINED_DISCOUNT: 750,
+  // Google Ads tiers — exact, from the deck. A tier applies from its min up to the next tier's min.
+  GOOGLE_TIERS: [
+    { min: 3000, fee: 1000 },
+    { min: 7000, fee: 1750 },
+    { min: 20000, fee: 2750 },
+    { min: 35000, fee: 3250 },
+    { min: 50000, fee: 4000, from: true }
+  ],
+  // Klaviyo bands — PLACEHOLDER, awaiting sign-off from Mindwave. Do not ship without confirmed figures.
+  // Only the 50k–100k band is anchored to a real figure (80k profiles = €1,500).
+  KLAVIYO_BANDS: [
+    { min: 0, fee: 1000 }, // Under 25k
+    { min: 25000, fee: 1250 }, // 25k–50k
+    { min: 50000, fee: 1500 }, // 50k–100k
+    { min: 100000, fee: 2250 }, // 100k–150k
+    { min: 150000, fee: 3000, from: true } // 150k+
+  ]
+};
+
+function getMindwavePricingBand(bands, value) {
+  let match = null;
+
+  bands.forEach(function (band) {
+    if (value >= band.min) match = band;
+  });
+
+  return match;
+}
+
+function formatMindwaveEuro(amount) {
+  return '€' + Math.round(amount).toLocaleString('en-IE');
+}
+
+function formatMindwavePricingFee(band) {
+  return (band.from ? 'From ' : '') + formatMindwaveEuro(band.fee);
+}
+
+function formatMindwaveProfiles(value) {
+  return Math.round(value / 1000) + 'k';
+}
+
+function initMindwavePricingCalculator() {
+  const calculators = document.querySelectorAll('[data-pricing-calculator]');
+
+  if (!calculators.length) return;
+
+  // Range track and thumb pseudo-elements cannot be styled with native Webflow
+  // controls, so the slider styling is injected here alongside its behaviour.
+  if (!document.getElementById('mindwave-pricing-calculator-styles')) {
+    const style = document.createElement('style');
+
+    style.id = 'mindwave-pricing-calculator-styles';
+    style.textContent = `
+      [data-pricing-calculator] .pricing_range {
+        -webkit-appearance: none;
+        appearance: none;
+        height: 1.5rem;
+        background: transparent;
+        cursor: pointer;
+      }
+
+      [data-pricing-calculator] .pricing_range::-webkit-slider-runnable-track {
+        height: 8px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #6e85ff 0%, #cb94ff var(--pricing-range-progress, 50%), #e6e6ee var(--pricing-range-progress, 50%), #e6e6ee 100%);
+      }
+
+      [data-pricing-calculator] .pricing_range::-moz-range-track {
+        height: 8px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #6e85ff 0%, #cb94ff var(--pricing-range-progress, 50%), #e6e6ee var(--pricing-range-progress, 50%), #e6e6ee 100%);
+      }
+
+      [data-pricing-calculator] .pricing_range::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 22px;
+        height: 22px;
+        margin-top: -7px;
+        border: 3px solid #fff;
+        border-radius: 50%;
+        background: #6e85ff;
+        box-shadow: 0 2px 8px rgba(110, 133, 255, 0.45);
+      }
+
+      [data-pricing-calculator] .pricing_range::-moz-range-thumb {
+        width: 22px;
+        height: 22px;
+        border: 3px solid #fff;
+        border-radius: 50%;
+        background: #6e85ff;
+        box-shadow: 0 2px 8px rgba(110, 133, 255, 0.45);
+      }
+
+      [data-pricing-calculator] .pricing_range:focus-visible {
+        outline: 2px solid #6e85ff;
+        outline-offset: 4px;
+        border-radius: 999px;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  calculators.forEach(function (calculator) {
+    const config = MINDWAVE_PRICING_CONFIG;
+    const googleToggle = calculator.querySelector('[data-pricing-toggle="google"]');
+    const klaviyoToggle = calculator.querySelector('[data-pricing-toggle="klaviyo"]');
+    const spendInput = calculator.querySelector('[data-pricing-input="google-spend"]');
+    const profilesInput = calculator.querySelector(
+      '[data-pricing-input="klaviyo-profiles"]'
+    );
+
+    function setText(selector, text) {
+      calculator.querySelectorAll(selector).forEach(function (element) {
+        element.textContent = text;
+      });
+    }
+
+    function setVisible(selector, isVisible, display) {
+      calculator.querySelectorAll(selector).forEach(function (element) {
+        element.style.display = isVisible ? display || '' : 'none';
+      });
+    }
+
+    function updateRangeProgress(input) {
+      const min = Number(input.min) || 0;
+      const max = Number(input.max) || 100;
+      const progress =
+        max > min ? ((Number(input.value) - min) / (max - min)) * 100 : 0;
+
+      input.style.setProperty('--pricing-range-progress', progress + '%');
+    }
+
+    function updatePricingCalculator() {
+      const hasGoogle = Boolean(spendInput) && (!googleToggle || googleToggle.checked);
+      const hasKlaviyo =
+        Boolean(profilesInput) && (!klaviyoToggle || klaviyoToggle.checked);
+      const spend = spendInput ? Number(spendInput.value) : 0;
+      const profiles = profilesInput ? Number(profilesInput.value) : 0;
+      const spendLabel =
+        formatMindwaveEuro(spend) +
+        (spendInput && spend >= Number(spendInput.max) ? '+' : '');
+      const profilesLabel =
+        formatMindwaveProfiles(profiles) +
+        (profilesInput && profiles >= Number(profilesInput.max) ? '+' : '');
+      const isBelowMinSpend = hasGoogle && spend < config.MIN_SPEND;
+      const googleBand =
+        hasGoogle && !isBelowMinSpend
+          ? getMindwavePricingBand(config.GOOGLE_TIERS, spend)
+          : null;
+      const klaviyoBand = hasKlaviyo
+        ? getMindwavePricingBand(config.KLAVIYO_BANDS, profiles)
+        : null;
+      const hasDiscount = hasGoogle && hasKlaviyo && !isBelowMinSpend;
+
+      if (spendInput) {
+        spendInput.setAttribute('aria-valuetext', spendLabel + ' per month');
+        updateRangeProgress(spendInput);
+      }
+
+      if (profilesInput) {
+        profilesInput.setAttribute('aria-valuetext', profilesLabel + ' profiles');
+        updateRangeProgress(profilesInput);
+      }
+
+      setText('[data-pricing-output="google-spend"]', spendLabel);
+      setText('[data-pricing-output="klaviyo-profiles"]', profilesLabel);
+
+      setVisible('[data-pricing-field="google"]', hasGoogle);
+      setVisible('[data-pricing-field="klaviyo"]', hasKlaviyo);
+      setVisible('[data-pricing-row="google"]', hasGoogle);
+      setVisible('[data-pricing-row="klaviyo"]', hasKlaviyo);
+      setVisible('[data-pricing-row="discount"]', hasDiscount);
+      setVisible('[data-pricing-klaviyo-only]', hasKlaviyo);
+      setVisible('[data-pricing-discount-note]', hasDiscount);
+      setVisible('[data-pricing-notice="min-spend"]', isBelowMinSpend, 'inline-flex');
+      setVisible('[data-pricing-output="google-fee"]', !isBelowMinSpend);
+
+      if (googleBand) {
+        setText('[data-pricing-output="google-fee"]', formatMindwavePricingFee(googleBand));
+      }
+
+      if (klaviyoBand) {
+        setText('[data-pricing-output="klaviyo-fee"]', formatMindwavePricingFee(klaviyoBand));
+      }
+
+      setText(
+        '[data-pricing-output="discount"]',
+        '−' + formatMindwaveEuro(config.COMBINED_DISCOUNT)
+      );
+
+      let total = 'Pick a channel';
+
+      if (isBelowMinSpend) {
+        total = 'Let’s talk';
+      } else if (hasGoogle || hasKlaviyo) {
+        const bands = [googleBand, klaviyoBand].filter(Boolean);
+        const sum =
+          bands.reduce(function (runningTotal, band) {
+            return runningTotal + band.fee;
+          }, 0) - (hasDiscount ? config.COMBINED_DISCOUNT : 0);
+        const isFrom = bands.some(function (band) {
+          return band.from;
+        });
+
+        total = (isFrom ? 'From ' : '') + formatMindwaveEuro(sum);
+      }
+
+      setText('[data-pricing-output="total"]', total);
+    }
+
+    calculator.querySelectorAll('[data-pricing-output="total"]').forEach(function (output) {
+      if (!output.hasAttribute('aria-live')) output.setAttribute('aria-live', 'polite');
+    });
+
+    [googleToggle, klaviyoToggle, spendInput, profilesInput].forEach(function (input) {
+      if (!input) return;
+
+      input.addEventListener('input', updatePricingCalculator);
+      input.addEventListener('change', updatePricingCalculator);
+    });
+
+    updatePricingCalculator();
+  });
+}
+
 function initMindwavePage() {
   generateMindwaveServiceLocationSchema();
   generateMindwavePageSchema();
   addAlternatingServiceLinkClasses();
   initMindwavePricingNavigation();
+  initMindwavePricingCalculator();
 }
 
 if (document.readyState === 'loading') {
