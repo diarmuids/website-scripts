@@ -100,7 +100,23 @@ Do not use:
 
 Use appropriate ARIA attributes or roles when additional accessibility information is needed.
 
-## 5. Existing Webflow variables
+## 5. Tables
+
+Always use `div` elements instead of native table elements unless explicitly instructed to use a table.
+
+Do not use the following elements by default:
+
+- `table`
+- `thead`
+- `tbody`
+- `tfoot`
+- `tr`
+- `th`
+- `td`
+
+When presenting tabular-looking content without an explicit instruction to use a table, build it from clearly named `div` wrappers and items using native Webflow Flexbox or Grid controls.
+
+## 6. Existing Webflow variables
 
 Always inspect and reuse the site's existing Webflow variables before creating styles.
 
@@ -123,7 +139,7 @@ Do not hard-code a CSS value when a suitable Webflow variable already exists.
 
 Only create a new variable when no suitable existing variable is available and the value is intended to be reused.
 
-## 6. Flexbox and Grid gaps
+## 7. Flexbox and Grid gaps
 
 Always set spacing between Flexbox or Grid children through Webflow's native gap controls.
 
@@ -154,7 +170,7 @@ Set gap values independently at each required breakpoint:
 
 After applying the styles, verify that both the horizontal and vertical gap controls are visible and editable in the Webflow Designer.
 
-## 7. Native Webflow implementation
+## 8. Native Webflow implementation
 
 Build layouts using native Webflow elements and Designer-compatible style properties wherever possible.
 
@@ -177,7 +193,7 @@ Avoid custom CSS when the same result can be created using native Webflow contro
 
 Any styling added programmatically must still appear correctly inside the Webflow Designer's Style panel.
 
-## 8. Borders
+## 9. Borders
 
 Use the border width, colour and radius required by the approved design. Reuse existing Webflow variables where suitable, but do not enforce a global border width across the site.
 
@@ -185,7 +201,7 @@ Use existing variables for border colours and border radius values.
 
 Set each required border side explicitly using Designer-compatible properties.
 
-## 9. Responsive behaviour
+## 10. Responsive behaviour
 
 Build and verify every section across Webflow's standard breakpoints:
 
@@ -209,7 +225,7 @@ Check:
 - Table behaviour
 - Minimum and maximum widths
 
-## 10. Existing structure and reusable classes
+## 11. Existing structure and reusable classes
 
 Inspect the existing page and style system before adding new elements or classes.
 
@@ -223,7 +239,7 @@ Create a new Client-First class when the purpose or styling is different.
 
 Do not overwrite a shared class to solve a section-specific problem.
 
-## 11. Final verification
+## 12. Final verification
 
 Before completing any Webflow task, verify that:
 
@@ -231,6 +247,7 @@ Before completing any Webflow task, verify that:
 - No temporary `v1` or `v2` classes remain
 - Every section has a descriptive class and Navigator name
 - Visual lists use div elements
+- Native table elements are only used when explicitly requested
 - Icons are SVGs inside Code Embeds
 - Existing Webflow variables are used
 - Grid and Flex gaps use `grid-column-gap` and `grid-row-gap`
