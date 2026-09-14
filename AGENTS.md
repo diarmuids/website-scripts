@@ -9,6 +9,12 @@ GitHub/jsDelivr and should be published quickly after local saves.
   [`WEBFLOW_STANDARDS.md`](./WEBFLOW_STANDARDS.md).
 - Treat that document as the canonical shared Webflow reference for Codex and
   Claude. Update the canonical document rather than duplicating its rules here.
+- Whenever working on a Webflow site, create or update that site's own
+  `AGENTS.md` to require its local `WEBFLOW_STANDARDS.md`, and provide or refresh
+  that local standards copy. Follow the portability workflow in the canonical
+  standards, preserving existing site-specific instructions. This makes the
+  requirements available to other agents, tools and collaborators independently
+  of this service.
 - Apply every CSS declaration that Webflow supports natively through Webflow's
   native Style-panel controls. Do not place equivalent styling in Custom
   Properties or custom CSS.

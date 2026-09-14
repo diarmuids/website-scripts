@@ -2,6 +2,39 @@
 
 Follow these requirements for every Webflow build, redesign or modification.
 
+## Site-local instructions and portability
+
+Whenever work begins on a Webflow site, read and apply these standards and ensure
+that the site's own project contains both:
+
+- A `WEBFLOW_STANDARDS.md` copy of this shared reference.
+- An `AGENTS.md` instruction requiring anyone working on that site to read and
+  follow its local `WEBFLOW_STANDARDS.md` before any Webflow build, redesign or
+  modification.
+
+Create missing files and update existing instructions as part of the site task.
+Preserve unrelated instructions and site-specific requirements; merge the standards
+reference into an existing `AGENTS.md` rather than replacing the file. Use a relative
+link to the site's local standards file so the instructions work for other agents,
+tools and collaborators without this service or access to this computer.
+
+The canonical source is `WEBFLOW_STANDARDS.md` in the
+[Website Scripts repository](https://github.com/diarmuids/website-scripts).
+Make shared rule changes in that canonical source, then refresh the site's local
+copy when working on the site. Keep site-specific additions in the site's
+`AGENTS.md` so refreshing the shared standards does not erase them. Identify and
+resolve conflicting instructions rather than silently discarding either version.
+
+Use this instruction in the site's `AGENTS.md`, adjusting the relative path only
+when required by the project structure:
+
+> Before any Webflow build, redesign or modification, read and follow
+> [WEBFLOW_STANDARDS.md](./WEBFLOW_STANDARDS.md). These standards apply to all
+> agents, tools and collaborators working on this site.
+
+If the site's project files are not accessible, report that its local instructions
+could not be updated; do not claim that the standards have been installed there.
+
 ## 1. Client-First structure and naming
 
 Always follow Finsweet Client-First principles for:
