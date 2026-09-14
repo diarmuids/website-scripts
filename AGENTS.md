@@ -45,10 +45,11 @@ https://dev.wsitefiles.com/sites
   the session that started it.
 - If `https://dev.wsitefiles.com/sites/...` returns 502 during a session, the
   local server has stopped. Re-run `.\tools\dev-server\ensure-dev-tunnel.ps1`.
-- External visitors must always get the published GitHub version. Site loaders
-  use the dev file only in a browser that has opted in with `?dev=on` (saved in
-  `localStorage`; `?dev=off` clears it), and fall back to the live file if the
-  dev file fails to load. Keep this behaviour when editing any site loader.
+- Site loaders try the dev file first for everyone, visitors included, and fall
+  back to the published file when the dev server isn't running. While work is
+  happening, every save is served straight away; once the window closes, the
+  site returns to the published GitHub version. Keep this behaviour when editing
+  any site loader.
 - Start the local auto-push worker before editing:
 
 ```powershell
