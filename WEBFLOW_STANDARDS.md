@@ -85,7 +85,7 @@ a class name or Navigator label does not replace the correct tag.
 - Use `<article>` for self-contained content and `<aside>` for related supporting content.
 - Use `<h1>` through `<h6>` in a logical hierarchy and `<p>` for paragraphs.
 - Use `<a>` for navigation and `<button>` for actions.
-- Use semantic list and table elements when the content is a list or tabular data,
+- Use list elements only inside Rich Text, and table elements for tabular data,
   as described below.
 - Use other relevant semantic elements, such as `<figure>`, `<figcaption>` and
   `<label>`, whenever appropriate to the content.
@@ -151,9 +151,8 @@ suffix. For example:
 - `pricing_check-list`
 - `pricing_check-item`
 
-A generic outer wrapper, icon wrapper or content wrapper may still use a div
-where appropriate. Use native HTML semantics first; add ARIA only when needed
-for accessibility information not already provided by the element.
+A generic outer wrapper, icon wrapper or content wrapper may also use a div
+where appropriate.
 
 ## 5. Tables
 
@@ -330,7 +329,7 @@ Before completing any Webflow task, verify that:
 - Every section has a descriptive permanent class and no custom Navigator name
 - Every thematic content section uses `<section>` and footers use `<footer>`
 - All other elements use the correct semantic tags wherever applicable
-- Lists use `<ul>` or `<ol>` with `<li>` items when semantically appropriate
+- Visual lists use div `-list`/`-item` structures; `<ul>`/`<ol>`/`<li>` appear only inside Rich Text
 - Tabular data uses native table elements with correctly identified headers
 - Icons are SVGs inside Code Embeds
 - SVG Code Embeds use column Flex, centred X/Y alignment, zero gaps, hidden overflow, matching width constraints and fixed `1rem` height constraints
