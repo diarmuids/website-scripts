@@ -38,9 +38,11 @@ GitHub/jsDelivr and should be published quickly after local saves.
 https://dev.wsitefiles.com/sites
 ```
 
-- Start the dev server and tunnel only when work begins in this repository.
-  Never start them at Windows login, from a startup shortcut, or from the
-  auto-push keepalive.
+- The dev server runs only while work is happening in this repository. The
+  VS Code task in `.vscode/tasks.json` starts it when this folder is opened and
+  it stops when the window closes. Never start it at Windows login, from a
+  startup shortcut, or from the auto-push keepalive, and never make it outlive
+  the session that started it.
 - If `https://dev.wsitefiles.com/sites/...` returns 502 during a session, the
   local server has stopped. Re-run `.\tools\dev-server\ensure-dev-tunnel.ps1`.
 - External visitors must always get the published GitHub version. Site loaders
