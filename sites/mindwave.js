@@ -1,4 +1,4 @@
-// Last updated: 2026-09-14 09:18:25
+// Last updated: 2026-09-14 09:22:46
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
@@ -1284,10 +1284,13 @@ function initMindwavePricingNavigation() {
   if (!pricingNavSection || !pricingNav || !finalPricingSection) return;
 
   const googleAdsSection = document.querySelector('.section_pricing-ads');
+  const googleAdsLink = pricingNav.querySelector('a[href="#google-ads"]');
 
-  if (googleAdsSection && !document.getElementById('google-ads')) {
-    googleAdsSection.id = 'google-ads';
+  if (googleAdsSection && !document.getElementById('pricing-google-ads')) {
+    googleAdsSection.id = 'pricing-google-ads';
   }
+
+  if (googleAdsLink) googleAdsLink.hash = 'pricing-google-ads';
 
   if (!document.getElementById('mindwave-pricing-navigation-styles')) {
     const style = document.createElement('style');
@@ -1327,7 +1330,7 @@ function initMindwavePricingNavigation() {
         white-space: nowrap;
       }
 
-      #google-ads,
+      #pricing-google-ads,
       #klaviyo,
       #both-channels,
       #calculator,
