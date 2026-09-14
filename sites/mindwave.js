@@ -1,4 +1,4 @@
-// Last updated: 2026-09-14 16:27:10
+// Last updated: 2026-09-14 16:32:17
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
@@ -1794,6 +1794,134 @@ function initMindwavePulse() {
       ],
       { duration: 2400, easing: 'ease-out', iterations: Infinity }
     );
+  });
+}
+
+// MOTIVATION TABS (Who We Are page)
+// Slides one gradient highlight behind the active tab and lifts each newly
+// opened tab's text into place. Webflow's native tabs can only fade, and a
+// moving highlight needs positions measured at runtime, so this is done here.
+// The page's static gradient on .w--current stays as the no-JS fallback.
+function initMindwaveMotivationTabs() {
+  const tabs = document.querySelector('.mission-tabs_component');
+  const menu = tabs?.querySelector('.mission-tabs_menu');
+  const links = menu
+    ? Array.from(menu.querySelectorAll('.mission-tabs_tab-link'))
+    : [];
+
+  if (!links.length) return;
+
+  const reduceMotion = window.matchMedia(
+    '(prefers-reduced-motion: reduce)'
+  ).matches;
+  const glideEasing = 'cubic-bezier(0.22, 1, 0.36, 1)';
+
+  if (!document.getElementById('mindwave-motivation-tabs-styles')) {
+    const style = document.createElement('style');
+
+    style.id = 'mindwave-motivation-tabs-styles';
+    style.textContent = `
+      .mission-tabs_menu.is-gliding {
+        position: relative;
+      }
+
+      .mission-tabs_menu.is-gliding .mission-tabs_tab-link {
+        position: relative;
+        z-index: 1;
+        background-color: transparent;
+        background-image: none;
+      }
+
+      .mission-tabs_menu.is-gliding .mission-tabs_tab-link.w--current {
+        border-color: transparent;
+        color: #ffffff;
+      }
+
+      .mission-tabs_menu.is-gliding .mission-tabs_tab-link:not(.w--current):hover {
+        background-color: var(--brand--black);
+        color: #ffffff;
+      }
+
+      .mission-tabs_indicator {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 0;
+        border-radius: 6.25rem;
+        background-image: linear-gradient(90deg, #cb94ff 0%, #6e85ff 50%, #73d5ff 100%);
+        pointer-events: none;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  const indicator = document.createElement('div');
+
+  indicator.className = 'mission-tabs_indicator';
+  indicator.setAttribute('aria-hidden', 'true');
+  menu.prepend(indicator);
+  menu.classList.add('is-gliding');
+
+  function moveIndicator(animate) {
+    const active =
+      menu.querySelector('.mission-tabs_tab-link.w--current') || links[0];
+    const glide = `500ms ${glideEasing}`;
+
+    indicator.style.transition =
+      animate && !reduceMotion
+        ? `transform ${glide}, width ${glide}, height ${glide}`
+        : 'none';
+    indicator.style.width = active.offsetWidth + 'px';
+    indicator.style.height = active.offsetHeight + 'px';
+    indicator.style.transform =
+      'translate(' + active.offsetLeft + 'px, ' + active.offsetTop + 'px)';
+  }
+
+  moveIndicator(false);
+  window.addEventListener('resize', function () {
+    moveIndicator(false);
+  });
+  if (document.fonts) {
+    document.fonts.ready.then(function () {
+      moveIndicator(false);
+    });
+  }
+
+  // Webflow moves .w--current between links when a tab is chosen.
+  const linkObserver = new MutationObserver(function () {
+    moveIndicator(true);
+  });
+
+  links.forEach(function (link) {
+    linkObserver.observe(link, { attributes: true, attributeFilter: ['class'] });
+  });
+
+  if (reduceMotion || !('animate' in Element.prototype)) return;
+
+  // Lift the text of whichever pane has just become active.
+  const paneObserver = new MutationObserver(function (records) {
+    records.forEach(function (record) {
+      const pane = record.target;
+      const wasActive = (record.oldValue || '').includes('w--tab-active');
+
+      if (wasActive || !pane.classList.contains('w--tab-active')) return;
+
+      pane.querySelector('.mission-tabs_content')?.animate(
+        [
+          { opacity: 0, transform: 'translateY(1.5rem)', filter: 'blur(6px)' },
+          { opacity: 1, transform: 'translateY(0)', filter: 'blur(0)' }
+        ],
+        { duration: 700, easing: glideEasing }
+      );
+    });
+  });
+
+  tabs.querySelectorAll('.mission-tabs_pane').forEach(function (pane) {
+    paneObserver.observe(pane, {
+      attributes: true,
+      attributeFilter: ['class'],
+      attributeOldValue: true
+    });
   });
 }
 
