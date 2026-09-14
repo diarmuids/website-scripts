@@ -111,12 +111,15 @@ Style-panel controls:
 | Y alignment | Center |
 | Horizontal and vertical gaps | `0` |
 | Width, minimum width and maximum width | All set to the same required icon width in `rem` (reference: `1rem`) |
-| Height, minimum height and maximum height | All set to `1rem` |
+| Height, minimum height and maximum height | All set to the same required icon height in `rem` (reference: `1rem`) |
 | Overflow | Hidden (`overflow: hidden`) |
 
-Only the width may vary to suit the icon; update width, minimum width and maximum
-width together. Keep the other settings as specified above. The reference's zero
-value applies to the gap; its overflow setting is Hidden, not a numeric value.
+Set both width and height to whatever the icon requires; they do not need to be
+equal. Match minimum and maximum width to the chosen width, and minimum and
+maximum height to the chosen height. The reference's `1rem` dimensions are only
+an example, not a required size. Keep the other settings as specified above.
+The reference's zero value applies to the gap; its overflow setting is Hidden,
+not a numeric value.
 
 
 Do not create SVG icons as:
@@ -131,7 +134,7 @@ If an icon has a coloured, circular or shaped background:
 
 1. Create a div wrapper for the background.
 2. Place the SVG Code Embed inside that div.
-3. Apply the required SVG Code Embed settings above, including the fixed `1rem` height, minimum height and maximum height.
+3. Apply the required SVG Code Embed settings above, including the required icon dimensions and matching minimum and maximum values.
 4. Centre the Code Embed within the wrapper using native Webflow Flexbox controls.
 
 Use `currentColor` for SVG fills and strokes where practical so the icon colour remains editable through Webflow styles.
@@ -324,7 +327,7 @@ Before completing any Webflow task, verify that:
 - Lists use `<ul>` or `<ol>` with `<li>` items when semantically appropriate
 - Tabular data uses native table elements with correctly identified headers
 - Icons are SVGs inside Code Embeds
-- SVG Code Embeds use column Flex, centred X/Y alignment, zero gaps, hidden overflow, matching width constraints and fixed `1rem` height constraints
+- SVG Code Embeds use column Flex, centred X/Y alignment, zero gaps, hidden overflow, the required icon width and height with matching minimum and maximum constraints
 - Existing Webflow variables are used
 - Length values use `rem` wherever possible, with exact `1px` values kept as `1px`
 - Every supported CSS declaration is set through native Webflow Style-panel controls
