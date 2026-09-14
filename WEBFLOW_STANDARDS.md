@@ -26,6 +26,17 @@ Do not use temporary naming such as:
 
 The current implementation should always use the permanent production class name.
 
+### Item-specific combo classes
+
+When a combo class changes an individual item rather than defining a shared
+variant, use the `is-` convention. For example:
+
+`pricing_google-layout is-klaviyo`
+
+Use a descriptive, non-`is-` combo class only when the same variation is
+intended to be reused by multiple items. Do not encode a one-off item name in
+the base class when an `is-[item]` modifier clearly expresses the variation.
+
 ## 2. Section naming
 
 Give every distinct section its own descriptive section class.
