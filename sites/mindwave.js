@@ -1,4 +1,4 @@
-// Last updated: 2026-09-14 09:23:59
+// Last updated: 2026-09-14 09:24:42
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
@@ -1410,6 +1410,7 @@ function initMindwavePricingNavigation() {
     if (!target) return;
 
     event.preventDefault();
+    event.stopImmediatePropagation();
 
     const headerHeight = header
       ? Math.ceil(header.getBoundingClientRect().height)
@@ -1432,7 +1433,7 @@ function initMindwavePricingNavigation() {
       top: Math.max(0, targetTop),
       behavior: reduceMotion ? 'auto' : 'smooth'
     });
-  });
+  }, true);
 
   updatePricingNavigation();
 }
