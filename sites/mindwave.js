@@ -1,4 +1,4 @@
-// Last updated: 2026-09-11 10:39:26
+// Last updated: 2026-09-14 09:18:25
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
@@ -1272,10 +1272,140 @@ function addAlternatingServiceLinkClasses() {
   });
 }
 
+// PRICING PAGE STICKY NAVIGATION
+function initMindwavePricingNavigation() {
+  if (location.pathname.replace(/\/+$/, '') !== '/pricing') return;
+
+  const pricingNavSection = document.querySelector('.section_pricing-nav');
+  const pricingNav = pricingNavSection?.querySelector('.pricing_nav');
+  const header = document.querySelector('.nav_component');
+  const finalPricingSection = document.querySelector('#faq');
+
+  if (!pricingNavSection || !pricingNav || !finalPricingSection) return;
+
+  const googleAdsSection = document.querySelector('.section_pricing-ads');
+
+  if (googleAdsSection && !document.getElementById('google-ads')) {
+    googleAdsSection.id = 'google-ads';
+  }
+
+  if (!document.getElementById('mindwave-pricing-navigation-styles')) {
+    const style = document.createElement('style');
+
+    style.id = 'mindwave-pricing-navigation-styles';
+    style.textContent = `
+      .section_pricing-nav {
+        position: sticky;
+        top: calc(var(--mindwave-header-height, 0px) + 4px);
+        z-index: 20;
+        background-color: #fff;
+        opacity: 1;
+        transform: translateY(0);
+        transition: opacity 180ms ease, transform 180ms ease;
+      }
+
+      .section_pricing-nav.is-past-pricing {
+        opacity: 0;
+        transform: translateY(-0.5rem);
+        pointer-events: none;
+      }
+
+      .section_pricing-nav .pricing_nav {
+        width: 100%;
+        max-width: 100%;
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        overscroll-behavior-x: contain;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+      }
+
+      .section_pricing-nav .pricing_nav-link {
+        flex: 0 0 auto;
+        white-space: nowrap;
+      }
+
+      #google-ads,
+      #klaviyo,
+      #both-channels,
+      #calculator,
+      #why-both-together,
+      #other-services,
+      #onboarding,
+      #faq {
+        scroll-margin-top: calc(
+          var(--mindwave-header-height, 0px) +
+          var(--mindwave-pricing-nav-height, 0px) +
+          12px
+        );
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .section_pricing-nav {
+          transition: none;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  let frameId = 0;
+
+  function updatePricingNavigation() {
+    frameId = 0;
+
+    const headerHeight = header
+      ? Math.ceil(header.getBoundingClientRect().height)
+      : 0;
+    const pricingNavHeight = Math.ceil(
+      pricingNavSection.getBoundingClientRect().height
+    );
+    const stickyTop = headerHeight + 4;
+    const finalPricingBottom =
+      finalPricingSection.getBoundingClientRect().bottom + window.scrollY;
+    const shouldHide =
+      window.scrollY + stickyTop + pricingNavHeight >= finalPricingBottom;
+
+    document.documentElement.style.setProperty(
+      '--mindwave-header-height',
+      headerHeight + 'px'
+    );
+    document.documentElement.style.setProperty(
+      '--mindwave-pricing-nav-height',
+      pricingNavHeight + 'px'
+    );
+    pricingNavSection.classList.toggle('is-past-pricing', shouldHide);
+  }
+
+  function queuePricingNavigationUpdate() {
+    if (frameId) return;
+    frameId = window.requestAnimationFrame(updatePricingNavigation);
+  }
+
+  window.addEventListener('scroll', queuePricingNavigationUpdate, {
+    passive: true
+  });
+  window.addEventListener('resize', queuePricingNavigationUpdate, {
+    passive: true
+  });
+
+  if ('ResizeObserver' in window) {
+    const resizeObserver = new ResizeObserver(queuePricingNavigationUpdate);
+
+    if (header) resizeObserver.observe(header);
+    resizeObserver.observe(pricingNavSection);
+  }
+
+  updatePricingNavigation();
+}
+
 function initMindwavePage() {
   generateMindwaveServiceLocationSchema();
   generateMindwavePageSchema();
   addAlternatingServiceLinkClasses();
+  initMindwavePricingNavigation();
 }
 
 if (document.readyState === 'loading') {
