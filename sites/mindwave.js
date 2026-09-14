@@ -1,4 +1,4 @@
-// Last updated: 2026-09-14 12:45:32
+// Last updated: 2026-09-14 12:45:41
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
@@ -1443,6 +1443,7 @@ function initMindwavePricingNavigation() {
       pricingNavHeight + 'px'
     );
     pricingNavSection.classList.toggle('is-past-pricing', shouldHide);
+    updateActivePricingNavLink(stickyTop + pricingNavHeight + 24);
   }
 
   function queuePricingNavigationUpdate() {
