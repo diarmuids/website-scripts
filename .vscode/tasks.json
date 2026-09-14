@@ -1,0 +1,21 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Website Scripts dev server",
+      "detail": "Serves sites/ on port 8787 for dev.wsitefiles.com while this folder is open. Stops when the window closes.",
+      "type": "shell",
+      "command": "node",
+      "args": ["tools/dev-server/server.js"],
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "silent",
+        "panel": "dedicated"
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+    }
+  ]
+}
