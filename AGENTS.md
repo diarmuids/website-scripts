@@ -38,8 +38,15 @@ GitHub/jsDelivr and should be published quickly after local saves.
 https://dev.wsitefiles.com/sites
 ```
 
-- Do not install or run the dev tunnel automatically at Windows login. It is
-  needed only while work is happening in this repository.
+- Start the dev server and tunnel only when work begins in this repository.
+  Never start them at Windows login, from a startup shortcut, or from the
+  auto-push keepalive.
+- If `https://dev.wsitefiles.com/sites/...` returns 502 during a session, the
+  local server has stopped. Re-run `.\tools\dev-server\ensure-dev-tunnel.ps1`.
+- External visitors must always get the published GitHub version. Site loaders
+  use the dev file only in a browser that has opted in with `?dev=on` (saved in
+  `localStorage`; `?dev=off` clears it), and fall back to the live file if the
+  dev file fails to load. Keep this behaviour when editing any site loader.
 - Start the local auto-push worker before editing:
 
 ```powershell

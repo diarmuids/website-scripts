@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const repo = path.resolve(__dirname, '..', '..');
-const port = Number(process.env.PORT || 8787);
+const port = Number(process.argv[2] || process.env.PORT || 8787);
 
 const types = {
   '.css': 'text/css; charset=utf-8',
