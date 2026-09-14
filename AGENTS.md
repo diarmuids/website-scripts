@@ -18,6 +18,8 @@ GitHub/jsDelivr and should be published quickly after local saves.
 - Apply every CSS declaration that Webflow supports natively through Webflow's
   native Style-panel controls. Do not place equivalent styling in Custom
   Properties or custom CSS.
+- Whenever a full site audit is requested, follow
+  [`WEBFLOW_AUDIT.md`](./WEBFLOW_AUDIT.md) in full and report in its format.
 
 ## Auto-publish workflow
 
