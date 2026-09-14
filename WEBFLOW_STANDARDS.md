@@ -360,6 +360,9 @@ layer:
    `background-image` on the page is not `none`.
 3. Confirm the layers appear in the Designer's Backgrounds panel and can be
    edited.
+4. Sweep the whole site, not just the class you touched. Query every style
+   whose `background-image` contains `radial-gradient`, and fix any value that
+   uses explicit sizes, has two positions after `at`, or contains a comment.
 
 If the Designer will not add a layer to an existing background, treat the
 stored value as invalid. Rewrite it in the formats above instead of working
