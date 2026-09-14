@@ -233,7 +233,6 @@ Before completing any Webflow task, verify that:
 - Visual lists use div elements
 - Icons are SVGs inside Code Embeds
 - Existing Webflow variables are used
-- Borders are 2px
 - Grid and Flex gaps use `grid-column-gap` and `grid-row-gap`
 - Gap controls appear natively in the Designer
 - Responsive styles exist at the required breakpoints
