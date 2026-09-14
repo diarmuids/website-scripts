@@ -1,4 +1,4 @@
-// Last updated: 2026-09-14 17:59:05
+// Last updated: 2026-09-14 17:59:14
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
@@ -1975,6 +1975,7 @@ function initMindwavePage() {
   initMindwaveFaqKeyboard();
   initMindwavePulse();
   initMindwaveMotivationTabs();
+  initMindwaveServiceWhyFade();
 }
 
 if (document.readyState === 'loading') {
