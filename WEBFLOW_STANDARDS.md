@@ -329,6 +329,25 @@ radial-gradient(circle farthest-corner at 80% 15%, rgba(255,200,170,0.55) 0%, tr
   add or edit layers on that class.
 - Control how far a glow spreads with its colour-stop percentages (for example
   `transparent 45%`), not with a radius.
+- Do not put CSS comments inside a value (for example
+  `none /* radial-gradient(...) */`). Delete unused layers instead.
+
+### Broken gradients can stay hidden until the next edit
+
+An explicit-size gradient can look fine in the browser for months. The problem
+only appears when someone edits any property on that class in the Designer, for
+example a radius or some padding. The Designer then re-saves the whole class,
+rewrites the gradient into invalid CSS, and the background disappears. This
+happened to the Who We Are tab panel when only its corner radius was changed.
+
+- Never leave an explicit-size gradient in place, even when it currently renders
+  correctly. Convert it as soon as you find it.
+- To convert one, keep its colours and position, switch the shape and size to
+  `ellipse farthest-side`, and adjust the transparent stop so the glow covers
+  roughly the same area. The new stop is about the original radius multiplied by
+  the original stop, divided by the distance from the position to the furthest
+  edge. For example, `radial-gradient(40% 55% at 4% 40%, colour, transparent 70%)`
+  becomes `radial-gradient(ellipse farthest-side at 4% 40%, colour, transparent 43%)`.
 
 ### Verifying backgrounds
 
