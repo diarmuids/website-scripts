@@ -281,7 +281,13 @@ Use existing variables for border colours and border radius values.
 
 Set each required border side explicitly using Designer-compatible properties.
 
-## 10. Responsive behaviour
+## 10. Mobile optimisation and responsive behaviour
+
+Always mobile-optimise every page, section and component that is built or modified.
+Mobile optimisation is part of the task, even when it is not requested separately.
+Review all styles affecting the work at every breakpoint, including inherited
+styles, component states and shared classes. Apply any required adjustments
+through native Webflow Style-panel controls.
 
 Build and verify every section across Webflow's standard breakpoints:
 
@@ -305,6 +311,16 @@ Check:
 - Overflow
 - Table behaviour
 - Minimum and maximum widths
+- Typography, line heights and readable text sizes
+- Margins, section spacing and alignment
+- Navigation, buttons, forms and touch usability
+- Visibility, stacking and interactive states
+
+Check any additional breakpoints already enabled on the site, and representative
+widths between breakpoints, for clipping, overlap and unintended horizontal scroll.
+Do not mark mobile optimisation complete without checking the affected work on
+both mobile landscape and mobile portrait. Report any breakpoint or behaviour
+that could not be verified.
 
 ## 11. Existing structure and reusable classes
 
@@ -340,7 +356,28 @@ Before completing any Webflow task, verify that:
 - Grid and Flex gaps use `grid-column-gap` and `grid-row-gap`
 - Gap controls appear natively in the Designer
 - Gap overrides exist only where values change; unchanged values inherit across breakpoints
-- Responsive styles exist at the required breakpoints
+- All affected styles are reviewed across every breakpoint and the work is mobile-optimised
+- Responsive adjustments use native controls and unchanged values inherit
 - Existing JavaScript hooks, attributes and integrations remain intact
 - The Navigator displays class names rather than custom renamed labels
 - The finished structure appears correctly in the Webflow Navigator and Style panel
+
+### Required completion report
+
+Every Webflow task's completion report must include:
+
+- **Mobile optimisation:** State which pages or components were checked and which
+  breakpoints were verified. Identify anything unverified or still needing work;
+  do not imply that a static code check proves visual or interactive behaviour.
+- **Non-native styling:** List every non-native styling exception introduced,
+  modified or retained in the affected work. For each one, give the page and
+  element/class, CSS property and value, relevant breakpoint/state, where it is
+  implemented (Custom Properties, Code Embed, custom CSS or script), and why a
+  native Webflow control could not be used.
+
+If no non-native styling remains in the checked work, explicitly report
+"Non-native styling: none." If native-control compliance could not be checked,
+state that limitation instead. An exception report does not permit bypassing an
+available native control: convert supported declarations to native Webflow styles
+before completion. Report any unresolved non-native implementation as outstanding
+work, with its exact location.
