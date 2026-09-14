@@ -281,7 +281,72 @@ Use existing variables for border colours and border radius values.
 
 Set each required border side explicitly using Designer-compatible properties.
 
-## 10. Mobile optimisation and responsive behaviour
+## 10. Backgrounds
+
+Build every background with the Style panel's Backgrounds controls so each layer
+stays visible and editable in the Designer. Reuse colour variables for solid
+colours and gradient stops wherever the Designer allows it.
+
+### Layer types
+
+| Need | How to build it |
+| --- | --- |
+| Solid colour | Background colour (`background-color`), using a colour variable where one fits. It always paints underneath every gradient and image layer. |
+| Linear gradient | A linear gradient layer with an angle and colour stops, for example `linear-gradient(135deg, #fff7eb, #fff3e8)`. |
+| Radial glow | A radial gradient layer written in the format described below. |
+| Image | An image layer from the site's assets, with size, position and tiling set on that layer. Use background images for decoration only; content images use an Image element with alt text. |
+| Tint or overlay | A linear gradient layer whose two stops are the same colour, placed above the layers it tints, for example `linear-gradient(rgba(255,255,255,0.3), rgba(255,255,255,0.3))`. |
+
+### Layer order
+
+Layers stack in the order they are listed: the first layer in the Style panel,
+and the first in the CSS value, is drawn on top. Order them as follows:
+
+1. Overlay or tint
+2. Radial glows
+3. Base gradient or image
+4. Background colour (always underneath, set separately)
+
+To change an overlay's strength, change the alpha value in both of its stops.
+Use a separate overlay element only when the tint has to sit above the
+element's children, or needs its own animation or blend mode.
+
+### Radial gradient syntax
+
+Write radial gradients in the form the Designer's own controls produce: a shape
+keyword, a size keyword and one position.
+
+```css
+radial-gradient(circle farthest-corner at 80% 15%, rgba(255,200,170,0.55) 0%, transparent 45%)
+```
+
+- Shape is `circle` or `ellipse`. Size is `closest-side`, `closest-corner`,
+  `farthest-side` or `farthest-corner`. Position is a single `at X% Y%`.
+- Never use explicit radius lengths, such as
+  `radial-gradient(60% 50% at 85% 20%, ...)`. The Designer rewrites them as
+  invalid CSS, for example `circle farthest-corner at 45% 50% 85% 20%`. The
+  browser then drops the whole background, and the Style panel will not let you
+  add or edit layers on that class.
+- Control how far a glow spreads with its colour-stop percentages (for example
+  `transparent 45%`), not with a radius.
+
+### Verifying backgrounds
+
+After setting or changing a gradient, or any background with more than one
+layer:
+
+1. Read the style back and confirm the stored value matches what was set.
+2. Confirm the value is valid in a real browser, using
+   `CSS.supports('background-image', value)` or by checking that the computed
+   `background-image` on the page is not `none`.
+3. Confirm the layers appear in the Designer's Backgrounds panel and can be
+   edited.
+
+If the Designer will not add a layer to an existing background, treat the
+stored value as invalid. Rewrite it in the formats above instead of working
+around it with an extra element or custom CSS.
+
+## 11. Mobile optimisation and responsive behaviour
 
 Always mobile-optimise every page, section and component that is built or modified.
 Mobile optimisation is part of the task, even when it is not requested separately.
