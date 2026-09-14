@@ -1,4 +1,4 @@
-// Last updated: 2026-09-14 12:55:35
+// Last updated: 2026-09-14 12:56:48
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
@@ -1512,8 +1512,7 @@ const MINDWAVE_PRICING_CONFIG = {
     { min: 35000, fee: 3250 },
     { min: 50000, fee: 4000, from: true }
   ],
-  // Klaviyo bands — PLACEHOLDER, awaiting sign-off from Mindwave. Do not ship without confirmed figures.
-  // Only the 50k–100k band is anchored to a real figure (80k profiles = €1,500).
+  // Klaviyo bands — confirmed by Mindwave. A band applies from its min up to the next band's min.
   KLAVIYO_BANDS: [
     { min: 0, fee: 1000 }, // Under 25k
     { min: 25000, fee: 1250 }, // 25k–50k
