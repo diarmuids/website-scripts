@@ -99,8 +99,11 @@ Use `currentColor` for SVG fills and strokes where practical so the icon colour 
 
 Build visual lists using div elements.
 
-Name list wrappers with the `-list` suffix and their direct entries with the
-matching `-item` suffix. For example:
+Name containers that wrap a list with the `-list-wrapper` suffix, the list
+itself with the `-list` suffix, and direct entries with the matching `-item`
+suffix. For example:
+
+`pricing_check-list-wrapper`
 
 `pricing_check-list`
 
