@@ -401,7 +401,39 @@ Create a new Client-First class when the purpose or styling is different.
 
 Do not overwrite a shared class to solve a section-specific problem.
 
-## 12. Final verification
+## 13. Known Webflow limitations and workarounds
+
+These problems have already come up in real builds. Apply the workaround
+rather than rediscovering the problem.
+
+### Designer and styling
+
+| Problem | What to do |
+| --- | --- |
+| The Designer rewrites radial gradients that use explicit radius lengths into invalid CSS, and then blocks editing of that background. | Use the keyword syntax in section 10 and verify the value in a browser. |
+| A Style panel control refuses a change or will not add a layer. | Check the class's stored value for invalid CSS first; an earlier invalid value usually causes this. |
+| The Current state of tab links and nav links cannot be created as a combo class through the MCP. Asking for `w--current` creates an unrelated `_w--current` class. | Style the Current state in the Designer by selecting the link and choosing the Current state. If it has to be done without the Designer, use a narrowly scoped `.class.w--current` rule in an embed, and report it as a non-native exception. |
+| Tabs, Tab Menu and Tab Content carry clearfix `::before` and `::after` pseudo-elements. When one of them is set to Grid, the pseudo-elements become grid items, take cell 1/1 and push the real children out of place. | Give each real child an explicit grid row and column, or use Flex with no gap on that element. |
+| A Tabs element cannot contain a heading. | Place the section heading outside the Tabs element. |
+| Centring items (`justify-content: center`) in a row that scrolls horizontally cuts off the first items on narrow screens, because content that overflows to the left cannot be scrolled to. | Align scrolling rows to the start, keep items on one line with `white-space: nowrap`, and check the first and last items at mobile widths. |
+| Fixed, full-screen elements such as page loaders, overlays and modals can block scrolling and clicks after they have finished. | Hide them when they are inactive (`display: none`, or `pointer-events: none` while fading out), and check the whole page can still be scrolled to the bottom. |
+
+### Content and third parties
+
+| Problem | What to do |
+| --- | --- |
+| Ad blockers hide elements whose id, class or link target matches their filter lists. For example, EasyList's `###google-ads` hides any element with `id="google-ads"`, even on a page about advertising services. | Do not use `ad`, `ads`, `advert`, `sponsor`, `google-ads`, `banner-ad` or similar words in ids, classes or anchor links. Use neutral names such as `google-search` or `paid-search`, and check affected pages with an ad blocker switched on. |
+
+### Webflow MCP
+
+| Problem | What to do |
+| --- | --- |
+| The WHTML builder silently drops classes that do not exist yet. | Create the styles first with the style tool, then build the elements. |
+| Component text properties cannot be bound to Span elements. | Bind them to a Text Block, Heading or Paragraph instead. |
+| Too many parallel calls return 429 rate-limit errors. | Keep to about six parallel calls, and pause before retrying. |
+| Read-backs can differ from what was sent, because Webflow normalises some values. | Read every changed style back and compare it with the intended value before reporting the work as done. |
+
+## 14. Final verification
 
 Before completing any Webflow task, verify that:
 
