@@ -1,4 +1,4 @@
-// Last updated: 2026-09-14 19:59:33
+// Last updated: 2026-09-14 20:00:01
 
 (function () {
   'use strict';
@@ -225,7 +225,12 @@
     if (!['/gp-services', '/occupational-health', '/occupational-health-online-forms'].includes(path)) return null;
     const links = Array.from(document.querySelectorAll('a[href]'))
       .map(function (link) {
-        return { name: cleanText(link.textContent), url: absoluteUrl(link.getAttribute('href')) };
+        const item = link.closest('.w-dyn-item');
+        const heading = item && item.querySelector('h2, h3, h4');
+        return {
+          name: cleanText((heading && heading.textContent) || link.textContent),
+          url: absoluteUrl(link.getAttribute('href')),
+        };
       })
       .filter(function (item) {
         if (!item.name || !item.url.startsWith(SITE_URL + '/') || item.url === url) return false;
