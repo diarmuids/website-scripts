@@ -1,4 +1,4 @@
-// Last updated: 2026-09-14 16:47:26
+// Last updated: 2026-09-14 17:11:44
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
@@ -225,7 +225,7 @@ function generateMindwaveServiceLocationSchema() {
     pageSections.push({ '@id': sectionId });
   });
 
-  const processSection = document.querySelector('.section_process');
+  const processSection = document.querySelector('.section_process, .section_what-we-do');
   const processHeading = cleanMindwaveText(
     processSection?.querySelector('.heading-style-h2, h2')
   );
@@ -575,7 +575,7 @@ function addMindwavePageSections(graph, context, sectionSelector, aboutId) {
 
 function addMindwaveProcess(graph, context, aboutId) {
   const processSection = document.querySelector('.process_content-item')?.closest('section') ||
-    document.querySelector('.section_process');
+    document.querySelector('.section_process, .section_what-we-do');
   const heading = cleanMindwaveText(
     processSection?.querySelector('.heading-style-h2, h2')
   );
