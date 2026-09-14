@@ -1,4 +1,4 @@
-// Last updated: 2026-09-14 13:40:50
+// Last updated: 2026-09-14 16:27:03
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
@@ -1283,12 +1283,22 @@ function initMindwavePricingNavigation() {
 
   if (!pricingNavSection || !pricingNav || !finalPricingSection) return;
 
-  const googleAdsSection = document.querySelector('.section_pricing-ads');
+  const googleAdsSection = document.querySelector(
+    '.section_pricing-google, .section_pricing-ads'
+  );
 
-  // Fallback for pages published before the section had its own id.
-  if (googleAdsSection && !googleAdsSection.id) {
-    googleAdsSection.id = 'google-ads';
+  // Ad blockers hide elements with ad-like ids such as "google-ads" (EasyList
+  // rule ###google-ads), so this section always uses "google-search".
+  if (
+    googleAdsSection &&
+    (!googleAdsSection.id || googleAdsSection.id === 'google-ads')
+  ) {
+    googleAdsSection.id = 'google-search';
   }
+
+  pricingNav.querySelectorAll('a[href="#google-ads"]').forEach(function (link) {
+    link.setAttribute('href', '#google-search');
+  });
 
   if (!document.getElementById('mindwave-pricing-navigation-styles')) {
     const style = document.createElement('style');
