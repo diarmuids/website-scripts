@@ -1,4 +1,4 @@
-// Last updated: 2026-09-14 09:24:42
+// Last updated: 2026-09-14 09:27:01
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
@@ -1358,12 +1358,18 @@ function initMindwavePricingNavigation() {
 
   let frameId = 0;
 
+  function getPricingHeaderHeight() {
+    if (!header) return 0;
+
+    return window.matchMedia('(min-width: 992px)').matches
+      ? 60
+      : Math.ceil(header.getBoundingClientRect().height);
+  }
+
   function updatePricingNavigation() {
     frameId = 0;
 
-    const headerHeight = header
-      ? Math.ceil(header.getBoundingClientRect().height)
-      : 0;
+    const headerHeight = getPricingHeaderHeight();
     const pricingNavHeight = Math.ceil(
       pricingNavSection.getBoundingClientRect().height
     );
@@ -1412,9 +1418,7 @@ function initMindwavePricingNavigation() {
     event.preventDefault();
     event.stopImmediatePropagation();
 
-    const headerHeight = header
-      ? Math.ceil(header.getBoundingClientRect().height)
-      : 0;
+    const headerHeight = getPricingHeaderHeight();
     const pricingNavHeight = Math.ceil(
       pricingNavSection.getBoundingClientRect().height
     );
