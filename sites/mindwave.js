@@ -1,4 +1,4 @@
-// Last updated: 2026-09-14 09:22:46
+// Last updated: 2026-09-14 09:23:59
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
@@ -1290,7 +1290,9 @@ function initMindwavePricingNavigation() {
     googleAdsSection.id = 'pricing-google-ads';
   }
 
-  if (googleAdsLink) googleAdsLink.hash = 'pricing-google-ads';
+  if (googleAdsLink) {
+    googleAdsLink.setAttribute('href', '#pricing-google-ads');
+  }
 
   if (!document.getElementById('mindwave-pricing-navigation-styles')) {
     const style = document.createElement('style');
@@ -1400,6 +1402,37 @@ function initMindwavePricingNavigation() {
     if (header) resizeObserver.observe(header);
     resizeObserver.observe(pricingNavSection);
   }
+
+  pricingNav.addEventListener('click', function (event) {
+    const link = event.target.closest('a[href*="#"]');
+    const target = link ? document.querySelector(link.hash) : null;
+
+    if (!target) return;
+
+    event.preventDefault();
+
+    const headerHeight = header
+      ? Math.ceil(header.getBoundingClientRect().height)
+      : 0;
+    const pricingNavHeight = Math.ceil(
+      pricingNavSection.getBoundingClientRect().height
+    );
+    const targetTop =
+      target.getBoundingClientRect().top +
+      window.scrollY -
+      headerHeight -
+      pricingNavHeight -
+      12;
+    const reduceMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
+
+    window.history.pushState(null, '', link.hash);
+    window.scrollTo({
+      top: Math.max(0, targetTop),
+      behavior: reduceMotion ? 'auto' : 'smooth'
+    });
+  });
 
   updatePricingNavigation();
 }
