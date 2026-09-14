@@ -1,4 +1,4 @@
-// Last updated: 2026-09-14 12:24:34
+// Last updated: 2026-09-14 12:45:32
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
@@ -1355,7 +1355,63 @@ function initMindwavePricingNavigation() {
     document.head.appendChild(style);
   }
 
+  const pricingNavItems = Array.from(
+    pricingNav.querySelectorAll('.pricing_nav-link[href^="#"]')
+  )
+    .map(function (link) {
+      return { link: link, section: document.querySelector(link.hash) };
+    })
+    .filter(function (item) {
+      return item.section;
+    });
+  let activePricingNavLink = null;
   let frameId = 0;
+
+  // Scrolls only the nav strip (never the page) so the current link sits in
+  // the middle, with the previous and next sections visible either side.
+  function centerPricingNavLink(link) {
+    const maxScroll = pricingNav.scrollWidth - pricingNav.clientWidth;
+
+    if (maxScroll <= 0) return;
+
+    const navRect = pricingNav.getBoundingClientRect();
+    const linkRect = link.getBoundingClientRect();
+    const offset =
+      linkRect.left + linkRect.width / 2 - (navRect.left + navRect.width / 2);
+    const reduceMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
+
+    pricingNav.scrollTo({
+      left: Math.min(maxScroll, Math.max(0, pricingNav.scrollLeft + offset)),
+      behavior: reduceMotion ? 'auto' : 'smooth'
+    });
+  }
+
+  function updateActivePricingNavLink(activationLine) {
+    let currentLink = null;
+
+    pricingNavItems.forEach(function (item) {
+      if (item.section.getBoundingClientRect().top <= activationLine) {
+        currentLink = item.link;
+      }
+    });
+
+    if (currentLink === activePricingNavLink) return;
+
+    if (activePricingNavLink) {
+      activePricingNavLink.classList.remove('is-active');
+      activePricingNavLink.removeAttribute('aria-current');
+    }
+
+    activePricingNavLink = currentLink;
+
+    if (!currentLink) return;
+
+    currentLink.classList.add('is-active');
+    currentLink.setAttribute('aria-current', 'location');
+    centerPricingNavLink(currentLink);
+  }
 
   function getPricingHeaderHeight() {
     if (!header) return 0;
