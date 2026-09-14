@@ -1,18 +1,20 @@
+param(
+  [int]$Port = $(if ($env:PORT) { [int]$env:PORT } else { 8787 })
+)
+
 $repo = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path))
 $server = Join-Path $repo "tools\dev-server\server.js"
-$port = if ($env:PORT) { $env:PORT } else { "8787" }
+$node = (Get-Command node -ErrorAction Stop).Source
 
-Push-Location $repo
-try {
-  $node = (Get-Command node -ErrorAction Stop).Source
-  $process = Start-Process -FilePath $node `
-    -ArgumentList @($server) `
-    -WorkingDirectory $repo `
-    -WindowStyle Hidden `
-    -PassThru
+# Launch through WMI rather than Start-Process so the server keeps running after
+# the terminal or agent session that started it closes.
+$result = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
+  CommandLine      = "`"$node`" `"$server`" $Port"
+  CurrentDirectory = $repo
+}
 
-  "Started Website Scripts dev server on port $port with PID $($process.Id)"
+if ($result.ReturnValue -ne 0) {
+  throw "Could not start the dev server (Win32_Process.Create returned $($result.ReturnValue))"
 }
-finally {
-  Pop-Location
-}
+
+"Started Website Scripts dev server on port $Port with PID $($result.ProcessId)"
