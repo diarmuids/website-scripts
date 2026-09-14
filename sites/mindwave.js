@@ -1,4 +1,4 @@
-// Last updated: 2026-09-14 12:56:48
+// Last updated: 2026-09-14 12:56:52
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
@@ -1725,6 +1725,35 @@ function initMindwavePricingCalculator() {
     });
 
     updatePricingCalculator();
+  });
+}
+
+// FAQ KEYBOARD ACCESS
+// The FAQ questions are divs driven by a Webflow interaction on click. This
+// makes each one focusable, announces it as a button with its open state, and
+// lets Enter / Space trigger the same click the interaction listens for.
+function initMindwaveFaqKeyboard() {
+  document.querySelectorAll('.faq_question').forEach(function (question) {
+    if (question.dataset.faqKeyboard) return;
+
+    question.dataset.faqKeyboard = 'true';
+    question.setAttribute('role', 'button');
+    question.setAttribute('tabindex', '0');
+    question.setAttribute('aria-expanded', 'false');
+
+    question.addEventListener('click', function () {
+      question.setAttribute(
+        'aria-expanded',
+        question.getAttribute('aria-expanded') === 'true' ? 'false' : 'true'
+      );
+    });
+
+    question.addEventListener('keydown', function (event) {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+
+      event.preventDefault();
+      question.click();
+    });
   });
 }
 
