@@ -1,4 +1,4 @@
-// Last updated: 2026-09-14 12:55:30
+// Last updated: 2026-09-14 12:55:35
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
@@ -1327,7 +1327,7 @@ function initMindwavePricingNavigation() {
         white-space: nowrap;
       }
 
-      #pricing-google-ads,
+      #google-ads,
       #klaviyo,
       #both-channels,
       #calculator,
@@ -1386,9 +1386,15 @@ function initMindwavePricingNavigation() {
 
   function updateActivePricingNavLink(activationLine) {
     let currentLink = null;
+    let currentTop = -Infinity;
 
+    // Use page position rather than nav order, so the highlight stays correct
+    // even if sections are reordered in Webflow.
     pricingNavItems.forEach(function (item) {
-      if (item.section.getBoundingClientRect().top <= activationLine) {
+      const sectionTop = item.section.getBoundingClientRect().top;
+
+      if (sectionTop <= activationLine && sectionTop > currentTop) {
+        currentTop = sectionTop;
         currentLink = item.link;
       }
     });
