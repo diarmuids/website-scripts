@@ -3,6 +3,13 @@
 This repository stores website JavaScript files that are served publicly from
 GitHub/jsDelivr and should be published quickly after local saves.
 
+## Webflow development standards
+
+- Before any Webflow build, redesign, or modification, read and follow
+  [`WEBFLOW_STANDARDS.md`](./WEBFLOW_STANDARDS.md).
+- Treat that document as the canonical shared Webflow reference for Codex and
+  Claude. Update the canonical document rather than duplicating its rules here.
+
 ## Auto-publish workflow
 
 - At the start of every work session in this repository, start both the local
