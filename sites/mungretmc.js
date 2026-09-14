@@ -1,4 +1,4 @@
-// Last updated: 2026-09-14 20:00:01
+// Last updated: 2026-09-14 20:01:05
 
 (function () {
   'use strict';
@@ -248,6 +248,7 @@
     return {
       '@type': 'ItemList',
       '@id': url + '#item-list',
+      name: pageName(),
       numberOfItems: links.length,
       itemListElement: links.map(function (item, index) {
         return { '@type': 'ListItem', position: index + 1, name: item.name, url: item.url };
