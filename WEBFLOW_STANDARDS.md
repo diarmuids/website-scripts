@@ -194,7 +194,17 @@ Use native Webflow controls for:
 - Typography
 - Breakpoint styles
 
-Avoid custom CSS when the same result can be created using native Webflow controls.
+Every CSS declaration that Webflow supports natively must be applied through
+Webflow's native Style-panel controls.
+
+Do not add a declaration to Custom Properties or custom CSS when Webflow has a
+native control for it. This includes, for example, padding, margins, sizing,
+positioning, borders, colours, typography, Flexbox, Grid, gaps and responsive
+breakpoint values.
+
+Use Custom Properties or custom CSS only when the required behaviour genuinely
+cannot be created with native Webflow controls. Keep the exception narrowly
+scoped and record why a native Webflow property was not possible.
 
 Any styling added programmatically must still appear correctly inside the Webflow Designer's Style panel.
 
@@ -255,6 +265,8 @@ Before completing any Webflow task, verify that:
 - Native table elements are only used when explicitly requested
 - Icons are SVGs inside Code Embeds
 - Existing Webflow variables are used
+- Every supported CSS declaration is set through native Webflow Style-panel controls
+- Custom Properties and custom CSS are used only for behaviour unavailable natively
 - Grid and Flex gaps use `grid-column-gap` and `grid-row-gap`
 - Gap controls appear natively in the Designer
 - Responsive styles exist at the required breakpoints

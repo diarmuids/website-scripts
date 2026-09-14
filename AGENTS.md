@@ -9,6 +9,9 @@ GitHub/jsDelivr and should be published quickly after local saves.
   [`WEBFLOW_STANDARDS.md`](./WEBFLOW_STANDARDS.md).
 - Treat that document as the canonical shared Webflow reference for Codex and
   Claude. Update the canonical document rather than duplicating its rules here.
+- Apply every CSS declaration that Webflow supports natively through Webflow's
+  native Style-panel controls. Do not place equivalent styling in Custom
+  Properties or custom CSS.
 
 ## Auto-publish workflow
 
