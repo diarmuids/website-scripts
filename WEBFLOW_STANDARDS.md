@@ -52,11 +52,16 @@ Do not give multiple unrelated sections a generic class such as:
 
 `section_pricing`
 
-Give every section a clear Navigator display name that matches its purpose, such as:
+Do not rename elements, sections, wrappers or components using Webflow's
+Navigator rename field.
 
-- `Section Pricing Google Ads`
-- `Section Pricing Klaviyo`
-- `Section Pricing Calculator`
+The Navigator must display permanent class names only. Do not add a custom
+display label such as `Klaviyo Illustration`, `Pricing Layout`, or `Audit
+Column`. If an element has been renamed, remove the custom Navigator name so
+that its class name is shown instead.
+
+Give every structural element a clear, permanent Client-First class so it can
+be identified in the Navigator without a custom name.
 
 ## 3. SVG icons
 
@@ -245,7 +250,7 @@ Before completing any Webflow task, verify that:
 
 - All classes use permanent Client-First names
 - No temporary `v1` or `v2` classes remain
-- Every section has a descriptive class and Navigator name
+- Every section has a descriptive permanent class and no custom Navigator name
 - Visual lists use div elements
 - Native table elements are only used when explicitly requested
 - Icons are SVGs inside Code Embeds
@@ -254,4 +259,5 @@ Before completing any Webflow task, verify that:
 - Gap controls appear natively in the Designer
 - Responsive styles exist at the required breakpoints
 - Existing JavaScript hooks, attributes and integrations remain intact
+- The Navigator displays class names rather than custom renamed labels
 - The finished structure appears correctly in the Webflow Navigator and Style panel
