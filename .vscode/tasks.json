@@ -4,9 +4,9 @@
     {
       "label": "Ensure shared Webflow dev gateway",
       "detail": "Starts the shared gateway for active projects and legacy sites paths.",
-      "type": "shell",
-      "command": "powershell",
-      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", ".webflow-shared/tools/ensure-dev-gateway.ps1"],
+      "type": "process",
+      "command": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}\\.webflow-shared\\tools\\ensure-dev-gateway.ps1"],
       "problemMatcher": [],
       "presentation": {
         "reveal": "silent",
