@@ -54,8 +54,8 @@ share with a client):
 - Use **Pageless** format where the tool allows it. The Drive connector
   can't set Pageless, so if it can't be set, tell the user to switch it on via
   File → Page setup → Pageless.
-- When uploading HTML, set Inter and 1.5 line spacing as inline styles on every
-  heading, paragraph and list item. Put an empty line between list points and
+- When uploading HTML, set Inter and the line spacing above as inline styles
+  on every heading, paragraph and list item. Put an empty line between list points and
   sections, and don't use ☐ tick boxes.
 
 ## Auto-publish workflow
