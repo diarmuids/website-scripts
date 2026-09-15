@@ -1,3 +1,4 @@
 auto-push.log
 tools/auto-push/auto-push.log
 tools/dev-server/*.log
+.webflow-shared/
