@@ -1,10 +1,13 @@
-# CLAUDE.md
+# Claude instructions
 
-Before any Webflow build, redesign, or modification, read and follow
-[`WEBFLOW_STANDARDS.md`](./WEBFLOW_STANDARDS.md).
+This is the production compatibility repository. Client source work lives in
+`C:\Users\diarm\Desktop\Webflow`.
 
-Treat that document as the canonical shared Webflow reference. Repository
-publishing and editing requirements remain in [`AGENTS.md`](./AGENTS.md).
+Before Webflow work, read and follow:
 
-Whenever a full site audit is requested, follow
-[`WEBFLOW_AUDIT.md`](./WEBFLOW_AUDIT.md) in full and report in its format.
+- `.webflow-shared/CLAUDE.shared.md`
+- `.webflow-shared/standards/WEBFLOW_STANDARDS.md`
+- The mapped client project's own `AGENTS.md`
+
+Use the shared project publisher rather than editing distribution assets
+directly.
