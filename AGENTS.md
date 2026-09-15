@@ -21,18 +21,25 @@ GitHub/jsDelivr and should be published quickly after local saves.
 - Style only the states the Designer's States menu offers (see
   `WEBFLOW_STANDARDS.md` section 13). Per-item differences go on `is-` combo
   classes such as `is-even`, `is-odd`, `is-first`, `is-last`.
-- Non-native CSS is used only when no native control or state can achieve the
-  result, or when the user explicitly asks for it. Examples: `::before` or
-  `::after`, `:focus-within`, `:has()`, `:not()`, `nth-child` outside a
-  Collection List, `@supports`, `clamp()`/`min()`/`max()`, `mask`, `line-clamp`,
-  `scrollbar-*`, `text-wrap`, container queries, custom keyframes.
-  When it is used:
-  - Put it only in the site's `local_styles` Code Embed, never in page or
-    site head code, Custom Properties or anywhere else.
-  - Comment every rule: what it does, which element or class it targets, and
-    why native Webflow can't do it.
-  - Always tell the user in the reply, flagged as **Please note — non-native
-    CSS added**, listing each rule and where it went.
+- Avoid non-native CSS wherever possible. What is allowed:
+  - **Always allowed:** `calc()`, `clamp()`, `min()`, `max()` and any other
+    function Webflow accepts typed into a native value field.
+  - **Allowed on a class:** properties with no native control, added through
+    the Style panel's Custom Properties section. Never use it for a property
+    that has a native control.
+  - **Ask the user first:** `::before` / `::after`.
+  - **Allowed as a last resort:** everything else, such as `:has()`, `:not()`,
+    `:focus-within`, `nth-child` outside a Collection List, `@supports`,
+    `scroll-*` properties that Custom Properties can't take, keyframes and
+    container queries. It goes only in the site's `local_styles` Code Embed,
+    never in head code or anywhere else. Comment every rule: what it does,
+    which class or element it targets, and why native Webflow can't do it.
+- Whenever anything non-native is added, whether in Custom Properties or
+  `local_styles`, the reply must contain this heading so the user can't miss it:
+
+  `## ⚠️ PLEASE NOTE: NON-NATIVE STYLES ADDED`
+
+  Under it, list each rule, the class or element, and where it was added.
 - Whenever a full site audit is requested, follow
   [`WEBFLOW_AUDIT.md`](./WEBFLOW_AUDIT.md) in full and report in its format.
 
