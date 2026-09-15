@@ -295,6 +295,31 @@ expect.
 Use custom attributes only for things Webflow has no native setting for, such as
 `aria-label`, `aria-hidden`, `data-*` hooks used by scripts, and `role`.
 
+### Form construction and delivery
+
+Configure every form and form control through Webflow's native settings. Give
+each form a permanent, descriptive name and give every submitted control a
+unique, human-readable field name. External processors receive the rendered
+HTML `name` value, not the visible label, placeholder, element ID or the value
+shown only in staged Designer settings.
+
+For every form that is created or modified:
+
+- Match each visible label's `for` value to the control's native element ID.
+- Set the correct native field type, required state, placeholder and field name.
+- Check the form action, method, redirect, success state and error state.
+- Never duplicate native form settings with custom `name`, `type`, `required`,
+  `action`, `method` or `id` attributes.
+- Never log field values, `FormData`, submission payloads or other personal data
+  to the browser console. Diagnostic logging may identify a form or status only
+  when it contains no user-provided data and is removed before production.
+- After publishing, inspect the live rendered HTML and confirm the form and every
+  submitted control have the intended `name` and `data-name` values. A staged
+  settings read-back is not proof of the published payload.
+- Verify the live submission path with a controlled test when authorised, and
+  confirm the external processor receives the intended field keys, success UI
+  appears only after a successful response, and failure UI appears on error.
+
 ## 9. Borders
 
 Use the border width, colour and radius required by the approved design. Reuse existing Webflow variables where suitable, but do not enforce a global border width across the site.
