@@ -4,6 +4,12 @@ This folder remains in place to preserve the public GitHub and jsDelivr URLs
 used by existing websites. It is the production distribution repository, not
 the normal place to work on a client project.
 
+Its location is:
+
+```text
+C:\Users\diarm\Desktop\Webflow\distribution\website-scripts
+```
+
 Use the Webflow workspace instead:
 
 ```text
