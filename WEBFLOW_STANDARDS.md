@@ -454,6 +454,8 @@ rather than rediscovering the problem.
 | Problem | What to do |
 | --- | --- |
 | The WHTML builder silently drops classes that do not exist yet. | Create the styles first with the style tool, then build the elements. |
+| The element builder's `Section` type creates a Div Block with its tag set to `section`, not a native Section element. The WHTML builder's `<section>` creates a native Section. | Create sections with the WHTML builder (`<section class="section_...">`), then add children. Read the element back and confirm its type is `Section`, not `Block`. |
+| The element builder ignores `set_text` on Text Blocks, leaving Webflow's default "This is some text inside of a div block." | Create Text Blocks with the WHTML builder (`<div class="...">Text</div>`), or read back and replace any default text before finishing. |
 | Component text properties cannot be bound to Span elements. | Bind them to a Text Block, Heading or Paragraph instead. |
 | Too many parallel calls return 429 rate-limit errors. | Keep to about six parallel calls, and pause before retrying. |
 | Read-backs can differ from what was sent, because Webflow normalises some values. | Read every changed style back and compare it with the intended value before reporting the work as done. |
@@ -466,6 +468,7 @@ Before completing any Webflow task, verify that:
 - No temporary `v1` or `v2` classes remain
 - Every section has a descriptive permanent class and no custom Navigator name
 - Every thematic content section uses `<section>` and footers use `<footer>`
+- Every section is a native Section element (type `Section`), not a Div Block with a `section` tag
 - All other elements use the correct semantic tags wherever applicable
 - Visual lists use div `-list`/`-item` structures; `<ul>`/`<ol>`/`<li>` appear only inside Rich Text
 - Tabular data uses native table elements with correctly identified headers
