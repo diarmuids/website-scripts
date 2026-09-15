@@ -49,7 +49,8 @@ When creating a Google Doc from this repository (for example a document to
 share with a client):
 
 - Use the **Inter** font throughout.
-- Use **1.5 line spacing**.
+- Line spacing: **1.15 for headings**; **1.5 for paragraphs, lists and all
+  other body text**.
 - Use **Pageless** format where the tool allows it. The Drive connector
   can't set Pageless, so if it can't be set, tell the user to switch it on via
   File → Page setup → Pageless.
