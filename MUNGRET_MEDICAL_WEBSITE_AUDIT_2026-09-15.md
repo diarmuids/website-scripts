@@ -20,7 +20,7 @@ This read-only audit covered all 80 Webflow pages, all 83 URLs in the live XML s
 ### Top five fixes
 
 1. Restore visible keyboard focus and repair form labels, duplicate IDs, and small tap targets.
-2. Remove the global homepage `og:url` and provide a page-specific social URL.
+2. DONE Remove the global homepage `og:url` and provide a page-specific social URL.
 3. Fix the two public 404 links and review the protected questionnaire links that return 401.
 4. Shorten and differentiate page descriptions and duplicate titles, especially CMS service pages.
 
