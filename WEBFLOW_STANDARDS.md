@@ -474,6 +474,7 @@ rather than rediscovering the problem.
 | --- | --- |
 | The WHTML builder silently drops classes that do not exist yet. | Create the styles first with the style tool, then build the elements. |
 | The element builder's `Section` type creates a Div Block with its tag set to `section`, not a native Section element. The WHTML builder's `<section>` creates a native Section. | Create sections with the WHTML builder (`<section class="section_...">`), then add children. Read the element back and confirm its type is `Section`, not `Block`. |
+| The WHTML builder copies HTML attributes such as `href`, `target` and `rel` from `<a href="...">` into custom attributes instead of the native link settings. | Build links without those attributes, then set the link with the native link setting (`set_link`, or the `link` setting with `open_in_new_tab` and `rel`). Read the element back and remove any custom attribute that duplicates a native setting. |
 | The element builder ignores `set_text` on Text Blocks, leaving Webflow's default "This is some text inside of a div block." | Create Text Blocks with the WHTML builder (`<div class="...">Text</div>`), or read back and replace any default text before finishing. |
 | Component text properties cannot be bound to Span elements. | Bind them to a Text Block, Heading or Paragraph instead. |
 | Too many parallel calls return 429 rate-limit errors. | Keep to about six parallel calls, and pause before retrying. |
@@ -488,6 +489,7 @@ Before completing any Webflow task, verify that:
 - Every section has a descriptive permanent class and no custom Navigator name
 - Every thematic content section uses `<section>` and footers use `<footer>`
 - Every section is a native Section element (type `Section`), not a Div Block with a `section` tag
+- Links, IDs, image sources, alt text and form settings use native Webflow settings; no custom attribute duplicates a native setting (for example `href`, `target`, `rel` or `id`)
 - All other elements use the correct semantic tags wherever applicable
 - Visual lists use div `-list`/`-item` structures; `<ul>`/`<ol>`/`<li>` appear only inside Rich Text
 - Tabular data uses native table elements with correctly identified headers
