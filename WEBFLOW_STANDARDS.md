@@ -79,6 +79,9 @@ purpose. Set the actual HTML tag through Webflow's native element or tag control
 a class name or Navigator label does not replace the correct tag.
 
 - Use `<section>` for every distinct thematic content section, normally with a heading.
+  Always build it with Webflow's native **Section** element, so it shows as a
+  Section in the Navigator. Do not use a Div Block with its tag changed to
+  `section`; it outputs the same HTML but is the wrong element type.
 - Use `<footer>` for the page footer or a footer belonging to an article or section.
 - Use `<header>` for introductory content and `<nav>` for major navigation groups.
 - Use one `<main>` for the page's primary content.
