@@ -79,6 +79,9 @@ purpose. Set the actual HTML tag through Webflow's native element or tag control
 a class name or Navigator label does not replace the correct tag.
 
 - Use `<section>` for every distinct thematic content section, normally with a heading.
+  Always build it with Webflow's native **Section** element, so it shows as a
+  Section in the Navigator. Do not use a Div Block with its tag changed to
+  `section`; it outputs the same HTML but is the wrong element type.
 - Use `<footer>` for the page footer or a footer belonging to an article or section.
 - Use `<header>` for introductory content and `<nav>` for major navigation groups.
 - Use one `<main>` for the page's primary content.
@@ -273,6 +276,50 @@ scoped and record why a native Webflow property was not possible.
 
 Any styling added programmatically must still appear correctly inside the Webflow Designer's Style panel.
 
+### Native settings, not custom attributes
+
+Set everything that has a native Webflow setting through that setting, never as a
+custom attribute. This includes:
+
+- Links: URL or page, open in new tab, and `rel`, using the element's Link settings.
+- Element ID, using the ID field.
+- Image source and alt text, using the image settings.
+- Form field name, type, placeholder and required state, using the form element settings.
+- Heading level, tag and visibility, using the element settings.
+
+Never add `href`, `target`, `rel`, `id`, `class`, `src`, `alt`, `name`, `type` or
+`required` as custom attributes. A custom attribute can duplicate or conflict with
+the native setting, and it isn't editable in the place a Designer user would
+expect.
+
+Use custom attributes only for things Webflow has no native setting for, such as
+`aria-label`, `aria-hidden`, `data-*` hooks used by scripts, and `role`.
+
+### Form construction and delivery
+
+Configure every form and form control through Webflow's native settings. Give
+each form a permanent, descriptive name and give every submitted control a
+unique, human-readable field name. External processors receive the rendered
+HTML `name` value, not the visible label, placeholder, element ID or the value
+shown only in staged Designer settings.
+
+For every form that is created or modified:
+
+- Match each visible label's `for` value to the control's native element ID.
+- Set the correct native field type, required state, placeholder and field name.
+- Check the form action, method, redirect, success state and error state.
+- Never duplicate native form settings with custom `name`, `type`, `required`,
+  `action`, `method` or `id` attributes.
+- Never log field values, `FormData`, submission payloads or other personal data
+  to the browser console. Diagnostic logging may identify a form or status only
+  when it contains no user-provided data and is removed before production.
+- After publishing, inspect the live rendered HTML and confirm the form and every
+  submitted control have the intended `name` and `data-name` values. A staged
+  settings read-back is not proof of the published payload.
+- Verify the live submission path with a controlled test when authorised, and
+  confirm the external processor receives the intended field keys, success UI
+  appears only after a successful response, and failure UI appears on error.
+
 ## 9. Borders
 
 Use the border width, colour and radius required by the approved design. Reuse existing Webflow variables where suitable, but do not enforce a global border width across the site.
@@ -451,6 +498,10 @@ rather than rediscovering the problem.
 | Problem | What to do |
 | --- | --- |
 | The WHTML builder silently drops classes that do not exist yet. | Create the styles first with the style tool, then build the elements. |
+| The element builder's `Section` type creates a Div Block with its tag set to `section`, not a native Section element. The WHTML builder's `<section>` creates a native Section. | Create sections with the WHTML builder (`<section class="section_...">`), then add children. Read the element back and confirm its type is `Section`, not `Block`. |
+| The WHTML builder copies HTML attributes such as `href`, `target` and `rel` from `<a href="...">` into custom attributes instead of the native link settings. | Build links without those attributes, then set the link with the native link setting (`set_link`, or the `link` setting with `open_in_new_tab` and `rel`). Read the element back and remove any custom attribute that duplicates a native setting. |
+| Setting visibility (hiding an element) can fail repeatedly with "[Conflict] The operation could not be applied to the component map", particularly on links and on newly created sections. | Don't keep retrying. Hide a child element that holds the content instead, or ask the user to hide the element in the Designer, and report which element still needs hiding. |
+| The element builder ignores `set_text` on Text Blocks, leaving Webflow's default "This is some text inside of a div block." | Create Text Blocks with the WHTML builder (`<div class="...">Text</div>`), or read back and replace any default text before finishing. |
 | Component text properties cannot be bound to Span elements. | Bind them to a Text Block, Heading or Paragraph instead. |
 | Too many parallel calls return 429 rate-limit errors. | Keep to about six parallel calls, and pause before retrying. |
 | Read-backs can differ from what was sent, because Webflow normalises some values. | Read every changed style back and compare it with the intended value before reporting the work as done. |
@@ -463,6 +514,8 @@ Before completing any Webflow task, verify that:
 - No temporary `v1` or `v2` classes remain
 - Every section has a descriptive permanent class and no custom Navigator name
 - Every thematic content section uses `<section>` and footers use `<footer>`
+- Every section is a native Section element (type `Section`), not a Div Block with a `section` tag
+- Links, IDs, image sources, alt text and form settings use native Webflow settings; no custom attribute duplicates a native setting (for example `href`, `target`, `rel` or `id`)
 - All other elements use the correct semantic tags wherever applicable
 - Visual lists use div `-list`/`-item` structures; `<ul>`/`<ol>`/`<li>` appear only inside Rich Text
 - Tabular data uses native table elements with correctly identified headers
