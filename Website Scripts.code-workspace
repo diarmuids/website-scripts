@@ -1,8 +1,14 @@
 {
 	"folders": [
 		{
-			"path": "."
+			"name": "Webflow Workspace",
+			"path": "../Webflow"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"git.autoRepositoryDetection": true,
+		"files.exclude": {
+			"**/.webflow-shared": true
+		}
+	}
 }
