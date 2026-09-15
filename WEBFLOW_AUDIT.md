@@ -235,6 +235,8 @@ Check every page and component against
 - Client-First class names, `is-` combo classes only, and no temporary names
   (`v1`, `v2`, `new`, `copy`).
 - Every structural element classed; no custom Navigator names.
+- Every section is a native Section element, not a Div Block with its tag set
+  to `section`.
 - Gaps use `grid-column-gap` and `grid-row-gap`; variables and `rem` units are
   used.
 - SVG icons are in Code Embeds using `currentColor` with the required settings.
