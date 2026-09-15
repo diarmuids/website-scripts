@@ -313,9 +313,10 @@ For every form that is created or modified:
 - Never log field values, `FormData`, submission payloads or other personal data
   to the browser console. Diagnostic logging may identify a form or status only
   when it contains no user-provided data and is removed before production.
-- After publishing, inspect the live rendered HTML and confirm the form and every
-  submitted control have the intended `name` and `data-name` values. A staged
-  settings read-back is not proof of the published payload.
+- After publishing, inspect both the generated HTML and the live browser DOM,
+  then confirm the form and every submitted control have the intended `name`
+  and `data-name` values. A staged settings read-back is not proof of the
+  published payload.
 - Verify the live submission path with a controlled test when authorised, and
   confirm the external processor receives the intended field keys, success UI
   appears only after a successful response, and failure UI appears on error.
@@ -505,6 +506,7 @@ rather than rediscovering the problem.
 | Component text properties cannot be bound to Span elements. | Bind them to a Text Block, Heading or Paragraph instead. |
 | Too many parallel calls return 429 rate-limit errors. | Keep to about six parallel calls, and pause before retrying. |
 | Read-backs can differ from what was sent, because Webflow normalises some values. | Read every changed style back and compare it with the intended value before reporting the work as done. |
+| Form field names written through the MCP can read back correctly while the published HTML retains generated names such as `field` and `field-2`. | Publish and inspect the live output. First re-save the native field names in the Designer. If the export still cannot be corrected, add a narrowly scoped runtime name normaliser before the submission handler, verify the resulting `FormData` keys, and record the workaround. |
 
 ## 14. Final verification
 
