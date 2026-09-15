@@ -18,6 +18,21 @@ GitHub/jsDelivr and should be published quickly after local saves.
 - Apply every CSS declaration that Webflow supports natively through Webflow's
   native Style-panel controls. Do not place equivalent styling in Custom
   Properties or custom CSS.
+- Style only the states the Designer's States menu offers (see
+  `WEBFLOW_STANDARDS.md` section 13). Per-item differences go on `is-` combo
+  classes such as `is-even`, `is-odd`, `is-first`, `is-last`.
+- Non-native CSS is used only when no native control or state can achieve the
+  result, or when the user explicitly asks for it. Examples: `::before` or
+  `::after`, `:focus-within`, `:has()`, `:not()`, `nth-child` outside a
+  Collection List, `@supports`, `clamp()`/`min()`/`max()`, `mask`, `line-clamp`,
+  `scrollbar-*`, `text-wrap`, container queries, custom keyframes.
+  When it is used:
+  - Put it only in the site's `local_styles` Code Embed, never in page or
+    site head code, Custom Properties or anywhere else.
+  - Comment every rule: what it does, which element or class it targets, and
+    why native Webflow can't do it.
+  - Always tell the user in the reply, flagged as **Please note — non-native
+    CSS added**, listing each rule and where it went.
 - Whenever a full site audit is requested, follow
   [`WEBFLOW_AUDIT.md`](./WEBFLOW_AUDIT.md) in full and report in its format.
 
