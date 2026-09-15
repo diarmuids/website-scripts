@@ -276,6 +276,25 @@ scoped and record why a native Webflow property was not possible.
 
 Any styling added programmatically must still appear correctly inside the Webflow Designer's Style panel.
 
+### Native settings, not custom attributes
+
+Set everything that has a native Webflow setting through that setting, never as a
+custom attribute. This includes:
+
+- Links: URL or page, open in new tab, and `rel`, using the element's Link settings.
+- Element ID, using the ID field.
+- Image source and alt text, using the image settings.
+- Form field name, type, placeholder and required state, using the form element settings.
+- Heading level, tag and visibility, using the element settings.
+
+Never add `href`, `target`, `rel`, `id`, `class`, `src`, `alt`, `name`, `type` or
+`required` as custom attributes. A custom attribute can duplicate or conflict with
+the native setting, and it isn't editable in the place a Designer user would
+expect.
+
+Use custom attributes only for things Webflow has no native setting for, such as
+`aria-label`, `aria-hidden`, `data-*` hooks used by scripts, and `role`.
+
 ## 9. Borders
 
 Use the border width, colour and radius required by the approved design. Reuse existing Webflow variables where suitable, but do not enforce a global border width across the site.
