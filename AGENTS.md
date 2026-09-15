@@ -43,6 +43,20 @@ GitHub/jsDelivr and should be published quickly after local saves.
 - Whenever a full site audit is requested, follow
   [`WEBFLOW_AUDIT.md`](./WEBFLOW_AUDIT.md) in full and report in its format.
 
+## Google Docs
+
+When creating a Google Doc from this repository (for example a document to
+share with a client):
+
+- Use the **Inter** font throughout.
+- Use **1.5 line spacing**.
+- Use **Pageless** format where the tool allows it. The Drive connector
+  can't set Pageless, so if it can't be set, tell the user to switch it on via
+  File → Page setup → Pageless.
+- When uploading HTML, set Inter and 1.5 line spacing as inline styles on every
+  heading, paragraph and list item. Put an empty line between list points and
+  sections, and don't use ☐ tick boxes.
+
 ## Auto-publish workflow
 
 - At the start of every work session in this repository, start both the local
