@@ -162,11 +162,25 @@ internal and external link found.
 
 - Each form submits successfully (test submission), shows its success and
   failure states, and redirects correctly if configured.
+- Every submitted control has a permanent, descriptive and unique field name.
+  Multiword field names contain no spaces and use hyphens between words, for
+  example `First-Name` and `GDPR-Consent`.
+- Every form-control ID is unique lowercase kebab-case with no spaces or
+  uppercase letters, and every visible label's `for` value exactly matches its
+  control ID.
 - Required fields, input types (email, tel) and validation are correct.
 - Consent checkbox and privacy-policy link are present where personal data is
   collected.
-- Spam protection is enabled; the destination (Webflow, Basin and so on)
-  receives submissions.
+- Form names, field names, IDs, types, required states, actions and methods use
+  Webflow's native settings rather than duplicate custom attributes.
+- Spam protection is enabled and the intended destination (Webflow, Basin and
+  so on) receives submissions through one delivery path only. A controlled test
+  creates exactly one network request and one destination record.
+- Inspect the staged Designer settings, generated HTML and live browser DOM.
+  Confirm the final submitted keys match in all relevant layers; a Designer
+  read-back alone is not proof of the published payload.
+- Browser console output never contains field values, `FormData`, submission
+  payloads or other personal information.
 - Analytics goals fire on submission.
 
 ### 3.12 Performance
@@ -232,6 +246,8 @@ internal and external link found.
 Check every page and component against
 [`WEBFLOW_STANDARDS.md`](./WEBFLOW_STANDARDS.md), including:
 
+- The site's `AGENTS.md` requires its local `WEBFLOW_STANDARDS.md`, and that
+  local standards copy is current while preserving site-specific instructions.
 - Client-First class names, `is-` combo classes only, and no temporary names
   (`v1`, `v2`, `new`, `copy`).
 - Every structural element classed; no custom Navigator names.
