@@ -299,14 +299,20 @@ Use custom attributes only for things Webflow has no native setting for, such as
 
 Configure every form and form control through Webflow's native settings. Give
 each form a permanent, descriptive name and give every submitted control a
-unique, human-readable field name. External processors receive the rendered
-HTML `name` value, not the visible label, placeholder, element ID or the value
-shown only in staged Designer settings.
+unique, human-readable field name. Field names must contain no spaces: use a
+hyphen between words and capitalise words when helpful, for example
+`First-Name`, `Phone-Number` and `GDPR-Consent`. Use lowercase kebab-case for
+every control ID, for example `contact-first-name`; IDs must contain no spaces
+or uppercase letters. External processors receive the rendered HTML `name`
+value, not the visible label, placeholder, element ID or the value shown only
+in staged Designer settings.
 
 For every form that is created or modified:
 
 - Match each visible label's `for` value to the control's native element ID.
 - Set the correct native field type, required state, placeholder and field name.
+- Confirm every multiword field name uses hyphens instead of spaces and every
+  control ID is unique lowercase kebab-case.
 - Check the form action, method, redirect, success state and error state.
 - Give each form one intentional delivery path. A Webflow Custom action must not
   also retain Webflow storage, email or App destinations. If custom JavaScript
