@@ -237,6 +237,11 @@ Check every page and component against
 - Every structural element classed; no custom Navigator names.
 - Every section is a native Section element, not a Div Block with its tag set
   to `section`.
+- No custom attributes duplicate native settings: links set their URL, new-tab
+  behaviour and `rel` through the native link settings, and no element carries a
+  custom `href`, `target`, `rel`, `id`, `class`, `src`, `alt`, `name` or `type`
+  attribute. Custom attributes are limited to things with no native setting,
+  such as `aria-*`, `role` and `data-*`.
 - Gaps use `grid-column-gap` and `grid-row-gap`; variables and `rem` units are
   used.
 - SVG icons are in Code Embeds using `currentColor` with the required settings.
