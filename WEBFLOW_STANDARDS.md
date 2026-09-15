@@ -308,6 +308,10 @@ For every form that is created or modified:
 - Match each visible label's `for` value to the control's native element ID.
 - Set the correct native field type, required state, placeholder and field name.
 - Check the form action, method, redirect, success state and error state.
+- Give each form one intentional delivery path. A Webflow Custom action must not
+  also retain Webflow storage, email or App destinations. If custom JavaScript
+  submits that form with AJAX, it must exclusively own the submit event so the
+  native or delegated Webflow handler cannot send a second request.
 - Never duplicate native form settings with custom `name`, `type`, `required`,
   `action`, `method` or `id` attributes.
 - Never log field values, `FormData`, submission payloads or other personal data
@@ -318,8 +322,9 @@ For every form that is created or modified:
   and `data-name` values. A staged settings read-back is not proof of the
   published payload.
 - Verify the live submission path with a controlled test when authorised, and
-  confirm the external processor receives the intended field keys, success UI
-  appears only after a successful response, and failure UI appears on error.
+  confirm exactly one network request and one external record are created, the
+  processor receives the intended field keys, success UI appears only after a
+  successful response, and failure UI appears on error.
 
 ## 9. Borders
 
