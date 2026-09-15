@@ -215,6 +215,9 @@ This read-only audit covered all 80 Webflow pages, all 83 URLs in the live XML s
 **Fix:** Remove all value logging from production and review third-party data handling against the privacy notices and processor agreements.  
 **Location:** Webflow site custom code; privacy review.
 
+**Status, 15 September 2026:** Resolved. The production submission handler no
+longer logs field values, `FormData` or submission payloads.
+
 ### 3.12 Performance
 
 #### PERF-01 - Medium - Large repeated HTML and script payload
@@ -296,6 +299,11 @@ No new styling was introduced during this audit.
 - No horizontal overflow was detected on the three representative mobile templates at 390px.
 - The three uploaded custom icon fonts use `font-display: swap`.
 - Form success/failure states exist in the shared Webflow markup.
+- Post-audit remediation verified the Careers form in the staged Designer and
+  live browser DOM: submitted keys contain no spaces (`First-Name`, `Surname`,
+  `Email`, `Phone`, `Role`, `Short-Note`, `GDPR-Consent`), all control IDs are
+  unique lowercase kebab-case, and every visible label target resolves to its
+  intended control. No test submission was sent.
 
 ## 4. Fix plan
 
