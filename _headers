@@ -1,0 +1,8 @@
+# Assets change on every publish, so browsers must revalidate rather than
+# hold a cached copy. Without this the zone's Browser Cache TTL applies and
+# returning visitors keep a stale file for hours after a publish.
+/sites/*.js
+  Cache-Control: no-cache, max-age=0, must-revalidate
+
+/sites/*.css
+  Cache-Control: no-cache, max-age=0, must-revalidate
