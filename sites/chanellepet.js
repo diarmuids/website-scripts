@@ -1,4 +1,4 @@
-// Last updated: 2026-09-25 14:43:27
+// Last updated: 2026-09-25 14:58:11
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -153,22 +153,29 @@
   // BRAND LOGO MARQUEE
   // -------------------------------------------------------
 
-  // Brand logo lists scroll continuously (full width, faded edges via CSS mask).
-  // The logos are duplicated once and the row slides by exactly one set.
+  // Brand logo lists become two rows scrolling in opposite directions inside the
+  // container (edges faded via CSS mask). Each row's logos are duplicated once and
+  // the row slides by exactly one set.
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  document.querySelectorAll('.brand_list').forEach((list) => {
-    if (reduceMotion || list.dataset.marquee || list.children.length < 2) return;
-    list.dataset.marquee = 'on';
-    [...list.children].forEach((item) => {
+  const cloneInto = (list, items) =>
+    items.forEach((item) => {
       const copy = item.cloneNode(true);
       copy.setAttribute('aria-hidden', 'true');
       copy.querySelectorAll('a').forEach((a) => a.setAttribute('tabindex', '-1'));
       list.appendChild(copy);
     });
+  const runMarquee = (list, reverse) => {
     const start = () => {
+      // Short rows are repeated until one set fills the container, then the whole
+      // set is duplicated once so the loop is seamless.
+      const base = [...list.children];
+      const width = list.parentElement.clientWidth;
+      for (let i = 0; i < 6 && list.scrollWidth < width; i++) cloneInto(list, base);
+      cloneInto(list, [...list.children]);
       const gap = parseFloat(getComputedStyle(list).columnGap) || 0;
       const distance = (list.scrollWidth + gap) / 2;
-      const animation = list.animate([{ transform: 'translateX(0)' }, { transform: `translateX(-${distance}px)` }], {
+      const frames = [{ transform: 'translateX(0)' }, { transform: `translateX(-${distance}px)` }];
+      const animation = list.animate(reverse ? frames.reverse() : frames, {
         duration: (distance / 40) * 1000, // 40px per second
         iterations: Infinity,
       });
@@ -177,6 +184,19 @@
     };
     if (document.readyState === 'complete') start();
     else window.addEventListener('load', start);
+  };
+  document.querySelectorAll('.brand_list').forEach((list) => {
+    if (reduceMotion || list.dataset.marquee || list.children.length < 2) return;
+    list.dataset.marquee = 'on';
+    const items = [...list.children];
+    const second = document.createElement('div');
+    second.className = 'brand_list';
+    second.dataset.marquee = 'on';
+    second.setAttribute('role', 'list');
+    items.slice(Math.ceil(items.length / 2)).forEach((item) => second.appendChild(item));
+    list.after(second);
+    runMarquee(list, false);
+    runMarquee(second, true);
   });
 
   // -------------------------------------------------------
