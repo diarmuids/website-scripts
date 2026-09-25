@@ -1,4 +1,4 @@
-// Last updated: 2026-09-25 14:58:11
+// Last updated: 2026-09-25 14:59:42
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -198,6 +198,53 @@
     runMarquee(list, false);
     runMarquee(second, true);
   });
+
+  // -------------------------------------------------------
+  // SUPPLIERS: A–Z BRAND SEARCH
+  // -------------------------------------------------------
+
+  // "1 products" -> "1 product" on brand counts.
+  document.querySelectorAll('.supplier-card_count, .supplier-tile_count').forEach((count) => {
+    const [n, word] = count.children;
+    if (n && word && n.textContent.trim() === '1') word.textContent = 'product';
+  });
+
+  const supplierList = document.querySelector('.supplier_list');
+  const supplierHeading = supplierList?.closest('.container-large')?.querySelector('.heading_row');
+  if (supplierList && supplierHeading) {
+    const box = document.createElement('div');
+    box.className = 'filters_search';
+    // Sits on the light-grey section, so give it a white fill and outline.
+    Object.assign(box.style, {
+      maxWidth: '24rem',
+      backgroundColor: 'var(--colors--white)',
+      border: '1px solid var(--colors--dark-gray-15)',
+    });
+    box.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>';
+    const input = document.createElement('input');
+    input.type = 'search';
+    input.className = 'filters_search-input';
+    input.placeholder = 'Search brands';
+    input.setAttribute('aria-label', 'Search brands');
+    box.appendChild(input);
+    supplierHeading.appendChild(box);
+    const empty = document.createElement('p');
+    empty.className = 'filters_dropdown-empty';
+    empty.textContent = 'No brands match your search.';
+    empty.style.display = 'none';
+    supplierList.after(empty);
+    input.addEventListener('input', () => {
+      const term = input.value.trim().toLowerCase();
+      let shown = 0;
+      supplierList.querySelectorAll('.supplier_item').forEach((item) => {
+        const match = !term || item.querySelector('.supplier-card_name')?.textContent.toLowerCase().includes(term);
+        item.style.display = match ? '' : 'none';
+        if (match) shown++;
+      });
+      empty.style.display = shown ? 'none' : '';
+    });
+  }
 
   // -------------------------------------------------------
   // FORMS
