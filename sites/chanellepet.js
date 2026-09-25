@@ -1,4 +1,4 @@
-// Last updated: 2026-09-25 15:09:35
+// Last updated: 2026-09-25 15:23:42
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -487,6 +487,17 @@
   }
 
   document.querySelectorAll('.filters_dropdown').forEach(addDropdownSearch);
+  // Short lists (no search box): the Clear button floats at the top right of the
+  // list instead of adding a row, so nothing jumps when it appears.
+  document.querySelectorAll('.filters_dropdown-head').forEach((head) => {
+    if (head.querySelector('.filters_dropdown-search')) return;
+    head.style.cssText = 'position:absolute;top:0.5rem;right:0.5rem;margin:0;background:none;box-shadow:none;z-index:2;';
+    // In the mobile drawer the list is static; anchor the button to the list itself.
+    const list = head.parentElement;
+    if (list && getComputedStyle(list).position === 'static') list.style.position = 'relative';
+    const clear = head.querySelector('.filters_dropdown-clear');
+    if (clear) clear.style.height = '2rem';
+  });
 
   // Lenis smooth scroll swallows wheel events; let the dropdown lists and the
   // mobile drawer scroll natively.
@@ -636,6 +647,37 @@
     document.querySelectorAll('.section_product-hero a[href="/products?brand="]').forEach((a) => {
       a.href = `/products?brand=${brandMatch[1]}`;
     });
+  }
+
+  // -------------------------------------------------------
+  // POLICY PAGES
+  // -------------------------------------------------------
+
+  // Rich text headings on the policy pages use the smaller heading styles (the
+  // API can't write "h2 inside this rich text" nested selectors).
+  if (/^\/(privacy-policy|cookie-policy)/.test(location.pathname)) {
+    document.querySelectorAll('.w-richtext h2').forEach((h) => h.classList.add('heading-style-h4'));
+    document.querySelectorAll('.w-richtext h3').forEach((h) => h.classList.add('heading-style-h5'));
+  }
+
+  // -------------------------------------------------------
+  // NAV ON SCROLL
+  // -------------------------------------------------------
+
+  // Once the page is scrolled, the pink top bar folds away and the nav gets shorter.
+  const navTop = document.querySelector('.nav_top');
+  const navContainer = document.querySelector('.nav_container');
+  if (navTop || navContainer) {
+    let compact = null;
+    const onScroll = () => {
+      const next = window.scrollY > 40;
+      if (next === compact) return;
+      compact = next;
+      navTop?.classList.toggle('is-collapsed', next);
+      navContainer?.classList.toggle('is-compact', next);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
   }
 
   // -------------------------------------------------------
