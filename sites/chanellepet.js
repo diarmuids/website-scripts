@@ -1,4 +1,4 @@
-// Last updated: 2026-09-25 14:59:42
+// Last updated: 2026-09-25 15:06:22
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -470,10 +470,14 @@
       const icon = summary.querySelector('.icon_svg');
       let badge = summary.querySelector('.filters_dropdown-count');
       if (!badge && icon) {
+        // Badge and chevron share a holder; only the chevron rotates when open.
+        const slot = document.createElement('span');
+        slot.style.cssText = 'position:relative;display:inline-flex;';
+        icon.before(slot);
+        slot.appendChild(icon);
         badge = document.createElement('span');
         badge.className = 'filters_dropdown-count';
-        icon.style.position = 'relative';
-        icon.appendChild(badge);
+        slot.appendChild(badge);
       }
       if (badge) {
         badge.textContent = n;
@@ -613,8 +617,9 @@
     document.querySelectorAll('.product-spec_row').forEach((row) => {
       if (isEmpty(row.querySelector('.product-spec_value'))) row.style.display = 'none';
     });
-    document.querySelectorAll('.product-details_ingredients, .product-details_analytical').forEach((body) => {
-      if (isEmpty(body)) body.closest('.accordion_item')?.style.setProperty('display', 'none');
+    document.querySelectorAll('.accordion_item').forEach((item) => {
+      const content = item.querySelector('.accordion_content');
+      if (content && !content.textContent.trim()) item.style.display = 'none';
     });
 
     // "Ask about this product" links to #product-enquiry (the API could not set this id).
