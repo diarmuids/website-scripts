@@ -1,4 +1,4 @@
-// Last updated: 2026-09-25 12:21:41
+// Last updated: 2026-09-25 12:29:40
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -96,6 +96,42 @@
     if (e.target.closest('.filters_dropdown')) return;
     dropdowns().forEach((d) => d.removeAttribute('open'));
   });
+
+  // Mobile filter drawer (tablet and down): the filter bar slides in from the left.
+  const drawer = document.querySelector('.filters_bar');
+  const overlay = document.querySelector('.filters_overlay');
+  const toggleDrawer = (open) => {
+    if (!drawer) return;
+    drawer.classList.toggle('is-open', open);
+    overlay?.classList.toggle('is-open', open);
+    document.documentElement.style.overflow = open ? 'hidden' : '';
+  };
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('.filters_mobile-toggle')) toggleDrawer(true);
+    else if (e.target.closest('.filters_drawer-close, .filters_overlay, .filters_drawer-foot .button')) {
+      e.preventDefault();
+      toggleDrawer(false);
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && drawer?.classList.contains('is-open')) toggleDrawer(false);
+  });
+
+  // Active filter count on the mobile "Filters" button.
+  const updateFilterCount = () => {
+    const count = document.querySelector('.filters_mobile-count');
+    if (!count || !drawer) return;
+    const checked = drawer.querySelectorAll('input[type="checkbox"]:checked').length;
+    const search = drawer.querySelector('.filters_search-input')?.value.trim() ? 1 : 0;
+    count.textContent = checked + search;
+    count.style.display = checked + search ? '' : 'none';
+  };
+  document.addEventListener('input', updateFilterCount);
+  document.addEventListener('change', updateFilterCount);
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('[fs-list-element="clear"], [fs-list-element="tag-remove"]')) setTimeout(updateFilterCount, 50);
+  });
+  window.addEventListener('load', updateFilterCount);
 
   // -------------------------------------------------------
   // BRAND PAGES (/brands/slug)
