@@ -1,4 +1,4 @@
-// Last updated: 2026-09-25 12:11:32
+// Last updated: 2026-09-25 12:21:41
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -96,6 +96,29 @@
     if (e.target.closest('.filters_dropdown')) return;
     dropdowns().forEach((d) => d.removeAttribute('open'));
   });
+
+  // -------------------------------------------------------
+  // BRAND PAGES (/brands/slug)
+  // -------------------------------------------------------
+
+  // The range list can't be filtered to the current brand through the API, so it
+  // lists every product and hides the ones from other brands. "View the range"
+  // opens the filtered Products page.
+  const brandMatch = location.pathname.match(/^\/brands\/([^/]+)/);
+  if (brandMatch) {
+    const brandName = document.querySelector('.section_product-hero h1')?.textContent.trim().toLowerCase();
+    const list = document.querySelector('.section_brand-products .product_list');
+    if (brandName && list) {
+      list.querySelectorAll('.product_item').forEach((item) => {
+        const meta = item.querySelector('.product-card_meta')?.textContent.trim().toLowerCase();
+        if (meta !== brandName) item.remove();
+      });
+      if (!list.children.length) list.closest('.section_brand-products').style.display = 'none';
+    }
+    document.querySelectorAll('.section_product-hero a[href="/products?brand="]').forEach((a) => {
+      a.href = `/products?brand=${brandMatch[1]}`;
+    });
+  }
 
   // -------------------------------------------------------
   // NAV SEARCH
