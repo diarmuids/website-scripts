@@ -1,4 +1,4 @@
-// Last updated: 2026-09-25 15:33:12
+// Last updated: 2026-09-25 15:38:33
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -413,17 +413,22 @@
   // focused as the dropdown opens: typing narrows the options, Enter (or Space once
   // the text no longer continues any option) ticks the top match, Arrow keys or Tab
   // move through the options, Enter/Space tick the focused one, Escape closes.
-  const SEARCH_MIN_OPTIONS = 7;
-  const rowsOf = (dropdown) => [...dropdown.querySelectorAll('.filters_checkbox')];
-  const shownRows = (dropdown) => rowsOf(dropdown).filter((row) => row.style.display !== 'none');
+  // Function declarations (not const arrows) so the Suppliers filter, which runs
+  // earlier in this file, can build its dropdown with them.
   const canHover = window.matchMedia('(hover: hover)').matches;
+  function rowsOf(dropdown) {
+    return [...dropdown.querySelectorAll('.filters_checkbox')];
+  }
+  function shownRows(dropdown) {
+    return rowsOf(dropdown).filter((row) => row.style.display !== 'none');
+  }
 
-  const highlightTop = (dropdown, on) => {
+  function highlightTop(dropdown, on) {
     rowsOf(dropdown).forEach((row) => row.classList.remove('is-active'));
     if (on) shownRows(dropdown)[0]?.classList.add('is-active');
-  };
+  }
 
-  const filterRows = (dropdown, term) => {
+  function filterRows(dropdown, term) {
     const search = term.trim().toLowerCase();
     rowsOf(dropdown).forEach((row) => {
       row.style.display = !search || row.textContent.toLowerCase().includes(search) ? '' : 'none';
@@ -431,12 +436,12 @@
     const empty = dropdown.querySelector('.filters_dropdown-empty');
     if (empty) empty.style.display = shownRows(dropdown).length ? 'none' : '';
     highlightTop(dropdown, Boolean(search));
-  };
+  }
 
-  const closeDropdown = (dropdown) => {
+  function closeDropdown(dropdown) {
     dropdown.removeAttribute('open');
     dropdown.querySelector('summary')?.focus();
-  };
+  }
 
   // Each dropdown gets a head row: search box (longer lists) plus a "Clear" button
   // that appears once something in that dropdown is ticked and unticks just those.
@@ -463,7 +468,7 @@
   function addDropdownSearch(dropdown) {
     const head = addDropdownHead(dropdown);
     const list = dropdown.querySelector('.filters_dropdown-list');
-    if (!head || rowsOf(dropdown).length < SEARCH_MIN_OPTIONS || list.querySelector('.filters_dropdown-search')) return;
+    if (!head || rowsOf(dropdown).length < 7 || list.querySelector('.filters_dropdown-search')) return;
     const name = dropdown.querySelector('summary')?.textContent.trim() || 'options';
 
     const search = document.createElement('input');
@@ -725,9 +730,23 @@
     'M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z',
     'M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z',
   ];
+  // Each card's circle takes a deeper shade of the card tint, and a large faint
+  // copy of the icon sits in the card corner for depth.
+  const WHY_TONES = ['var(--colors--pink)', 'var(--colors--accent)', 'var(--colors--dark-gray)', '#e8833a', 'var(--colors--pink)'];
   document.querySelectorAll('.suppliers-why_grid .icon_svg').forEach((icon, i) => {
     if (!WHY_ICONS[i]) return;
-    icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="${WHY_ICONS[i]}"/></svg>`;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="${WHY_ICONS[i]}"/></svg>`;
+    icon.innerHTML = svg;
+    const circle = icon.closest('.icon_circle');
+    if (circle) circle.style.backgroundColor = WHY_TONES[i];
+    const card = icon.closest('.step_card');
+    if (card && !card.querySelector('.why-watermark')) {
+      const mark = document.createElement('div');
+      mark.className = 'why-watermark';
+      mark.style.cssText = `position:absolute;right:-1.5rem;bottom:-1.5rem;width:9rem;height:9rem;opacity:0.08;pointer-events:none;color:${WHY_TONES[i]};`;
+      mark.innerHTML = svg;
+      card.appendChild(mark);
+    }
   });
 
   // -------------------------------------------------------
