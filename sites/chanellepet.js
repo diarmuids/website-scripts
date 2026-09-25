@@ -1,4 +1,4 @@
-// Last updated: 2026-09-25 11:32:48
+// Last updated: 2026-09-25 12:11:32
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -138,18 +138,40 @@
     }
   }
 
-  // Product template exposes the current product on [data-product-current].
-  const current = document.querySelector('[data-product-current]');
-  if (current) {
+  // Product template elements (CMS-bound) are found by class.
+  const field = (name) => document.querySelector(`.product-hero_${name}`);
+  if (field('name')) {
+    const image = field('image');
     const product = {
       url: location.pathname,
-      name: current.getAttribute('data-name') || document.title,
-      brand: current.getAttribute('data-brand') || '',
-      sku: current.getAttribute('data-sku') || '',
-      image: current.getAttribute('data-image') || '',
+      name: field('name').textContent.trim(),
+      brand: field('brand')?.textContent.trim() || '',
+      sku: field('sku')?.textContent.trim() || '',
+      image: image ? image.currentSrc || image.src : '',
     };
+
+    // Brand links go to the brand page; the slug sits in a hidden CMS-bound element.
+    const brandSlug = document.querySelector('.product-hero_content .product-card_filters')?.textContent.trim();
+    if (brandSlug) {
+      document.querySelectorAll('.product-hero_brand, .breadcrumb_link.is-brand').forEach((a) => {
+        a.href = `/brands/${brandSlug}`;
+      });
+    }
+
+    // "Ask about this product" links to #product-enquiry (the API could not set this id).
+    const enquirySection = document.querySelector('.section_product-enquiry');
+    if (enquirySection && !enquirySection.id) enquirySection.id = 'product-enquiry';
+
+    // Pre-fill the enquiry form with the product being viewed.
+    const message = document.querySelector('.product-enquiry_card textarea');
+    if (message && !message.value) {
+      message.value = `I'd like to ask about ${product.name}${product.sku ? ` (${product.sku})` : ''}.`;
+    }
+    const skuInput = document.querySelector('.product-enquiry_card input[name="SKU"]');
+    if (skuInput) skuInput.value = product.sku;
+
     const list = readRecent().filter((p) => p.url !== product.url);
-    const recentWrap = document.querySelector('[data-recent-list]');
+    const recentWrap = document.querySelector('.product-recent_list');
     if (recentWrap) renderRecent(recentWrap, list.slice(0, RECENT_MAX));
     try {
       localStorage.setItem(RECENT_KEY, JSON.stringify([product, ...list].slice(0, RECENT_MAX + 1)));
@@ -158,10 +180,10 @@
     }
   }
 
-  // Clones the first card in [data-recent-list] as a template for each stored product.
+  // Clones the first card in .product-recent_list as a template for each stored product.
   function renderRecent(wrap, items) {
-    const section = wrap.closest('[data-recent-section]');
-    const template = wrap.querySelector('[data-recent-item]');
+    const section = wrap.closest('.section_product-recent');
+    const template = wrap.querySelector('.product-recent_item');
     if (!items.length || !template) {
       if (section) section.style.display = 'none';
       return;
@@ -178,9 +200,8 @@
         img.alt = p.name;
       }
       const set = (sel, text) => card.querySelectorAll(sel).forEach((el) => (el.textContent = text));
-      set('[data-recent-name]', p.name);
-      set('[data-recent-brand]', p.brand);
-      set('[data-recent-sku]', p.sku);
+      set('.product-recent_name', p.name);
+      set('.product-recent_brand', p.brand);
       wrap.appendChild(card);
     });
   }
