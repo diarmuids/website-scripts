@@ -1,4 +1,4 @@
-// Last updated: 2026-09-25 15:06:22
+// Last updated: 2026-09-25 15:09:35
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -203,19 +203,43 @@
   // SUPPLIERS: A–Z BRAND SEARCH
   // -------------------------------------------------------
 
+  // Smaller arrows on the A–Z brand cards (the embed SVG otherwise fills its circle).
+  document.querySelectorAll('.supplier-card .cat_pill-arrow svg').forEach((svg) => {
+    svg.setAttribute('width', '16');
+    svg.setAttribute('height', '16');
+    svg.style.width = '1rem';
+    svg.style.height = '1rem';
+  });
+
   // "1 products" -> "1 product" on brand counts.
   document.querySelectorAll('.supplier-card_count, .supplier-tile_count').forEach((count) => {
     const [n, word] = count.children;
     if (n && word && n.textContent.trim() === '1') word.textContent = 'product';
   });
 
+  // Brand filter bar: search, pet pills and a Category dropdown. Each card carries
+  // hidden "|dog|cat|" and "|food|toys|" values (Brands > Filter Pets / Filter
+  // Categories). A brand shows if it matches any ticked pet and any ticked category.
   const supplierList = document.querySelector('.supplier_list');
   const supplierHeading = supplierList?.closest('.container-large')?.querySelector('.heading_row');
   if (supplierList && supplierHeading) {
+    const items = [...supplierList.querySelectorAll('.supplier_item')];
+    const valuesOf = (item, key) =>
+      (item.querySelector(`[data-brand-field="${key}"]`)?.textContent || '').split('|').filter(Boolean);
+    const labelOf = (slug) =>
+      slug === 'pos' ? 'POS' : slug.replace(/-and-/g, ' & ').replace(/-/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
+    const PETS = [['dog', 'Dog'], ['cat', 'Cat'], ['small-animal', 'Small animal'], ['bird', 'Bird'], ['fish', 'Fish']];
+    const categories = [...new Set(items.flatMap((item) => valuesOf(item, 'categories')))].sort();
+    const chosenPets = new Set();
+
+    const bar = document.createElement('div');
+    bar.style.cssText = 'display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem;margin-bottom:1.5rem;';
+
+    // Search with a reset button on the right.
     const box = document.createElement('div');
     box.className = 'filters_search';
-    // Sits on the light-grey section, so give it a white fill and outline.
     Object.assign(box.style, {
+      flex: '1 1 16rem',
       maxWidth: '24rem',
       backgroundColor: 'var(--colors--white)',
       border: '1px solid var(--colors--dark-gray-15)',
@@ -223,27 +247,91 @@
     box.innerHTML =
       '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>';
     const input = document.createElement('input');
-    input.type = 'search';
+    input.type = 'text';
     input.className = 'filters_search-input';
     input.placeholder = 'Search brands';
     input.setAttribute('aria-label', 'Search brands');
-    box.appendChild(input);
-    supplierHeading.appendChild(box);
+    const clearSearch = document.createElement('button');
+    clearSearch.type = 'button';
+    clearSearch.className = 'filters_dropdown-clear';
+    clearSearch.innerHTML = '&#x2715;&nbsp;Reset';
+    clearSearch.style.cssText = 'height:2rem;display:none;';
+    box.append(input, clearSearch);
+    bar.appendChild(box);
+
+    // Pet pills.
+    PETS.forEach(([slug, name]) => {
+      const pill = document.createElement('button');
+      pill.type = 'button';
+      pill.className = 'filters_dropdown-toggle';
+      pill.textContent = name;
+      pill.addEventListener('click', () => {
+        if (chosenPets.has(slug)) chosenPets.delete(slug);
+        else chosenPets.add(slug);
+        pill.classList.toggle('is-active', chosenPets.has(slug));
+        apply();
+      });
+      bar.appendChild(pill);
+    });
+
+    // Category dropdown (same markup as the Products filters, so it gets the
+    // search, Clear, count badge and keyboard behaviour).
+    const dropdown = document.createElement('details');
+    dropdown.className = 'filters_dropdown';
+    dropdown.innerHTML =
+      '<summary class="filters_dropdown-toggle">Category<div class="icon_svg" style="width:1rem;height:1rem"><svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></div></summary>' +
+      `<div class="filters_dropdown-list">${categories
+        .map((c) => `<label class="filters_checkbox"><input type="checkbox" class="filters_checkbox-input" value="${c}"><span>${labelOf(c)}</span></label>`)
+        .join('')}</div>`;
+    bar.appendChild(dropdown);
+
+    const count = document.createElement('div');
+    count.className = 'filters_count';
+    count.style.marginLeft = 'auto';
+    bar.appendChild(count);
+
+    supplierHeading.after(bar);
+    addDropdownSearch(dropdown);
+    dropdown.querySelector('.filters_dropdown-list')?.setAttribute('data-lenis-prevent', '');
+
     const empty = document.createElement('p');
     empty.className = 'filters_dropdown-empty';
-    empty.textContent = 'No brands match your search.';
+    empty.textContent = 'No brands match these filters.';
     empty.style.display = 'none';
     supplierList.after(empty);
-    input.addEventListener('input', () => {
+
+    function apply() {
       const term = input.value.trim().toLowerCase();
+      const cats = [...dropdown.querySelectorAll('input[type="checkbox"]:checked')].map((i) => i.value);
       let shown = 0;
-      supplierList.querySelectorAll('.supplier_item').forEach((item) => {
-        const match = !term || item.querySelector('.supplier-card_name')?.textContent.toLowerCase().includes(term);
+      items.forEach((item) => {
+        const pets = valuesOf(item, 'pets');
+        const itemCats = valuesOf(item, 'categories');
+        const match =
+          (!term || item.querySelector('.supplier-card_name')?.textContent.toLowerCase().includes(term)) &&
+          (!chosenPets.size || pets.some((p) => chosenPets.has(p))) &&
+          (!cats.length || itemCats.some((c) => cats.includes(c)));
         item.style.display = match ? '' : 'none';
         if (match) shown++;
       });
       empty.style.display = shown ? 'none' : '';
+      count.textContent = `Showing ${shown} of ${items.length} brands`;
+      clearSearch.style.display = term ? '' : 'none';
+      // Count badge / active state on the Category toggle.
+      const summary = dropdown.querySelector('summary');
+      summary.classList.toggle('is-active', cats.length > 0);
+      const dClear = dropdown.querySelector('.filters_dropdown-clear');
+      if (dClear) dClear.style.display = cats.length ? '' : 'none';
+    }
+    input.addEventListener('input', apply);
+    dropdown.addEventListener('change', apply);
+    dropdown.querySelector('.filters_dropdown-clear')?.addEventListener('click', () => setTimeout(apply, 0));
+    clearSearch.addEventListener('click', () => {
+      input.value = '';
+      apply();
+      input.focus();
     });
+    apply();
   }
 
   // -------------------------------------------------------
