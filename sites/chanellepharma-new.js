@@ -1,4 +1,4 @@
-// Last updated: 2026-09-25 14:19:06
+// Last updated: 2026-09-25 16:13:46
 
 // Chanelle Pharma: new-build site script (sites/chanellepharma-new.js).
 // Loaded by the new Webflow build's footer loader (dev.wsitefiles.com, falling back to wsitefiles.com).
@@ -33,4 +33,11 @@
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
+})();
+
+// CMS sections that should disappear while their list is empty (Human Health knowledge list).
+(() => {
+  document.querySelectorAll('.section_hh-knowledge').forEach((section) => {
+    if (!section.querySelector('.w-dyn-item')) section.style.display = 'none';
+  });
 })();
