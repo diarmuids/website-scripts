@@ -1,4 +1,4 @@
-// Last updated: 2026-09-25 15:23:42
+// Last updated: 2026-09-25 15:24:18
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -647,6 +647,15 @@
     document.querySelectorAll('.section_product-hero a[href="/products?brand="]').forEach((a) => {
       a.href = `/products?brand=${brandMatch[1]}`;
     });
+  }
+
+  // Contact: "Message us" links point at /contact#message; give the form that id.
+  if (location.pathname.startsWith('/contact')) {
+    const formBlock = document.querySelector('.w-form');
+    if (formBlock && !document.getElementById('message')) {
+      formBlock.id = 'message';
+      if (location.hash === '#message') window.addEventListener('load', () => formBlock.scrollIntoView({ block: 'start' }));
+    }
   }
 
   // -------------------------------------------------------
