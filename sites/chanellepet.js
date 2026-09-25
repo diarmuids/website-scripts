@@ -1,4 +1,4 @@
-// Last updated: 2026-09-25 14:13:13
+// Last updated: 2026-09-25 14:31:43
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -12,9 +12,25 @@
       a.removeAttribute('id');
     });
   };
+  // "On offer" badge on product cards whose hidden offer field is "true".
+  const addOfferBadges = (root = document) => {
+    root.querySelectorAll('.product-card').forEach((card) => {
+      if (card.querySelector('.product-card_badge')) return;
+      if (card.querySelector('[fs-list-field="offer"]')?.textContent.trim() !== 'true') return;
+      const badge = document.createElement('div');
+      badge.className = 'product-card_badge';
+      badge.textContent = 'On offer';
+      card.querySelector('.product-card_image-wrap')?.appendChild(badge);
+    });
+  };
+
   fixItemLinks();
+  addOfferBadges();
   // Finsweet load-more renders new items later; fix those as they appear.
-  new MutationObserver(() => fixItemLinks()).observe(document.documentElement, { childList: true, subtree: true });
+  new MutationObserver(() => {
+    fixItemLinks();
+    addOfferBadges();
+  }).observe(document.documentElement, { childList: true, subtree: true });
 
   const SEARCH_FIELD = 'name, brandname, sku';
   const RECENT_KEY = 'chanellePetRecentlyViewed';
@@ -60,7 +76,7 @@
       pet: (v) => ['pet_contain', JSON.stringify(v.split(',').map((s) => `|${s}|`))],
       category: (v) => ['category_contain', JSON.stringify(v.split(',').map((s) => `|${s}|`))],
       brand: (v) => ['brand_equal', JSON.stringify(v.split(',').map(brandName))],
-      featured: (v) => (v === 'true' ? ['featured_equal', 'true'] : null),
+      offer: (v) => (v === 'true' ? ['offer_equal', 'true'] : null),
       search: (v) => [`${SEARCH_FIELD}_contain`, v],
     };
     let changed = false;
@@ -92,13 +108,13 @@
   // empty, so only the box itself was clickable and Webflow's default checkbox offsets
   // pushed it out of line with the text. Flatten each row to <label><input><span>.
   function flattenCheckboxes() {
-    document.querySelectorAll('.filters_checkbox').forEach((row) => {
-      const inner = row.querySelector('label.filters_checkbox-input');
+    document.querySelectorAll('.filters_checkbox, .filters_toggle').forEach((row) => {
+      const inner = row.querySelector('label.filters_checkbox-input, label.filters_toggle-input');
       const input = row.querySelector('input[type="checkbox"]');
       if (!inner || !input) return;
       row.removeAttribute('for');
       input.removeAttribute('id');
-      input.className = 'filters_checkbox-input';
+      input.className = inner.classList.contains('filters_toggle-input') ? 'filters_toggle-input' : 'filters_checkbox-input';
       inner.replaceWith(input);
     });
   }
@@ -258,21 +274,49 @@
     if (e.key === 'Escape' && drawer?.classList.contains('is-open')) toggleDrawer(false);
   });
 
-  // Active filter count on the mobile "Filters" button.
+  // Active states: each dropdown toggle shows how many of its options are ticked,
+  // the offer toggle turns pink when on, Clear all only lights up when there is
+  // something to clear, and the mobile "Filters" button shows the total.
   const updateFilterCount = () => {
-    const count = document.querySelector('.filters_mobile-count');
-    if (!count || !drawer) return;
+    if (!drawer) return;
+    drawer.querySelectorAll('.filters_dropdown').forEach((dropdown) => {
+      const summary = dropdown.querySelector('summary');
+      if (!summary) return;
+      const n = dropdown.querySelectorAll('input[type="checkbox"]:checked').length;
+      let badge = summary.querySelector('.filters_dropdown-count');
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'filters_dropdown-count';
+        summary.insertBefore(badge, summary.querySelector('.icon_svg'));
+      }
+      badge.textContent = n;
+      badge.style.display = n ? '' : 'none';
+      summary.classList.toggle('is-active', n > 0);
+    });
+    drawer.querySelectorAll('.filters_toggle').forEach((toggle) => {
+      const on = Boolean(toggle.querySelector('input:checked'));
+      toggle.classList.toggle('is-active', on);
+      toggle.querySelector('input')?.classList.toggle('is-checked', on);
+    });
     const checked = drawer.querySelectorAll('input[type="checkbox"]:checked').length;
     const search = drawer.querySelector('.filters_search-input')?.value.trim() ? 1 : 0;
-    count.textContent = checked + search;
-    count.style.display = checked + search ? '' : 'none';
+    document.querySelectorAll('.filters_clear').forEach((clear) => clear.classList.toggle('is-active', checked + search > 0));
+    const count = document.querySelector('.filters_mobile-toggle .filters_mobile-count');
+    if (count) {
+      count.textContent = checked + search;
+      count.style.display = checked + search ? '' : 'none';
+    }
   };
   document.addEventListener('input', updateFilterCount);
   document.addEventListener('change', updateFilterCount);
   document.addEventListener('click', (e) => {
     if (e.target.closest('[fs-list-element="clear"], [fs-list-element="tag-remove"]')) setTimeout(updateFilterCount, 50);
   });
-  window.addEventListener('load', updateFilterCount);
+  // Finsweet applies filters from the URL after load without firing change events.
+  window.addEventListener('load', () => {
+    updateFilterCount();
+    setTimeout(updateFilterCount, 600);
+  });
 
   // -------------------------------------------------------
   // BRAND PAGES (/brands/slug)
