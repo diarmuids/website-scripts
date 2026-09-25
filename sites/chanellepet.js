@@ -1,4 +1,4 @@
-// Last updated: 2026-09-25 15:24:18
+// Last updated: 2026-09-25 15:31:38
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -668,6 +668,29 @@
     document.querySelectorAll('.w-richtext h2').forEach((h) => h.classList.add('heading-style-h4'));
     document.querySelectorAll('.w-richtext h3').forEach((h) => h.classList.add('heading-style-h5'));
   }
+
+  // -------------------------------------------------------
+  // TOP BAR ICONS
+  // -------------------------------------------------------
+
+  // Solid (filled) icons in the pink top bar, chosen by each link's target.
+  // Paths are Material Icons (Apache 2.0).
+  const TOP_ICONS = [
+    [/account\/login/, 'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'],
+    [/^tel:/, 'M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z'],
+    [/^mailto:/, 'M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z'],
+    [/#message/, 'M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z'],
+    [/#delivery/, 'M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9 1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z'],
+    [/^\/about$/, 'M23 12l-2.44-2.79.34-3.69-3.61-.82-1.89-3.2L12 2.96 8.6 1.5 6.71 4.69 3.1 5.5l.34 3.7L1 12l2.44 2.79-.34 3.7 3.61.82L8.6 22.5l3.4-1.47 3.4 1.46 1.89-3.19 3.61-.82-.34-3.69L23 12zm-12.91 4.72-3.8-3.81 1.48-1.48 2.32 2.33 5.85-5.87 1.48 1.48-7.33 7.35z'],
+  ];
+  document.querySelectorAll('.nav_top-link').forEach((link) => {
+    const href = link.getAttribute('href') || '';
+    const match = TOP_ICONS.find(([re]) => re.test(href));
+    const slot = link.querySelector('.nav_top-icon, .w-embed');
+    if (!match || !slot) return;
+    slot.style.cssText = 'display:flex;width:1rem;height:1rem;flex-shrink:0;';
+    slot.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="display:block"><path d="${match[1]}"/></svg>`;
+  });
 
   // -------------------------------------------------------
   // NAV ON SCROLL
