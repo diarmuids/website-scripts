@@ -1,4 +1,4 @@
-// Last updated: 2026-09-25 12:59:42
+// Last updated: 2026-09-25 14:13:13
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -88,7 +88,23 @@
     return slug;
   }
 
+  // The builder nested each checkbox in a second label and left the row label's for=""
+  // empty, so only the box itself was clickable and Webflow's default checkbox offsets
+  // pushed it out of line with the text. Flatten each row to <label><input><span>.
+  function flattenCheckboxes() {
+    document.querySelectorAll('.filters_checkbox').forEach((row) => {
+      const inner = row.querySelector('label.filters_checkbox-input');
+      const input = row.querySelector('input[type="checkbox"]');
+      if (!inner || !input) return;
+      row.removeAttribute('for');
+      input.removeAttribute('id');
+      input.className = 'filters_checkbox-input';
+      inner.replaceWith(input);
+    });
+  }
+
   if (document.querySelector('[fs-list-element="list"]')) {
+    flattenCheckboxes();
     addFilterAttributes();
     rewriteFilterParams();
   }
@@ -107,6 +123,119 @@
   document.addEventListener('click', (e) => {
     if (e.target.closest('.filters_dropdown')) return;
     dropdowns().forEach((d) => d.removeAttribute('open'));
+  });
+
+  // Dropdown search and keyboard use. Longer option lists get a search box that is
+  // focused as the dropdown opens: typing narrows the options, Enter (or Space once
+  // the text no longer continues any option) ticks the top match, Arrow keys or Tab
+  // move through the options, Enter/Space tick the focused one, Escape closes.
+  const SEARCH_MIN_OPTIONS = 7;
+  const rowsOf = (dropdown) => [...dropdown.querySelectorAll('.filters_checkbox')];
+  const shownRows = (dropdown) => rowsOf(dropdown).filter((row) => row.style.display !== 'none');
+  const canHover = window.matchMedia('(hover: hover)').matches;
+
+  const highlightTop = (dropdown, on) => {
+    rowsOf(dropdown).forEach((row) => row.classList.remove('is-active'));
+    if (on) shownRows(dropdown)[0]?.classList.add('is-active');
+  };
+
+  const filterRows = (dropdown, term) => {
+    const search = term.trim().toLowerCase();
+    rowsOf(dropdown).forEach((row) => {
+      row.style.display = !search || row.textContent.toLowerCase().includes(search) ? '' : 'none';
+    });
+    const empty = dropdown.querySelector('.filters_dropdown-empty');
+    if (empty) empty.style.display = shownRows(dropdown).length ? 'none' : '';
+    highlightTop(dropdown, Boolean(search));
+  };
+
+  const closeDropdown = (dropdown) => {
+    dropdown.removeAttribute('open');
+    dropdown.querySelector('summary')?.focus();
+  };
+
+  function addDropdownSearch(dropdown) {
+    const list = dropdown.querySelector('.filters_dropdown-list');
+    if (!list || rowsOf(dropdown).length < SEARCH_MIN_OPTIONS || list.querySelector('.filters_dropdown-search')) return;
+    const name = dropdown.querySelector('summary')?.textContent.trim() || 'options';
+
+    const search = document.createElement('input');
+    search.type = 'search';
+    search.className = 'filters_dropdown-search';
+    search.placeholder = `Search ${name.toLowerCase()}`;
+    search.autocomplete = 'off';
+    search.setAttribute('aria-label', `Search ${name}`);
+    // Keep the box out of the filter form: Finsweet reads form.elements and listens on the form.
+    search.setAttribute('form', 'filters-dropdown-search');
+    ['input', 'change', 'keydown', 'keyup'].forEach((type) =>
+      search.addEventListener(type, (e) => e.stopPropagation()),
+    );
+
+    const empty = document.createElement('div');
+    empty.className = 'filters_dropdown-empty';
+    empty.textContent = 'No matches';
+    empty.style.display = 'none';
+
+    list.prepend(search);
+    list.append(empty);
+
+    search.addEventListener('input', () => {
+      filterRows(dropdown, search.value);
+      list.scrollTop = 0;
+    });
+    search.addEventListener('keydown', (e) => {
+      const top = shownRows(dropdown)[0];
+      const term = search.value.toLowerCase();
+      const spaceTicks = e.key === ' ' && (!term.trim() || !rowsOf(dropdown).some((row) => row.textContent.toLowerCase().includes(`${term} `)));
+      if ((e.key === 'Enter' || spaceTicks) && top) {
+        e.preventDefault();
+        top.querySelector('input')?.click();
+        search.select();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+      } else if (e.key === 'ArrowDown' && top) {
+        e.preventDefault();
+        highlightTop(dropdown, false);
+        top.querySelector('input')?.focus();
+      } else if (e.key === 'Escape') {
+        closeDropdown(dropdown);
+      }
+    });
+  }
+
+  document.querySelectorAll('.filters_dropdown').forEach(addDropdownSearch);
+
+  document.addEventListener('toggle', (e) => {
+    const dropdown = e.target;
+    if (!dropdown.matches || !dropdown.matches('.filters_dropdown')) return;
+    const search = dropdown.querySelector('.filters_dropdown-search');
+    if (!search) return;
+    if (dropdown.open) {
+      if (canHover) search.focus();
+    } else if (search.value) {
+      search.value = '';
+      filterRows(dropdown, '');
+    }
+  }, true);
+
+  // Arrow keys, Enter and Escape on the options themselves (Space ticks natively).
+  document.addEventListener('keydown', (e) => {
+    const input = e.target;
+    if (!input.matches || !input.matches('.filters_dropdown input[type="checkbox"]')) return;
+    const dropdown = input.closest('.filters_dropdown');
+    const rows = shownRows(dropdown);
+    const index = rows.indexOf(input.closest('.filters_checkbox'));
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      const next = rows[index + (e.key === 'ArrowDown' ? 1 : -1)];
+      if (next) next.querySelector('input')?.focus();
+      else if (e.key === 'ArrowUp') dropdown.querySelector('.filters_dropdown-search')?.focus();
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      input.click();
+    } else if (e.key === 'Escape') {
+      closeDropdown(dropdown);
+    }
   });
 
   // Mobile filter drawer (tablet and down): the filter bar slides in from the left.
