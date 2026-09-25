@@ -1,4 +1,4 @@
-// Last updated: 2026-09-25 14:31:43
+// Last updated: 2026-09-25 14:36:27
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -57,6 +57,19 @@
     });
     set('.filters_tag', { 'fs-list-element': 'tag' });
     set('.filters_tag > span:first-child', { 'fs-list-element': 'tag-value' });
+
+    // Pet and category checkboxes: the item fields hold "|slug|slug|", so each box
+    // filters on "|slug|" (slug from its label) and its tag shows the label.
+    const slugify = (s) => s.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    document.querySelectorAll('.filters_dropdown[fs-list-field="pet"], .filters_dropdown[fs-list-field="category"]').forEach((dropdown) => {
+      dropdown.querySelectorAll('.filters_checkbox').forEach((label) => {
+        const input = label.querySelector('input');
+        const name = label.textContent.trim();
+        if (!input || !name) return;
+        input.setAttribute('fs-list-value', `|${slugify(name)}|`);
+        input.setAttribute('fs-list-tagvalue', name);
+      });
+    });
 
     // Brand checkboxes come from a Brands collection list; their value is the brand name.
     document.querySelectorAll('.filters_dropdown-list.is-brands .filters_checkbox').forEach((label) => {
@@ -309,8 +322,20 @@
   };
   document.addEventListener('input', updateFilterCount);
   document.addEventListener('change', updateFilterCount);
+  // Clear all and tag removal untick boxes without firing change events; re-check
+  // a few times while Finsweet catches up.
   document.addEventListener('click', (e) => {
-    if (e.target.closest('[fs-list-element="clear"], [fs-list-element="tag-remove"]')) setTimeout(updateFilterCount, 50);
+    if (!e.target.closest('[fs-list-element="clear"], [fs-list-element="tag-remove"]')) return;
+    if (e.target.closest('[fs-list-element="clear"]')) {
+      // Belt and braces: make sure every box and the search field are visibly reset.
+      setTimeout(() => {
+        drawer?.querySelectorAll('input[type="checkbox"]:checked').forEach((input) => (input.checked = false));
+        const search = drawer?.querySelector('.filters_search-input');
+        if (search) search.value = '';
+        updateFilterCount();
+      }, 100);
+    }
+    [50, 250, 600].forEach((delay) => setTimeout(updateFilterCount, delay));
   });
   // Finsweet applies filters from the URL after load without firing change events.
   window.addEventListener('load', () => {
