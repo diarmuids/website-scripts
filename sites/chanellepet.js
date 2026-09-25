@@ -1,4 +1,4 @@
-// Last updated: 2026-09-25 14:36:27
+// Last updated: 2026-09-25 14:43:27
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -17,10 +17,12 @@
     root.querySelectorAll('.product-card').forEach((card) => {
       if (card.querySelector('.product-card_badge')) return;
       if (card.querySelector('[fs-list-field="offer"]')?.textContent.trim() !== 'true') return;
+      // Sits on the card (not the clipped image box) so it can overhang the corner.
       const badge = document.createElement('div');
       badge.className = 'product-card_badge';
-      badge.textContent = 'On offer';
-      card.querySelector('.product-card_image-wrap')?.appendChild(badge);
+      badge.innerHTML =
+        '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg><span>On offer</span>';
+      card.appendChild(badge);
     });
   };
 
@@ -50,8 +52,11 @@
       });
 
     set('.filters_form form, form.filters_form', { 'fs-list-element': 'filters' });
+    // Fuzzy search: Finsweet only applies fs-list-fuzzy to the "equal" operator.
     set('.filters_search-input', {
       'fs-list-field': SEARCH_FIELD,
+      'fs-list-operator': 'equal',
+      'fs-list-fuzzy': '35',
       'fs-list-debounce': '200',
       'fs-list-tagfield': 'Search',
     });
@@ -90,7 +95,7 @@
       category: (v) => ['category_contain', JSON.stringify(v.split(',').map((s) => `|${s}|`))],
       brand: (v) => ['brand_equal', JSON.stringify(v.split(',').map(brandName))],
       offer: (v) => (v === 'true' ? ['offer_equal', 'true'] : null),
-      search: (v) => [`${SEARCH_FIELD}_contain`, v],
+      search: (v) => [`${SEARCH_FIELD}_equal`, v],
     };
     let changed = false;
     Object.entries(map).forEach(([key, toFinsweet]) => {
@@ -136,7 +141,78 @@
     flattenCheckboxes();
     addFilterAttributes();
     rewriteFilterParams();
+    // Default sort: featured first, unless the URL already asks for a sort.
+    const sortSelect = document.querySelector('.filters_sort-select');
+    if (sortSelect && !/[?&]sort/.test(location.search)) {
+      sortSelect.value = 'rank-desc';
+      window.addEventListener('load', () => sortSelect.dispatchEvent(new Event('change', { bubbles: true })));
+    }
   }
+
+  // -------------------------------------------------------
+  // BRAND LOGO MARQUEE
+  // -------------------------------------------------------
+
+  // Brand logo lists scroll continuously (full width, faded edges via CSS mask).
+  // The logos are duplicated once and the row slides by exactly one set.
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll('.brand_list').forEach((list) => {
+    if (reduceMotion || list.dataset.marquee || list.children.length < 2) return;
+    list.dataset.marquee = 'on';
+    [...list.children].forEach((item) => {
+      const copy = item.cloneNode(true);
+      copy.setAttribute('aria-hidden', 'true');
+      copy.querySelectorAll('a').forEach((a) => a.setAttribute('tabindex', '-1'));
+      list.appendChild(copy);
+    });
+    const start = () => {
+      const gap = parseFloat(getComputedStyle(list).columnGap) || 0;
+      const distance = (list.scrollWidth + gap) / 2;
+      const animation = list.animate([{ transform: 'translateX(0)' }, { transform: `translateX(-${distance}px)` }], {
+        duration: (distance / 40) * 1000, // 40px per second
+        iterations: Infinity,
+      });
+      list.addEventListener('mouseenter', () => animation.pause());
+      list.addEventListener('mouseleave', () => animation.play());
+    };
+    if (document.readyState === 'complete') start();
+    else window.addEventListener('load', start);
+  });
+
+  // -------------------------------------------------------
+  // FORMS
+  // -------------------------------------------------------
+
+  // Placeholders by field name (the Webflow API can't set input placeholders).
+  const PLACEHOLDERS = {
+    Name: 'Your full name',
+    Business: 'Shop, practice or business',
+    Email: 'you@business.ie',
+    Phone: 'e.g. 087 123 4567',
+    Message: 'How can we help?',
+  };
+  document.querySelectorAll('form input[name], form textarea[name]').forEach((field) => {
+    if (PLACEHOLDERS[field.name] && (!field.placeholder || field.placeholder === 'Example text')) {
+      field.placeholder = PLACEHOLDERS[field.name];
+    }
+  });
+
+  // Privacy checkbox: flatten Webflow's nested label into <label><input><span> and
+  // drive the pink custom box from the checked state.
+  document.querySelectorAll('.form_checkbox-field').forEach((row) => {
+    const inner = row.querySelector('label.form_checkbox-icon');
+    const input = row.querySelector('input[type="checkbox"]');
+    if (!input) return;
+    if (inner) {
+      row.removeAttribute('for');
+      input.removeAttribute('id');
+      input.className = 'form_checkbox-input';
+      inner.replaceWith(input);
+    }
+    const sync = () => input.classList.toggle('is-checked', input.checked);
+    input.addEventListener('change', sync);
+    sync();
+  });
 
   // Filter dropdowns are native <details>: keep one open at a time and close on outside click.
   const dropdowns = () => document.querySelectorAll('.filters_dropdown');
@@ -183,9 +259,32 @@
     dropdown.querySelector('summary')?.focus();
   };
 
-  function addDropdownSearch(dropdown) {
+  // Each dropdown gets a head row: search box (longer lists) plus a "Clear" button
+  // that appears once something in that dropdown is ticked and unticks just those.
+  function addDropdownHead(dropdown) {
     const list = dropdown.querySelector('.filters_dropdown-list');
-    if (!list || rowsOf(dropdown).length < SEARCH_MIN_OPTIONS || list.querySelector('.filters_dropdown-search')) return;
+    if (!list || list.querySelector('.filters_dropdown-head')) return;
+    const head = document.createElement('div');
+    head.className = 'filters_dropdown-head';
+    const clear = document.createElement('button');
+    clear.type = 'button';
+    clear.className = 'filters_dropdown-clear';
+    clear.textContent = 'Clear';
+    clear.setAttribute('form', 'filters-dropdown-search');
+    clear.addEventListener('click', (e) => {
+      e.preventDefault();
+      dropdown.querySelectorAll('input[type="checkbox"]:checked').forEach((input) => input.click());
+      updateFilterCount();
+    });
+    head.appendChild(clear);
+    list.prepend(head);
+    return head;
+  }
+
+  function addDropdownSearch(dropdown) {
+    const head = addDropdownHead(dropdown);
+    const list = dropdown.querySelector('.filters_dropdown-list');
+    if (!head || rowsOf(dropdown).length < SEARCH_MIN_OPTIONS || list.querySelector('.filters_dropdown-search')) return;
     const name = dropdown.querySelector('summary')?.textContent.trim() || 'options';
 
     const search = document.createElement('input');
@@ -205,7 +304,7 @@
     empty.textContent = 'No matches';
     empty.style.display = 'none';
 
-    list.prepend(search);
+    head.prepend(search);
     list.append(empty);
 
     search.addEventListener('input', () => {
@@ -233,6 +332,10 @@
   }
 
   document.querySelectorAll('.filters_dropdown').forEach(addDropdownSearch);
+
+  // Lenis smooth scroll swallows wheel events; let the dropdown lists and the
+  // mobile drawer scroll natively.
+  document.querySelectorAll('.filters_dropdown-list, .filters_bar').forEach((el) => el.setAttribute('data-lenis-prevent', ''));
 
   document.addEventListener('toggle', (e) => {
     const dropdown = e.target;
@@ -296,15 +399,25 @@
       const summary = dropdown.querySelector('summary');
       if (!summary) return;
       const n = dropdown.querySelectorAll('input[type="checkbox"]:checked').length;
+      // The count sits over the chevron so the toggle never changes width.
+      const icon = summary.querySelector('.icon_svg');
       let badge = summary.querySelector('.filters_dropdown-count');
-      if (!badge) {
+      if (!badge && icon) {
         badge = document.createElement('span');
         badge.className = 'filters_dropdown-count';
-        summary.insertBefore(badge, summary.querySelector('.icon_svg'));
+        icon.style.position = 'relative';
+        icon.appendChild(badge);
       }
-      badge.textContent = n;
-      badge.style.display = n ? '' : 'none';
+      if (badge) {
+        badge.textContent = n;
+        badge.style.display = n ? '' : 'none';
+        icon.querySelector('svg').style.visibility = n ? 'hidden' : '';
+      }
       summary.classList.toggle('is-active', n > 0);
+      const clear = dropdown.querySelector('.filters_dropdown-clear');
+      if (clear) clear.style.display = n ? '' : 'none';
+      const head = dropdown.querySelector('.filters_dropdown-head');
+      if (head && !head.querySelector('.filters_dropdown-search')) head.style.display = n ? '' : 'none';
     });
     drawer.querySelectorAll('.filters_toggle').forEach((toggle) => {
       const on = Boolean(toggle.querySelector('input:checked'));
@@ -426,6 +539,16 @@
         a.href = `/brands/${brandSlug}`;
       });
     }
+
+    // Hide spec rows and accordions whose CMS field is empty (the API can't set
+    // Webflow conditional visibility on text fields).
+    const isEmpty = (el) => !el || el.classList.contains('w-dyn-bind-empty') || !el.textContent.trim();
+    document.querySelectorAll('.product-spec_row').forEach((row) => {
+      if (isEmpty(row.querySelector('.product-spec_value'))) row.style.display = 'none';
+    });
+    document.querySelectorAll('.product-details_ingredients, .product-details_analytical').forEach((body) => {
+      if (isEmpty(body)) body.closest('.accordion_item')?.style.setProperty('display', 'none');
+    });
 
     // "Ask about this product" links to #product-enquiry (the API could not set this id).
     const enquirySection = document.querySelector('.section_product-enquiry');
