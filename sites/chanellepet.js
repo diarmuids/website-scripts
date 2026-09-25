@@ -1,4 +1,4 @@
-// Last updated: 2026-09-25 15:31:38
+// Last updated: 2026-09-25 15:33:12
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -209,6 +209,30 @@
     svg.setAttribute('height', '16');
     svg.style.width = '1rem';
     svg.style.height = '1rem';
+  });
+
+  // Long brand names are cut off with an ellipsis; on hover they scroll slowly
+  // left to show the full name, then slide back.
+  document.querySelectorAll('.supplier-card_name').forEach((name) => {
+    const card = name.closest('.supplier-card');
+    if (!card) return;
+    const inner = document.createElement('span');
+    inner.style.display = 'inline-block';
+    inner.textContent = name.textContent;
+    name.textContent = '';
+    name.appendChild(inner);
+    card.addEventListener('mouseenter', () => {
+      const overflow = inner.scrollWidth - name.clientWidth;
+      if (overflow <= 0) return;
+      name.style.textOverflow = 'clip';
+      inner.style.transition = `transform ${Math.max(1, overflow / 30)}s linear 0.3s`;
+      inner.style.transform = `translateX(-${overflow + 4}px)`;
+    });
+    card.addEventListener('mouseleave', () => {
+      inner.style.transition = 'transform 0.4s ease';
+      inner.style.transform = '';
+      setTimeout(() => (name.style.textOverflow = ''), 400);
+    });
   });
 
   // "1 products" -> "1 product" on brand counts.
@@ -690,6 +714,20 @@
     if (!match || !slot) return;
     slot.style.cssText = 'display:flex;width:1rem;height:1rem;flex-shrink:0;';
     slot.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="display:block"><path d="${match[1]}"/></svg>`;
+  });
+
+  // Solid icons for the "Why suppliers partner" bento (Material Icons, Apache 2.0),
+  // in card order: distribution, field sales, relationships, group, expertise.
+  const WHY_ICONS = [
+    'M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9 1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z',
+    'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z',
+    'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z',
+    'M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z',
+    'M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z',
+  ];
+  document.querySelectorAll('.suppliers-why_grid .icon_svg').forEach((icon, i) => {
+    if (!WHY_ICONS[i]) return;
+    icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="${WHY_ICONS[i]}"/></svg>`;
   });
 
   // -------------------------------------------------------
