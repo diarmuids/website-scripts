@@ -1,9 +1,21 @@
-// Last updated: 2026-09-25 12:29:40
+// Last updated: 2026-09-25 12:59:42
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
 
 (function () {
+  // CMS card links: the API can't set "current item" links, so cards link to the
+  // template root (/product or /brands) and carry the item slug as their id.
+  const fixItemLinks = (root = document) => {
+    root.querySelectorAll('a[id][href="/product"], a[id][href="/brands"]').forEach((a) => {
+      a.href = `${a.getAttribute('href')}/${a.id}`;
+      a.removeAttribute('id');
+    });
+  };
+  fixItemLinks();
+  // Finsweet load-more renders new items later; fix those as they appear.
+  new MutationObserver(() => fixItemLinks()).observe(document.documentElement, { childList: true, subtree: true });
+
   const SEARCH_FIELD = 'name, brandname, sku';
   const RECENT_KEY = 'chanellePetRecentlyViewed';
   const RECENT_MAX = 6;
