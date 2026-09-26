@@ -1,4 +1,4 @@
-// Last updated: 2026-09-26 08:47:08
+// Last updated: 2026-09-26 08:51:11
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -1273,27 +1273,30 @@
   }
 
   // -------------------------------------------------------
-  // RECENTLY VIEWED STRIPS
+  // RECENTLY VIEWED AND FAVOURITES PAGES AND STRIPS
   // -------------------------------------------------------
 
-  // Product pages use their own "Recently viewed" section; Home, Products and brand
-  // pages get one added above the closing call to action. Each is a slider showing
-  // 4 at a time (3 tablet, 2 mobile) with arrows; "View all" goes to the favourites
-  // page, which lists everything.
+  // /favourites lists every favourite (with a spreadsheet download) and ends with a
+  // Recently viewed strip; /recently-viewed lists everything viewed and ends with a
+  // Favourites strip (the only place that strip appears). Product, Home, Products and
+  // brand pages get a Recently viewed strip above the closing call to action.
+  // Strips are sliders: 4 at a time (3 tablet, 2 mobile), arrows, and "View all".
   const path = location.pathname.replace(/\/$/, '') || '/';
-  const RECENT_ALL = '/favourites#recently-viewed';
-  const recentOthers = readRecent().filter((p) => p.url !== path).slice(0, RECENT_STRIP);
+  const isFavPage = path === '/favourites' && !document.querySelector('._404_wrapper');
+  const isRecentPage = path === '/recently-viewed' && !document.querySelector('._404_wrapper');
   const CHEVRON = (d) =>
     `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
-  function makeSlider(section, list) {
+
+  // A strip section whose items come from getItems(); refresh() re-renders it and
+  // hides it when empty.
+  function makeStrip(section, list, getItems, viewAll) {
     list.classList.add('recent_track');
-    fillList(list, recentOthers);
     const controls = document.createElement('div');
     controls.className = 'recent_controls';
     controls.innerHTML =
       `<button type="button" class="recent_arrow" data-dir="-1" aria-label="Previous products">${CHEVRON('m15 18-6-6 6-6')}</button>` +
       `<button type="button" class="recent_arrow" data-dir="1" aria-label="Next products">${CHEVRON('m9 18 6-6-6-6')}</button>`;
-    controls.appendChild(viewAllLink(RECENT_ALL, 'View all'));
+    controls.appendChild(viewAllLink(viewAll, 'View all'));
     section.querySelector('.heading_row')?.appendChild(controls);
     const [prev, next] = controls.querySelectorAll('.recent_arrow');
     const update = () => {
@@ -1307,33 +1310,39 @@
     });
     list.addEventListener('scroll', update, { passive: true });
     window.addEventListener('resize', update);
-    requestAnimationFrame(update);
+    const refresh = () => {
+      const items = getItems().slice(0, RECENT_STRIP);
+      section.style.display = items.length ? '' : 'none';
+      fillList(list, items);
+      requestAnimationFrame(update);
+    };
+    refresh();
+    return refresh;
   }
-  const nativeRecent = document.querySelector('.section_product-recent');
-  if (nativeRecent) {
-    const list = nativeRecent.querySelector('.product-recent_list');
-    if (!recentOthers.length || !list) nativeRecent.style.display = 'none';
-    else makeSlider(nativeRecent, list);
-  } else if (recentOthers.length && (path === '/' || path === '/products' || path.startsWith('/brands/'))) {
-    const section = productSection('section_product-recent', 'Recently viewed');
+  function stripSection(title, getItems, viewAll) {
+    const section = productSection('section_product-recent', title);
     section.querySelector('.heading_text p').remove();
-    makeSlider(section, section.querySelector('.product_list'));
-    const cta = document.querySelector('main [class*="section_cta"]');
-    if (cta) cta.before(section);
-    else document.querySelector('main')?.appendChild(section);
+    const refresh = makeStrip(section, section.querySelector('.product_list'), getItems, viewAll);
+    // Above the closing call to action, else above the footer (Home has no <main>).
+    const anchor = document.querySelector('[class*="section_cta"], .footer_component');
+    if (anchor) anchor.before(section);
+    else (document.querySelector('main') || document.body).appendChild(section);
+    return refresh;
   }
-
-  // -------------------------------------------------------
-  // FAVOURITES PAGE (/favourites)
-  // -------------------------------------------------------
-
-  // Favourites (with a spreadsheet download), then recently viewed products that
-  // aren't favourites. Rendered after the page title; re-rendered on any change.
-  // Not on Webflow's 404 page (served at this URL until the page exists).
-  if (path === '/favourites' && !document.querySelector('._404_wrapper')) {
+  // Content goes after the page title (or first in main).
+  function placeAfterTitle(...sections) {
     const main = document.querySelector('main') || document.body;
-    const favSection = productSection('section_favourites', 'Your favourites');
-    favSection.id = 'favourites';
+    const title = main.querySelector('.section_page-title');
+    if (title) title.after(...sections);
+    else main.prepend(...sections);
+  }
+  const recentOthers = () => readRecent().filter((p) => p.url !== path);
+  const refreshers = [];
+
+  if (isFavPage) {
+    // The page title names the page, so the list itself has no heading of its own.
+    const favSection = productSection('section_favourites', '');
+    favSection.querySelector('h2').remove();
     const actions = document.createElement('div');
     actions.className = 'button-group';
     actions.innerHTML = '<button type="button" class="button is-secondary">Download for Excel</button>';
@@ -1344,43 +1353,16 @@
     favEmpty.innerHTML =
       '<p>No favourites yet. Tap the heart on any product to save it here.</p><div class="button-group" style="justify-content:center"><a href="/products" class="button w-inline-block"><div>Browse products</div></a></div>';
     favList.after(favEmpty);
-
-    const recentSection = productSection('section_product-recent', 'Recently viewed', "Products you've looked at that aren't in your favourites.");
-    recentSection.id = 'recently-viewed';
-    const clear = document.createElement('button');
-    clear.type = 'button';
-    clear.className = 'fav-page_clear';
-    clear.textContent = 'Clear history';
-    recentSection.querySelector('.heading_row').appendChild(clear);
-
-    const title = main.querySelector('.section_page-title');
-    if (title) title.after(favSection, recentSection);
-    else main.prepend(favSection, recentSection);
-
-    const render = () => {
+    placeAfterTitle(favSection);
+    refreshers.push(() => {
       const n = favourites.length;
       fillList(favList, favourites);
       favList.style.display = n ? '' : 'none';
       favEmpty.style.display = n ? 'none' : '';
       actions.style.display = n ? '' : 'none';
       favSection.querySelector('.heading_text p').textContent = n ? `${n} saved product${n === 1 ? '' : 's'}, stored on this device.` : '';
-      const recent = readRecent().filter((p) => !isFavourite(p.url));
-      fillList(recentSection.querySelector('.product_list'), recent);
-      recentSection.style.display = recent.length ? '' : 'none';
-    };
-    onFavouritesChange = render;
-    render();
-    if (location.hash === '#recently-viewed') requestAnimationFrame(() => recentSection.scrollIntoView());
-
-    clear.addEventListener('click', () => {
-      try {
-        localStorage.setItem(RECENT_KEY, JSON.stringify(readRecent().filter((p) => isFavourite(p.url))));
-      } catch (error) {
-        // Nothing to clear if storage is blocked.
-      }
-      render();
     });
-    window.addEventListener('storage', (e) => e.key === RECENT_KEY && render());
+    refreshers.push(stripSection('Recently viewed', recentOthers, '/recently-viewed'));
 
     // CSV with a byte-order mark so Excel opens it with the right characters.
     actions.querySelector('button').addEventListener('click', () => {
@@ -1395,5 +1377,49 @@
       a.remove();
       setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     });
+  } else if (isRecentPage) {
+    const recentSection = productSection('section_recent', '');
+    recentSection.querySelector('h2').remove();
+    const clear = document.createElement('button');
+    clear.type = 'button';
+    clear.className = 'fav-page_clear';
+    clear.textContent = 'Clear history';
+    recentSection.querySelector('.heading_row').appendChild(clear);
+    const recentList = recentSection.querySelector('.product_list');
+    const recentEmpty = document.createElement('div');
+    recentEmpty.className = 'fav-page_empty';
+    recentEmpty.innerHTML =
+      "<p>Nothing here yet. Products you look at will show up here.</p><div class=\"button-group\" style=\"justify-content:center\"><a href=\"/products\" class=\"button w-inline-block\"><div>Browse products</div></a></div>";
+    recentList.after(recentEmpty);
+    placeAfterTitle(recentSection);
+    refreshers.push(() => {
+      const items = readRecent();
+      fillList(recentList, items);
+      recentList.style.display = items.length ? '' : 'none';
+      recentEmpty.style.display = items.length ? 'none' : '';
+      clear.style.display = items.length ? '' : 'none';
+      recentSection.querySelector('.heading_text p').textContent = items.length ? `The last ${items.length} product${items.length === 1 ? '' : 's'} you looked at, on this device.` : '';
+    });
+    refreshers.push(stripSection('Your favourites', () => favourites, '/favourites'));
+    clear.addEventListener('click', () => {
+      try {
+        localStorage.removeItem(RECENT_KEY);
+      } catch (error) {
+        // Nothing to clear if storage is blocked.
+      }
+      refreshers.forEach((fn) => fn());
+    });
+  } else {
+    const nativeRecent = document.querySelector('.section_product-recent');
+    const list = nativeRecent?.querySelector('.product-recent_list');
+    if (nativeRecent && list) refreshers.push(makeStrip(nativeRecent, list, recentOthers, '/recently-viewed'));
+    else if (path === '/' || path === '/products' || path.startsWith('/brands/')) {
+      refreshers.push(stripSection('Recently viewed', recentOthers, '/recently-viewed'));
+    }
   }
+  refreshers.forEach((fn) => fn());
+  // On the two list pages, hearts toggled here (or in another tab) re-render the lists.
+  // Elsewhere the hearts just repaint, so a slider keeps its scroll position.
+  if (isFavPage || isRecentPage) onFavouritesChange = () => refreshers.forEach((fn) => fn());
+  window.addEventListener('storage', (e) => e.key === RECENT_KEY && refreshers.forEach((fn) => fn()));
 })();
