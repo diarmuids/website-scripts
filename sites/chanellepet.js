@@ -1,4 +1,4 @@
-// Last updated: 2026-09-26 10:53:02
+// Last updated: 2026-09-26 10:55:36
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -30,6 +30,25 @@
     });
   };
 
+  // One-line text cut off with an ellipsis (the element's CSS does the cutting); while
+  // the pointer is over `hoverEl` it scrolls slowly left to show the rest, then slides back.
+  function ellipsisScroll(textEl, hoverEl) {
+    // text-indent moves the text itself, so the CSS ellipsis still shows at rest.
+    hoverEl.addEventListener('mouseenter', () => {
+      const overflow = textEl.scrollWidth - textEl.clientWidth;
+      if (overflow <= 0) return;
+      textEl.style.textOverflow = 'clip';
+      textEl.style.transition = `text-indent ${Math.max(1, overflow / 30)}s linear 0.3s`;
+      textEl.style.textIndent = `-${overflow + 4}px`;
+    });
+    hoverEl.addEventListener('mouseleave', () => {
+      textEl.style.transition = 'text-indent 0.4s ease';
+      textEl.style.textIndent = '';
+      setTimeout(() => (textEl.style.textOverflow = ''), 400);
+    });
+  }
+
+
   // -------------------------------------------------------
   // FAVOURITES
   // -------------------------------------------------------
@@ -59,41 +78,47 @@
     /* Nav heart: same box as the search icon, a slightly larger heart, and the count
        in white inside the filled heart. */
     .nav_icon-link.is-fav { position: relative; flex: none; margin: 0; }
-    .nav_icon-link.is-fav .nav_icon { width: 1.625rem; height: 1.625rem; }
+    .nav_icon-link.is-fav .nav_icon { position: relative; width: 1.625rem; height: 1.625rem; }
     .nav_icon-link.is-fav:hover { color: var(--colors--pink); }
     .nav_icon-link.is-fav.is-active { color: var(--colors--pink); }
     .nav_icon-link.is-fav svg { fill: none; }
     .nav_icon-link.is-fav.is-active svg { fill: currentColor; }
     /* Tabular figures keep digits (especially "1") centred in the heart. */
-    .fav-count { position: absolute; inset: 0 0 .1rem; display: flex; align-items: center; justify-content: center; color: var(--colors--white); font-size: .75rem; font-weight: 700; font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; line-height: 1; pointer-events: none; }
-    .fav-count.is-long { font-size: .6875rem; letter-spacing: -.04em; }
+    /* Centred on the heart itself; the bottom offset lifts it to the heart's optical middle. */
+    .fav-count { position: absolute; inset: 0 0 .2rem; display: flex; align-items: center; justify-content: center; color: var(--colors--white); font-size: .75rem; font-weight: 700; font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; line-height: 1; pointer-events: none; }
+    .fav-count.is-long { font-size: .6875rem; }
     .fav-count:empty { display: none; }
     .fav-overlay { position: fixed; inset: 0; z-index: 998; background: var(--colors--dark-gray); opacity: 0; pointer-events: none; transition: opacity .3s; }
     .fav-overlay.is-open { opacity: .5; pointer-events: auto; }
     .fav-panel { position: fixed; top: 0; right: 0; bottom: 0; z-index: 999; display: flex; flex-direction: column; width: min(26rem, 100vw); background: var(--colors--white); color: var(--colors--dark-gray); box-shadow: -8px 0 32px rgba(15, 23, 42, .15); transform: translateX(100%); visibility: hidden; transition: transform .3s ease, visibility 0s .3s; }
     .fav-panel.is-open { transform: none; visibility: visible; transition: transform .3s ease; }
     .fav-panel_head { display: flex; align-items: flex-start; justify-content: space-between; padding: 1.25rem 1.5rem .25rem; }
-    .fav-panel_title { margin: 0; font-family: var(--theme--heading-font); font-size: var(--font-size--medium); font-weight: 700; line-height: 1.2; }
+    .fav-panel_title { margin: 0; font-family: var(--theme--heading-font); font-size: 1.5rem; font-weight: 700; line-height: 1.15; }
     .fav-panel_close { width: 2.5rem; height: 2.5rem; padding: .6rem; border: 0; border-radius: var(--radius--radius-circle); background: var(--colors--light-gray); color: inherit; cursor: pointer; }
     .fav-panel_close:hover { color: var(--colors--pink); }
-    .fav-panel_list { flex: 1; overflow: auto; scrollbar-gutter: stable; margin: 0; padding: .5rem 1.5rem; list-style: none; }
+    .fav-panel_list { flex: 1; overflow-x: hidden; overflow-y: auto; scrollbar-gutter: stable; margin: 0; padding: .5rem 1.5rem; list-style: none; }
     .fav-panel_item { display: flex; align-items: center; gap: 1rem; padding: .75rem 0; border-bottom: 1px solid var(--colors--navy-tint); }
     .fav-panel_link { display: flex; flex: 1; align-items: center; gap: 1rem; min-width: 0; color: inherit; text-decoration: none; }
     .fav-panel_link:hover .fav-panel_name { color: var(--colors--pink); }
     .fav-panel_image { flex: none; width: 4rem; height: 4rem; padding: .25rem; border-radius: var(--radius--radius-input); background: var(--colors--light-gray); object-fit: contain; }
     .fav-panel_brand { font-size: var(--font-size--tiny); text-transform: uppercase; letter-spacing: .05em; opacity: .7; }
     .fav-panel_name { font-weight: 600; line-height: 1.3; transition: color .2s; }
+    /* One line each; long names end in an ellipsis and scroll on hover (ellipsisScroll). */
+    .fav-panel_text { flex: 1; min-width: 0; }
+    .fav-panel_brand, .fav-panel_name { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
     .fav-panel_remove { flex: none; width: 2rem; height: 2rem; padding: .45rem; border: 0; border-radius: var(--radius--radius-circle); background: transparent; color: var(--colors--pink); cursor: pointer; }
     .fav-panel_remove svg { fill: currentColor; }
     .fav-panel_remove:hover { background: var(--colors--pink-tint); }
     .fav-panel_empty { padding: 2.5rem 1.5rem; text-align: center; }
     .fav-panel_empty p { margin: 0 0 1.5rem; }
-    .fav-panel_bar { display: flex; align-items: center; gap: .5rem; padding: .75rem 1.5rem; border-bottom: 1px solid var(--colors--navy-tint); }
-    .fav-panel_bar .button, .fav-panel_bar .fav-download > summary { min-height: 0; padding: .45rem .85rem; font-size: .8125rem; line-height: 1.2; }
-    .fav-panel_bar .fav-download > summary { gap: .45rem; }
-    .fav-panel_recent { margin-left: auto; color: inherit; font-size: .8125rem; font-weight: 600; text-decoration: underline; text-underline-offset: .2em; white-space: nowrap; }
-    .fav-panel_recent:hover { color: var(--colors--pink); }
-    .fav-panel_note { margin: .15rem 0 0; font-size: var(--font-size--tiny); opacity: .7; }
+    /* Three equal buttons across the panel: View on page, Download, Recently viewed (grey). */
+    .fav-panel_bar { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto; align-items: stretch; gap: .5rem; padding: .875rem 1.5rem 1rem; border-bottom: 1px solid var(--colors--navy-tint); }
+    .fav-panel_bar .button, .fav-panel_bar .fav-download > summary { width: 100%; min-height: 0; padding: .6rem .5rem; font-size: .875rem; line-height: 1.2; white-space: nowrap; }
+    .fav-panel_bar .fav-download > summary { gap: .4rem; }
+    .fav-panel_bar .button.fav-panel_recent { background-color: var(--colors--navy-tint); color: var(--colors--dark-gray); }
+    .fav-panel_bar .button.fav-panel_recent:hover { background-color: var(--colors--dark-gray-15); }
+    .fav-panel_bar.is-empty { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .fav-panel_note { margin: .2rem 0 0; font-size: .6875rem; opacity: .65; }
     .fav-panel_bar.is-empty .fav-download { display: none; }
     .fav-toast { position: fixed; left: 50%; bottom: 1.5rem; z-index: 1000; display: flex; align-items: center; gap: 1rem; max-width: calc(100vw - 2rem); padding: .75rem .75rem .75rem 1.25rem; border-radius: var(--radius--radius-button); background: var(--colors--dark-gray); color: var(--colors--white); font-size: var(--font-size--small); box-shadow: 0 8px 24px rgba(15, 23, 42, .25); transform: translate(-50%, 150%); opacity: 0; transition: transform .3s ease, opacity .3s; pointer-events: none; }
     .fav-toast.is-open { transform: translate(-50%, 0); opacity: 1; pointer-events: auto; }
@@ -265,7 +290,7 @@
     navFav.type = 'button';
     navFav.className = 'nav_icon-link is-fav';
     navFav.style.cssText = 'border:0;background:transparent;padding:0;';
-    navFav.innerHTML = `<div class="nav_icon">${heartSvg}</div><span class="fav-count"></span>`;
+    navFav.innerHTML = `<div class="nav_icon">${heartSvg}<span class="fav-count"></span></div>`;
     navFav.addEventListener('click', () => openPanel());
     const search = navRight.querySelector('[data-search-toggle]');
     navRight.insertBefore(navFav, search ? search.nextSibling : navRight.firstChild);
@@ -610,7 +635,7 @@
     </div>
     <div class="fav-panel_bar">
       <a href="/favourites" class="button w-inline-block"><div>View on page</div></a>
-      <a href="/recently-viewed" class="fav-panel_recent">Recently viewed</a>
+      <a href="/recently-viewed" class="button fav-panel_recent w-inline-block"><div>Recently viewed</div></a>
     </div>
     <ul class="fav-panel_list"></ul>
     <div class="fav-panel_empty">
@@ -658,9 +683,11 @@
           link.appendChild(img);
         }
         const text = document.createElement('div');
+        text.className = 'fav-panel_text';
         text.innerHTML = '<div class="fav-panel_brand"></div><div class="fav-panel_name"></div>';
         text.children[0].textContent = p.brand;
         text.children[1].textContent = p.name;
+        ellipsisScroll(text.children[1], li);
         link.appendChild(text);
         const remove = document.createElement('button');
         remove.type = 'button';
@@ -924,24 +951,7 @@
   // left to show the full name, then slide back.
   document.querySelectorAll('.supplier-card_name').forEach((name) => {
     const card = name.closest('.supplier-card');
-    if (!card) return;
-    const inner = document.createElement('span');
-    inner.style.display = 'inline-block';
-    inner.textContent = name.textContent;
-    name.textContent = '';
-    name.appendChild(inner);
-    card.addEventListener('mouseenter', () => {
-      const overflow = inner.scrollWidth - name.clientWidth;
-      if (overflow <= 0) return;
-      name.style.textOverflow = 'clip';
-      inner.style.transition = `transform ${Math.max(1, overflow / 30)}s linear 0.3s`;
-      inner.style.transform = `translateX(-${overflow + 4}px)`;
-    });
-    card.addEventListener('mouseleave', () => {
-      inner.style.transition = 'transform 0.4s ease';
-      inner.style.transform = '';
-      setTimeout(() => (name.style.textOverflow = ''), 400);
-    });
+    if (card) ellipsisScroll(name, card);
   });
 
   // "1 products" -> "1 product" on brand counts.
