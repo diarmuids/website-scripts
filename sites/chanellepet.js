@@ -1,4 +1,4 @@
-// Last updated: 2026-09-26 08:51:11
+// Last updated: 2026-09-26 09:57:10
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -41,6 +41,8 @@
   const favStyle = document.createElement('style');
   favStyle.textContent = `
     .product_item { position: relative; }
+    /* Open menu button: its Webflow open-state colour points at a deleted variable. */
+    .nav_menu-button.w--open { background-color: var(--colors--pink); }
     .fav-button { position: absolute; z-index: 3; top: .75rem; right: .75rem; width: 2.5rem; height: 2.5rem; padding: .6rem; border: 0; border-radius: var(--radius--radius-circle); background: var(--colors--white); color: var(--colors--dark-gray); box-shadow: 0 2px 8px rgba(15, 23, 42, .12); cursor: pointer; transition: transform .2s, color .2s; }
     .fav-button svg { fill: none; transition: fill .2s; }
     .fav-button:hover { color: var(--colors--pink); transform: scale(1.08); }
@@ -54,7 +56,7 @@
     .nav_icon-link.is-fav:hover, .nav_icon-link.is-fav.is-active { color: var(--colors--pink); }
     .nav_icon-link.is-fav svg { fill: none; }
     .nav_icon-link.is-fav.is-active svg { fill: currentColor; }
-    .fav-count { position: absolute; top: .2rem; right: .1rem; min-width: 1.125rem; height: 1.125rem; padding: 0 .25rem; border-radius: var(--radius--radius-circle); background: var(--colors--pink); color: var(--colors--white); font-size: .6875rem; font-weight: 700; line-height: 1.125rem; text-align: center; }
+    .fav-count { position: absolute; top: .2rem; right: .1rem; min-width: 1.125rem; height: 1.125rem; padding: 0 .25rem; border-radius: var(--radius--radius-circle); background: var(--colors--pink-dark); color: var(--colors--white); font-size: .6875rem; font-weight: 700; line-height: 1.125rem; text-align: center; }
     .fav-count:empty { display: none; }
     .fav-overlay { position: fixed; inset: 0; z-index: 998; background: var(--colors--dark-gray); opacity: 0; pointer-events: none; transition: opacity .3s; }
     .fav-overlay.is-open { opacity: .5; pointer-events: auto; }
@@ -80,7 +82,7 @@
     .fav-panel_foot span { opacity: .7; }
     .fav-toast { position: fixed; left: 50%; bottom: 1.5rem; z-index: 1000; display: flex; align-items: center; gap: 1rem; max-width: calc(100vw - 2rem); padding: .75rem .75rem .75rem 1.25rem; border-radius: var(--radius--radius-button); background: var(--colors--dark-gray); color: var(--colors--white); font-size: var(--font-size--small); box-shadow: 0 8px 24px rgba(15, 23, 42, .25); transform: translate(-50%, 150%); opacity: 0; transition: transform .3s ease, opacity .3s; pointer-events: none; }
     .fav-toast.is-open { transform: translate(-50%, 0); opacity: 1; pointer-events: auto; }
-    .fav-toast_undo { padding: .4rem .9rem; border: 0; border-radius: var(--radius--radius-button); background: var(--colors--pink); color: var(--colors--white); font: inherit; font-weight: 700; cursor: pointer; }
+    .fav-toast_undo { padding: .4rem .9rem; border: 0; border-radius: var(--radius--radius-button); background: var(--colors--pink-dark); color: var(--colors--white); font: inherit; font-weight: 700; cursor: pointer; }
     .fav-toast_undo:hover { background: var(--colors--white); color: var(--colors--pink); }
     .fav-page_actions { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }
     .recent_track { display: grid; grid-auto-flow: column; grid-template-columns: none; grid-template-rows: auto; grid-auto-columns: calc((100% - 3 * var(--spacing--medium)) / 4); overflow: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
@@ -714,6 +716,21 @@
   // -------------------------------------------------------
   // FORMS
   // -------------------------------------------------------
+
+  // Form labels: the builder left for="" and repeated ids (id="field"), so labels
+  // weren't tied to their inputs. Give each field a unique id and point its label at it.
+  const usedIds = new Set();
+  document.querySelectorAll('form input:not([type="hidden"]):not([type="submit"]), form textarea, form select').forEach((field, i) => {
+    let id = field.id;
+    if (!id || usedIds.has(id) || document.querySelectorAll(`[id="${CSS.escape(id)}"]`).length > 1) {
+      id = `${(field.name || 'field').toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${i}`;
+      field.id = id;
+    }
+    usedIds.add(id);
+    const wrapper = field.closest('.form_field-wrapper, .w-checkbox, label');
+    const label = wrapper?.matches('label') ? wrapper : wrapper?.querySelector('label');
+    if (label && !label.contains(field)) label.htmlFor = id;
+  });
 
   // Placeholders by field name (the Webflow API can't set input placeholders).
   const PLACEHOLDERS = {
