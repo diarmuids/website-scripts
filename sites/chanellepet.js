@@ -1,4 +1,4 @@
-// Last updated: 2026-09-26 10:16:41
+// Last updated: 2026-09-26 10:17:46
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -61,7 +61,7 @@
     .nav_icon-link.is-fav { position: relative; flex: none; margin: 0; }
     .nav_icon-link.is-fav .nav_icon { width: 1.625rem; height: 1.625rem; }
     .nav_icon-link.is-fav:hover { color: var(--colors--pink); }
-    .nav_icon-link.is-fav.is-active { color: var(--colors--pink-dark); }
+    .nav_icon-link.is-fav.is-active { color: var(--colors--pink); }
     .nav_icon-link.is-fav svg { fill: none; }
     .nav_icon-link.is-fav.is-active svg { fill: currentColor; }
     .fav-count { position: absolute; inset: 0 0 .125rem; display: flex; align-items: center; justify-content: center; color: var(--colors--white); font-size: .6875rem; font-weight: 700; line-height: 1; letter-spacing: -.02em; pointer-events: none; }
@@ -91,7 +91,7 @@
     .fav-panel_foot span { opacity: .7; }
     .fav-toast { position: fixed; left: 50%; bottom: 1.5rem; z-index: 1000; display: flex; align-items: center; gap: 1rem; max-width: calc(100vw - 2rem); padding: .75rem .75rem .75rem 1.25rem; border-radius: var(--radius--radius-button); background: var(--colors--dark-gray); color: var(--colors--white); font-size: var(--font-size--small); box-shadow: 0 8px 24px rgba(15, 23, 42, .25); transform: translate(-50%, 150%); opacity: 0; transition: transform .3s ease, opacity .3s; pointer-events: none; }
     .fav-toast.is-open { transform: translate(-50%, 0); opacity: 1; pointer-events: auto; }
-    .fav-toast_undo { padding: .4rem .9rem; border: 0; border-radius: var(--radius--radius-button); background: var(--colors--pink-dark); color: var(--colors--white); font: inherit; font-weight: 700; cursor: pointer; }
+    .fav-toast_undo { padding: .4rem .9rem; border: 0; border-radius: var(--radius--radius-button); background: var(--colors--pink); color: var(--colors--white); font: inherit; font-weight: 700; cursor: pointer; }
     .fav-toast_undo:hover { background: var(--colors--white); color: var(--colors--pink); }
     .fav-page_actions { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }
     .recent_track { display: grid; grid-auto-flow: column; grid-template-columns: none; grid-template-rows: auto; grid-auto-columns: calc((100% - 3 * var(--spacing--medium)) / 4); overflow: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
@@ -113,7 +113,7 @@
     .fav-download_menu { position: absolute; right: 0; top: calc(100% + .4rem); z-index: 20; display: grid; min-width: 11rem; padding: .3rem; border: 1px solid var(--colors--dark-gray-15); border-radius: var(--radius--radius-block); background: var(--colors--white); box-shadow: 0 12px 32px rgba(15, 23, 42, .14); }
     .fav-download_menu button { display: flex; align-items: center; gap: .55rem; padding: .45rem .7rem; border: 0; border-radius: var(--radius--radius-input); background: none; color: var(--colors--dark-gray); font: inherit; font-size: var(--font-size--small); font-weight: 600; white-space: nowrap; text-align: left; cursor: pointer; }
     .fav-download_menu svg { flex: none; width: 1rem; height: 1rem; opacity: .6; }
-    .fav-download_menu button:hover, .fav-download_menu button:focus-visible { background: var(--colors--pink-tint); color: var(--colors--pink-dark); }
+    .fav-download_menu button:hover, .fav-download_menu button:focus-visible { background: var(--colors--pink-tint); color: var(--colors--pink); }
     @media (max-width: 767px) { .fav-download_menu { left: 0; right: auto; } }
     .fav-page_empty { padding: 2.5rem; border-radius: var(--radius--radius-block); background: var(--colors--light-gray); text-align: center; }
     .fav-page_empty p { margin: 0 0 1.5rem; }
@@ -1608,7 +1608,6 @@
       const H = 297;
       const M = 16;
       const PINK = [255, 20, 147];
-      const PINK_DARK = [200, 0, 106];
       const NAVY = [15, 23, 42];
       const GREY = [100, 108, 124];
       const LINE = [226, 232, 240];
@@ -1681,7 +1680,7 @@
         let ty = y + 4;
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(8);
-        doc.setTextColor(...PINK_DARK);
+        doc.setTextColor(...PINK);
         doc.text((it.brand || '').toUpperCase(), textX, ty);
         ty += 5.5;
         doc.setFontSize(12);
@@ -1701,7 +1700,7 @@
         }
         ty += 1.5;
         doc.setFontSize(8.5);
-        doc.setTextColor(...PINK_DARK);
+        doc.setTextColor(...PINK);
         doc.textWithLink('View product online', textX, ty, { url: it.link });
         y += rowH;
         if (i < items.length - 1) {
