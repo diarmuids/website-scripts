@@ -1,9 +1,13 @@
-// Last updated: 2026-09-26 09:57:10
+// Last updated: 2026-09-26 10:13:15
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
 
 (function () {
+  // Run once, even if the page includes the script twice (e.g. a loader plus a plain tag).
+  if (window.chanellePetLoaded) return;
+  window.chanellePetLoaded = true;
+
   // CMS card links: the API can't set "current item" links, so cards link to the
   // template root (/product or /brands) and carry the item slug as their id.
   const fixItemLinks = (root = document) => {
@@ -96,6 +100,16 @@
     .recent_arrow:disabled { opacity: .35; cursor: default; }
     @media (max-width: 991px) { .recent_track { grid-auto-columns: calc((100% - 2 * var(--spacing--medium)) / 3); } }
     @media (max-width: 767px) { .recent_track { grid-auto-columns: calc((100% - var(--spacing--small)) / 2); } }
+    .fav-download { position: relative; }
+    .fav-download > summary { list-style: none; cursor: pointer; gap: .6rem; }
+    .fav-download > summary::-webkit-details-marker { display: none; }
+    .fav-download_chevron { width: .5rem; height: .5rem; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(-2px) rotate(45deg); transition: transform .2s; }
+    .fav-download[open] .fav-download_chevron { transform: translateY(2px) rotate(-135deg); }
+    .fav-download_menu { position: absolute; right: 0; top: calc(100% + .4rem); z-index: 20; display: grid; min-width: 11rem; padding: .3rem; border: 1px solid var(--colors--dark-gray-15); border-radius: var(--radius--radius-block); background: var(--colors--white); box-shadow: 0 12px 32px rgba(15, 23, 42, .14); }
+    .fav-download_menu button { display: flex; align-items: center; gap: .55rem; padding: .45rem .7rem; border: 0; border-radius: var(--radius--radius-input); background: none; color: var(--colors--dark-gray); font: inherit; font-size: var(--font-size--small); font-weight: 600; white-space: nowrap; text-align: left; cursor: pointer; }
+    .fav-download_menu svg { flex: none; width: 1rem; height: 1rem; opacity: .6; }
+    .fav-download_menu button:hover, .fav-download_menu button:focus-visible { background: var(--colors--pink-tint); color: var(--colors--pink-dark); }
+    @media (max-width: 767px) { .fav-download_menu { left: 0; right: auto; } }
     .fav-page_empty { padding: 2.5rem; border-radius: var(--radius--radius-block); background: var(--colors--light-gray); text-align: center; }
     .fav-page_empty p { margin: 0 0 1.5rem; }
     .fav-page_clear { padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
@@ -1360,9 +1374,16 @@
     // The page title names the page, so the list itself has no heading of its own.
     const favSection = productSection('section_favourites', '');
     favSection.querySelector('h2').remove();
+    const FILE_ICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>';
     const actions = document.createElement('div');
     actions.className = 'button-group';
-    actions.innerHTML = '<button type="button" class="button is-secondary">Download for Excel</button>';
+    actions.innerHTML =
+      '<details class="fav-download"><summary class="button is-secondary">Download<span class="fav-download_chevron" aria-hidden="true"></span></summary>' +
+      '<div class="fav-download_menu">' +
+      [['pdf', 'PDF'], ['xlsx', 'Excel'], ['csv', 'CSV'], ['txt', 'Text']]
+        .map(([ext, name]) => `<button type="button" data-export="${ext}">${FILE_ICON}${name} (.${ext})</button>`)
+        .join('') +
+      '</div></details>';
     favSection.querySelector('.heading_row').appendChild(actions);
     const favList = favSection.querySelector('.product_list');
     const favEmpty = document.createElement('div');
@@ -1381,19 +1402,303 @@
     });
     refreshers.push(stripSection('Recently viewed', recentOthers, '/recently-viewed'));
 
-    // CSV with a byte-order mark so Excel opens it with the right characters.
-    actions.querySelector('button').addEventListener('click', () => {
-      const cell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-      const rows = [['Product', 'Brand', 'SKU', 'Link'], ...favourites.map((p) => [p.name, p.brand, p.sku, location.origin + p.url])];
-      const csv = '﻿' + rows.map((r) => r.map(cell).join(',')).join('\r\n');
+    // Downloads: each favourite's product page is read for its details (spec table,
+    // short summary, main image), then written as PDF, Excel, CSV or text. Excel and
+    // PDF libraries load only when first used.
+    const download = actions.querySelector('.fav-download');
+    const summaryEl = download.querySelector('summary');
+    document.addEventListener('click', (e) => {
+      if (download.open && !download.contains(e.target)) download.open = false;
+    });
+    download.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        download.open = false;
+        summaryEl.focus();
+      }
+    });
+    download.querySelectorAll('[data-export]').forEach((button) =>
+      button.addEventListener('click', async () => {
+        download.open = false;
+        const label = summaryEl.firstChild.textContent;
+        summaryEl.firstChild.textContent = 'Preparing…';
+        summaryEl.setAttribute('aria-busy', 'true');
+        try {
+          const items = await favouriteDetails();
+          await EXPORTERS[button.dataset.export](items);
+        } catch (error) {
+          showToast('Sorry, the download failed. Please try again.', false);
+        }
+        summaryEl.firstChild.textContent = label;
+        summaryEl.removeAttribute('aria-busy');
+      })
+    );
+
+    const detailCache = new Map();
+    async function productDetails(p) {
+      if (detailCache.has(p.url)) return detailCache.get(p.url);
+      const item = { ...p, specs: [], summary: '', link: location.origin + p.url };
+      try {
+        const html = await (await fetch(p.url)).text();
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        doc.querySelectorAll('.product-spec_row').forEach((row) => {
+          const label = row.querySelector('.product-spec_label')?.textContent.trim();
+          const value = row.querySelector('.product-spec_value')?.textContent.trim();
+          if (label && value) item.specs.push([label, value]);
+        });
+        item.summary = doc.querySelector('.product-hero_summary')?.textContent.trim() || '';
+        item.name = doc.querySelector('.product-hero_name')?.textContent.trim() || item.name;
+        item.brand = doc.querySelector('.product-hero_brand')?.textContent.trim() || item.brand;
+        item.image = doc.querySelector('.product-hero_image')?.getAttribute('src') || item.image;
+        const sku = item.specs.find(([label]) => label === 'SKU');
+        if (sku) item.sku = sku[1];
+      } catch (error) {
+        // Offline or blocked: export what was saved with the heart.
+      }
+      detailCache.set(p.url, item);
+      return item;
+    }
+    async function favouriteDetails() {
+      const list = [...favourites];
+      const out = new Array(list.length);
+      let next = 0;
+      const worker = async () => {
+        while (next < list.length) {
+          const i = next++;
+          out[i] = await productDetails(list[i]);
+        }
+      };
+      await Promise.all(Array.from({ length: Math.min(6, list.length) }, worker));
+      return out;
+    }
+
+    // Spec columns in a stable order: the usual ones first, then anything else found.
+    function specColumns(items) {
+      const order = ['SKU', 'Barcode (EAN)', 'Supplier code', 'Brand'];
+      items.forEach((it) => it.specs.forEach(([label]) => !order.includes(label) && order.push(label)));
+      return order.filter((label) => label !== 'Brand');
+    }
+    const specOf = (it, label) => it.specs.find(([l]) => l === label)?.[1] || (label === 'SKU' ? it.sku : '') || '';
+    const today = new Date().toLocaleDateString('en-IE', { day: 'numeric', month: 'long', year: 'numeric' });
+    const fileBase = `chanelle-pet-favourites-${new Date().toISOString().slice(0, 10)}`;
+    function saveBlob(blob, name) {
       const a = document.createElement('a');
-      a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-      a.download = 'chanelle-pet-favourites.csv';
+      a.href = URL.createObjectURL(blob);
+      a.download = name;
       document.body.appendChild(a);
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    });
+    }
+    function tableRows(items) {
+      const cols = specColumns(items);
+      return [
+        ['Product', 'Brand', ...cols, 'Summary', 'Link'],
+        ...items.map((it) => [it.name, it.brand, ...cols.map((c) => specOf(it, c)), it.summary, it.link]),
+      ];
+    }
+    const loadScript = (src) =>
+      new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = src;
+        s.onload = resolve;
+        s.onerror = reject;
+        document.head.appendChild(s);
+      });
+
+    const EXPORTERS = {
+      txt(items) {
+        const lines = [`Chanelle Pet: your favourites (${today})`, `${items.length} product${items.length === 1 ? '' : 's'}`, ''];
+        items.forEach((it, i) => {
+          lines.push(`${i + 1}. ${it.name}`);
+          if (it.brand) lines.push(`   Brand: ${it.brand}`);
+          specColumns([it]).forEach((c) => specOf(it, c) && lines.push(`   ${c}: ${specOf(it, c)}`));
+          if (it.summary) lines.push(`   ${it.summary}`);
+          lines.push(`   ${it.link}`, '');
+        });
+        saveBlob(new Blob([lines.join('\r\n')], { type: 'text/plain;charset=utf-8' }), `${fileBase}.txt`);
+      },
+      csv(items) {
+        const cell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+        // Byte-order mark so Excel opens it with the right characters.
+        const csv = '﻿' + tableRows(items).map((r) => r.map(cell).join(',')).join('\r\n');
+        saveBlob(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `${fileBase}.csv`);
+      },
+      async xlsx(items) {
+        if (!window.XLSX) await loadScript('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');
+        const rows = tableRows(items);
+        const sheet = XLSX.utils.aoa_to_sheet(rows);
+        sheet['!cols'] = rows[0].map((h) => ({ wch: h === 'Product' || h === 'Summary' ? 48 : h === 'Link' ? 40 : 18 }));
+        // Links clickable in Excel.
+        const linkCol = rows[0].length - 1;
+        items.forEach((it, i) => {
+          const ref = XLSX.utils.encode_cell({ r: i + 1, c: linkCol });
+          if (sheet[ref]) sheet[ref].l = { Target: it.link };
+        });
+        const book = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(book, sheet, 'Favourites');
+        XLSX.writeFile(book, `${fileBase}.xlsx`);
+      },
+      async pdf(items) {
+        if (!window.jspdf) await loadScript('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js');
+        const [logo, ...images] = await Promise.all([
+          imageData(document.querySelector('.nav_logo-img')?.src, 600, 'image/png'),
+          ...items.map((it) => imageData(it.image, 360, 'image/jpeg')),
+        ]);
+        buildPdf(items, logo, images).save(`${fileBase}.pdf`);
+      },
+    };
+
+    // Draws an image into a canvas (white behind transparency) and returns a data URL
+    // plus its size, or null if it can't be loaded.
+    function imageData(src, max, type) {
+      return new Promise((resolve) => {
+        if (!src) return resolve(null);
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          const w0 = img.naturalWidth || max;
+          const h0 = img.naturalHeight || max;
+          const scale = Math.min(1, max / Math.max(w0, h0)) || 1;
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.round(w0 * scale);
+          canvas.height = Math.round(h0 * scale);
+          const ctx = canvas.getContext('2d');
+          if (type === 'image/jpeg') {
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+          }
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          try {
+            resolve({ data: canvas.toDataURL(type, 0.85), w: canvas.width, h: canvas.height });
+          } catch (error) {
+            resolve(null);
+          }
+        };
+        img.onerror = () => resolve(null);
+        img.src = src;
+      });
+    }
+
+    // A4 list: logo header on every page, one product per row (image left, details
+    // right), page numbers in the footer.
+    function buildPdf(items, logo, images) {
+      const doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' });
+      const W = 210;
+      const H = 297;
+      const M = 16;
+      const PINK = [255, 20, 147];
+      const PINK_DARK = [200, 0, 106];
+      const NAVY = [15, 23, 42];
+      const GREY = [100, 108, 124];
+      const LINE = [226, 232, 240];
+      const header = () => {
+        doc.setFillColor(...PINK);
+        doc.rect(0, 0, W, 4, 'F');
+        let x = M;
+        if (logo) {
+          const h = 11;
+          const w = (logo.w / logo.h) * h;
+          doc.addImage(logo.data, 'PNG', M, 11, w, h);
+          x = M + w;
+        } else {
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(18);
+          doc.setTextColor(...PINK);
+          doc.text('Chanelle Pet', M, 19);
+        }
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.setTextColor(...NAVY);
+        doc.text('Your favourites', W - M, 16, { align: 'right' });
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(...GREY);
+        doc.text(`${items.length} product${items.length === 1 ? '' : 's'} · ${today}`, W - M, 21.5, { align: 'right' });
+        doc.setDrawColor(...PINK);
+        doc.setLineWidth(0.6);
+        doc.line(M, 27, W - M, 27);
+        return x;
+      };
+      header();
+      let y = 33;
+      const IMG = 34;
+      const textX = M + IMG + 7;
+      const textW = W - M - textX;
+      items.forEach((it, i) => {
+        // Measure the text block so rows never split across pages.
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        const nameLines = doc.splitTextToSize(it.name || '', textW).slice(0, 2);
+        const specs = specColumns([it])
+          .map((c) => [c, specOf(it, c)])
+          .filter(([, v]) => v);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        const specLines = doc.splitTextToSize(specs.map(([c, v]) => `${c}: ${v}`).join('   ·   '), textW).slice(0, 3);
+        const summaryLines = it.summary ? doc.splitTextToSize(it.summary, textW).slice(0, 3) : [];
+        const textH = 5 + nameLines.length * 5.2 + 1.5 + specLines.length * 4.3 + (summaryLines.length ? 1.5 + summaryLines.length * 4.1 : 0) + 5.5;
+        const rowH = Math.max(IMG, textH) + 8;
+        if (y + rowH > H - 18) {
+          doc.addPage();
+          header();
+          y = 33;
+        }
+        // Image in a light rounded box, contained.
+        doc.setFillColor(248, 250, 252);
+        doc.setDrawColor(...LINE);
+        doc.setLineWidth(0.3);
+        doc.roundedRect(M, y, IMG, IMG, 3, 3, 'FD');
+        const img = images[i];
+        if (img) {
+          const pad = 2.5;
+          const box = IMG - pad * 2;
+          const r = Math.min(box / img.w, box / img.h);
+          const w = img.w * r;
+          const h = img.h * r;
+          doc.addImage(img.data, 'JPEG', M + pad + (box - w) / 2, y + pad + (box - h) / 2, w, h);
+        }
+        let ty = y + 4;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(...PINK_DARK);
+        doc.text((it.brand || '').toUpperCase(), textX, ty);
+        ty += 5.5;
+        doc.setFontSize(12);
+        doc.setTextColor(...NAVY);
+        doc.text(nameLines, textX, ty);
+        ty += nameLines.length * 5.2 + 0.5;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(...NAVY);
+        doc.text(specLines, textX, ty);
+        ty += specLines.length * 4.3;
+        if (summaryLines.length) {
+          ty += 1.5;
+          doc.setTextColor(...GREY);
+          doc.text(summaryLines, textX, ty);
+          ty += summaryLines.length * 4.1;
+        }
+        ty += 1.5;
+        doc.setFontSize(8.5);
+        doc.setTextColor(...PINK_DARK);
+        doc.textWithLink('View product online', textX, ty, { url: it.link });
+        y += rowH;
+        if (i < items.length - 1) {
+          doc.setDrawColor(...LINE);
+          doc.line(M, y - 4, W - M, y - 4);
+        }
+      });
+      const pages = doc.getNumberOfPages();
+      for (let n = 1; n <= pages; n++) {
+        doc.setPage(n);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(...GREY);
+        doc.text(`Chanelle Pet · ${location.host}`, M, H - 9);
+        doc.text(`Page ${n} of ${pages}`, W - M, H - 9, { align: 'right' });
+      }
+      return doc;
+    }
   } else if (isRecentPage) {
     const recentSection = productSection('section_recent', '');
     recentSection.querySelector('h2').remove();
