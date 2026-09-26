@@ -1,4 +1,4 @@
-// Last updated: 2026-09-26 10:55:36
+// Last updated: 2026-09-26 10:56:44
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -118,7 +118,7 @@
     .fav-panel_bar .button.fav-panel_recent { background-color: var(--colors--navy-tint); color: var(--colors--dark-gray); }
     .fav-panel_bar .button.fav-panel_recent:hover { background-color: var(--colors--dark-gray-15); }
     .fav-panel_bar.is-empty { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .fav-panel_note { margin: .2rem 0 0; font-size: .6875rem; opacity: .65; }
+    .fav-panel_note { margin: .25rem 0 0; font-size: .8125rem; opacity: .7; }
     .fav-panel_bar.is-empty .fav-download { display: none; }
     .fav-toast { position: fixed; left: 50%; bottom: 1.5rem; z-index: 1000; display: flex; align-items: center; gap: 1rem; max-width: calc(100vw - 2rem); padding: .75rem .75rem .75rem 1.25rem; border-radius: var(--radius--radius-button); background: var(--colors--dark-gray); color: var(--colors--white); font-size: var(--font-size--small); box-shadow: 0 8px 24px rgba(15, 23, 42, .25); transform: translate(-50%, 150%); opacity: 0; transition: transform .3s ease, opacity .3s; pointer-events: none; }
     .fav-toast.is-open { transform: translate(-50%, 0); opacity: 1; pointer-events: auto; }
@@ -635,7 +635,7 @@
     </div>
     <div class="fav-panel_bar">
       <a href="/favourites" class="button w-inline-block"><div>View on page</div></a>
-      <a href="/recently-viewed" class="button fav-panel_recent w-inline-block"><div>Recently viewed</div></a>
+      <a href="/recently-viewed" class="button fav-panel_recent w-inline-block"><div>Recent</div></a>
     </div>
     <ul class="fav-panel_list"></ul>
     <div class="fav-panel_empty">
