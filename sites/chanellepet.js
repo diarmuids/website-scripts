@@ -1,4 +1,4 @@
-// Last updated: 2026-09-26 10:17:46
+// Last updated: 2026-09-26 10:41:43
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -1260,8 +1260,24 @@
     if (message && !message.value) {
       message.value = `I'd like to ask about ${product.name}${product.sku ? ` (${product.sku})` : ''}.`;
     }
-    const skuInput = document.querySelector('.product-enquiry_card input[name="SKU"]');
-    if (skuInput) skuInput.value = product.sku;
+    // Hidden fields so the enquiry (Webflow Forms or Basin) records which product it's about.
+    const enquiryForm = document.querySelector('.product-enquiry_card form');
+    if (enquiryForm) {
+      [
+        ['Product', product.name],
+        ['SKU', product.sku],
+        ['Product link', location.origin + location.pathname],
+      ].forEach(([name, value]) => {
+        let input = enquiryForm.querySelector(`input[name="${name}"]`);
+        if (!input) {
+          input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = name;
+          enquiryForm.appendChild(input);
+        }
+        input.value = value;
+      });
+    }
 
     // Favourite heart on the product image.
     const imageCard = document.querySelector('.product-hero_image-card');
