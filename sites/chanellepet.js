@@ -1,4 +1,4 @@
-// Last updated: 2026-09-26 08:35:31
+// Last updated: 2026-09-26 08:46:11
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -76,7 +76,28 @@
     .fav-panel_remove:hover { background: var(--colors--pink-tint); }
     .fav-panel_empty { padding: 2.5rem 1.5rem; text-align: center; }
     .fav-panel_empty p { margin: 0 0 1.5rem; }
-    .fav-panel_foot { padding: 1.25rem 1.5rem; border-top: 1px solid var(--colors--navy-tint); font-size: var(--font-size--small); opacity: .7; }
+    .fav-panel_foot { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.25rem 1.5rem; border-top: 1px solid var(--colors--navy-tint); font-size: var(--font-size--small); }
+    .fav-panel_foot span { opacity: .7; }
+    .fav-toast { position: fixed; left: 50%; bottom: 1.5rem; z-index: 1000; display: flex; align-items: center; gap: 1rem; max-width: calc(100vw - 2rem); padding: .75rem .75rem .75rem 1.25rem; border-radius: var(--radius--radius-button); background: var(--colors--dark-gray); color: var(--colors--white); font-size: var(--font-size--small); box-shadow: 0 8px 24px rgba(15, 23, 42, .25); transform: translate(-50%, 150%); opacity: 0; transition: transform .3s ease, opacity .3s; pointer-events: none; }
+    .fav-toast.is-open { transform: translate(-50%, 0); opacity: 1; pointer-events: auto; }
+    .fav-toast_undo { padding: .4rem .9rem; border: 0; border-radius: var(--radius--radius-button); background: var(--colors--pink); color: var(--colors--white); font: inherit; font-weight: 700; cursor: pointer; }
+    .fav-toast_undo:hover { background: var(--colors--white); color: var(--colors--pink); }
+    .fav-page_actions { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }
+    .recent_track { display: grid; grid-auto-flow: column; grid-template-columns: none; grid-template-rows: auto; grid-auto-columns: calc((100% - 3 * var(--spacing--medium)) / 4); overflow: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+    .recent_track::-webkit-scrollbar { display: none; }
+    .recent_track > * { scroll-snap-align: start; }
+    .recent_controls { display: flex; align-items: center; gap: .5rem; }
+    .recent_controls .link_arrow { margin-left: .75rem; }
+    .recent_controls.is-static .recent_arrow { display: none; }
+    .recent_arrow { width: 2.5rem; height: 2.5rem; padding: .65rem; border: 1px solid var(--colors--dark-gray-15); border-radius: var(--radius--radius-circle); background: var(--colors--white); color: var(--colors--dark-gray); cursor: pointer; transition: background-color .2s, color .2s, opacity .2s; }
+    .recent_arrow:hover:not(:disabled) { background: var(--colors--pink); border-color: var(--colors--pink); color: var(--colors--white); }
+    .recent_arrow:disabled { opacity: .35; cursor: default; }
+    @media (max-width: 991px) { .recent_track { grid-auto-columns: calc((100% - 2 * var(--spacing--medium)) / 3); } }
+    @media (max-width: 767px) { .recent_track { grid-auto-columns: calc((100% - var(--spacing--small)) / 2); } }
+    .fav-page_empty { padding: 2.5rem; border-radius: var(--radius--radius-block); background: var(--colors--light-gray); text-align: center; }
+    .fav-page_empty p { margin: 0 0 1.5rem; }
+    .fav-page_clear { padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
+    .fav-page_clear:hover { color: var(--colors--pink); }
   `;
   document.head.appendChild(favStyle);
 
@@ -98,16 +119,65 @@
     syncFavourites();
   }
   let favourites = readFavourites();
+  // Set by the favourites page (further down) so it re-renders when the list changes.
+  let onFavouritesChange = null;
   const isFavourite = (url) => favourites.some((p) => p.url === url);
 
+  // Every add/remove is recorded so Ctrl+Z / Ctrl+Y (or Ctrl+Shift+Z) can undo and
+  // redo it. A removal also shows a toast with an Undo button for touch screens.
+  const favHistory = { undo: [], redo: [] };
+  function setFavourite(product, on, index = 0) {
+    const rest = favourites.filter((p) => p.url !== product.url);
+    if (on) rest.splice(Math.min(index, rest.length), 0, product);
+    saveFavourites(rest);
+  }
   function toggleFavourite(product, button) {
     const on = !isFavourite(product.url);
-    saveFavourites(on ? [product, ...favourites] : favourites.filter((p) => p.url !== product.url));
+    const index = on ? 0 : favourites.findIndex((p) => p.url === product.url);
+    setFavourite(product, on);
+    favHistory.undo.push({ product, on, index });
+    favHistory.redo = [];
     if (on && button) {
       button.classList.remove('is-pop');
       void button.offsetWidth;
       button.classList.add('is-pop');
     }
+    if (!on) showToast(`Removed ${product.name || 'product'} from favourites`, true);
+  }
+  function undoFavourite(redo) {
+    const step = (redo ? favHistory.redo : favHistory.undo).pop();
+    if (!step) return;
+    (redo ? favHistory.undo : favHistory.redo).push(step);
+    const on = redo ? step.on : !step.on;
+    setFavourite(step.product, on, step.index);
+    showToast(`${on ? 'Added' : 'Removed'} ${step.product.name || 'product'} ${on ? 'to' : 'from'} favourites`, false);
+  }
+  document.addEventListener('keydown', (e) => {
+    if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+    const key = e.key.toLowerCase();
+    if (key !== 'z' && key !== 'y') return;
+    // Leave typing fields alone so Ctrl+Z still undoes text there.
+    const t = e.target;
+    if (t.closest?.('input, textarea, select, [contenteditable=""], [contenteditable="true"]')) return;
+    const redo = key === 'y' || e.shiftKey;
+    if (!(redo ? favHistory.redo : favHistory.undo).length) return;
+    e.preventDefault();
+    undoFavourite(redo);
+  });
+
+  const favToast = document.createElement('div');
+  favToast.className = 'fav-toast';
+  favToast.setAttribute('role', 'status');
+  favToast.innerHTML = '<span class="fav-toast_text"></span><button type="button" class="fav-toast_undo">Undo</button>';
+  favToast.querySelector('.fav-toast_undo').addEventListener('click', () => undoFavourite(false));
+  let toastTimer;
+  function showToast(text, withUndo) {
+    if (!favToast.isConnected) document.body.appendChild(favToast);
+    favToast.querySelector('.fav-toast_text').textContent = text;
+    favToast.querySelector('.fav-toast_undo').style.display = withUndo ? '' : 'none';
+    favToast.classList.add('is-open');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => favToast.classList.remove('is-open'), 5000);
   }
 
   // One listener for every heart, so hearts on cards Finsweet clones still work.
@@ -137,15 +207,16 @@
     return {
       url: card.getAttribute('href') || '',
       name: card.querySelector('.product-card_name')?.textContent.trim() || '',
-      brand: card.querySelector('[fs-list-field="brandname"]')?.textContent.trim() || '',
+      brand: card.querySelector('[fs-list-field="brandname"], .product-recent_brand')?.textContent.trim() || '',
+      sku: card.querySelector('[fs-list-field="sku"]')?.textContent.trim() || card.dataset.sku || '',
       image: img ? img.currentSrc || img.src : '',
     };
   }
   const addFavouriteButtons = (root = document) => {
     root.querySelectorAll('.product-card').forEach((card) => {
       const item = card.parentElement;
-      // CMS list items only (Recently viewed cards are clones sitting straight in the list).
-      if (!item?.classList.contains('w-dyn-item') || item.querySelector(':scope > .fav-button')) return;
+      // Cards in a list item only (CMS items, or the script's own recently viewed / favourites cards).
+      if (!item?.matches('.w-dyn-item, .product_item') || item.querySelector(':scope > .fav-button')) return;
       const url = card.getAttribute('href') || '';
       if (!url.startsWith('/product/')) return;
       item.appendChild(makeHeart(url));
@@ -191,7 +262,10 @@
       <p>No favourites yet. Tap the heart on any product to save it here.</p>
       <div class="button-group" style="justify-content:center"><a href="/products" class="button w-inline-block"><div>Browse products</div></a></div>
     </div>
-    <div class="fav-panel_foot">Saved on this device only.</div>`;
+    <div class="fav-panel_foot">
+      <div class="button-group"><a href="/favourites" class="button w-inline-block"><div>View all</div></a></div>
+      <span>Saved on this device only.</span>
+    </div>`;
   document.body.append(favOverlay, favPanel);
   favPanel.querySelector('.fav-panel_close').addEventListener('click', () => closePanel());
   favOverlay.addEventListener('click', () => closePanel());
@@ -241,7 +315,7 @@
         remove.setAttribute('aria-label', `Remove ${p.name} from favourites`);
         remove.innerHTML = heartSvg;
         remove.addEventListener('click', () => {
-          saveFavourites(favourites.filter((f) => f.url !== p.url));
+          toggleFavourite(p);
           favPanel.querySelector('.fav-panel_close').focus();
         });
         li.append(link, remove);
@@ -261,6 +335,7 @@
       navFav.setAttribute('aria-label', n ? `Favourites (${n})` : 'Favourites');
     }
     if (favPanel.classList.contains('is-open')) renderPanel();
+    onFavouritesChange?.();
   }
   // Another tab changed the list.
   window.addEventListener('storage', (e) => {
@@ -282,7 +357,9 @@
 
   const SEARCH_FIELD = 'name, brandname, sku';
   const RECENT_KEY = 'chanellePetRecentlyViewed';
-  const RECENT_MAX = 6;
+  // Up to 24 products are remembered; sliders hold the latest 12.
+  const RECENT_MAX = 24;
+  const RECENT_STRIP = 12;
 
   // -------------------------------------------------------
   // PRODUCT FILTERS (Finsweet Attributes v2 List)
@@ -383,8 +460,38 @@
     });
   }
 
+  // The Category dropdown was built with only some categories; add the rest (in
+  // alphabetical order) so every product can be found by its category.
+  const ALL_CATEGORIES = [
+    'Aquatic', 'Bedding', 'Beds', 'Bowls & Feeders', 'Cages & Carriers', 'Car Accessories', 'Care & Hygiene',
+    'Cat Flaps', 'Cat Litter', 'Coats', 'Collars & Leads', 'Food', 'Footwear & Training Aids', 'Grooming',
+    'Harness', 'Healthcare', 'Home Care', 'Hygiene', 'Kennels & Runs', 'Poop Bags', 'POS', 'Scratchers',
+    'Shampoo', 'Small Animal Accessories', 'Tie-Out Stakes & Cables', 'Toys', 'Training & Behaviour',
+    'Travel Accessories', 'Travel Bowls', 'Treats', 'Wild Bird', 'Worming & Flea',
+  ];
+  function addMissingCategories() {
+    const list = document.querySelector('.filters_dropdown[fs-list-field="category"] .filters_dropdown-list');
+    const rows = () => [...(list?.querySelectorAll('.filters_checkbox') || [])];
+    const template = rows()[0];
+    if (!template) return;
+    const key = (s) => s.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '');
+    const have = new Set(rows().map((row) => key(row.textContent.trim())));
+    ALL_CATEGORIES.forEach((name) => {
+      if (have.has(key(name))) return;
+      const row = template.cloneNode(true);
+      const input = row.querySelector('input');
+      if (input) input.checked = false;
+      const text = row.querySelector('span');
+      if (!text) return;
+      text.textContent = name;
+      const before = rows().find((r) => r.textContent.trim().localeCompare(name) > 0);
+      list.insertBefore(row, before || null);
+    });
+  }
+
   if (document.querySelector('[fs-list-element="list"]')) {
     flattenCheckboxes();
+    addMissingCategories();
     addFilterAttributes();
     rewriteFilterParams();
     // Default sort: featured first, unless the URL already asks for a sort.
@@ -1082,6 +1189,11 @@
     document.querySelectorAll('.product-spec_row').forEach((row) => {
       if (isEmpty(row.querySelector('.product-spec_value'))) row.style.display = 'none';
     });
+    // The last shown row drops its divider so it doesn't double up with the table border.
+    document.querySelectorAll('.product-spec_list').forEach((specList) => {
+      const shown = [...specList.querySelectorAll('.product-spec_row')].filter((row) => row.style.display !== 'none');
+      if (shown.length) shown[shown.length - 1].style.borderBottom = '0';
+    });
     document.querySelectorAll('.accordion_item').forEach((item) => {
       const content = item.querySelector('.accordion_content');
       if (content && !content.textContent.trim()) item.style.display = 'none';
@@ -1107,38 +1219,180 @@
     }
 
     const list = readRecent().filter((p) => p.url !== product.url);
-    const recentWrap = document.querySelector('.product-recent_list');
-    if (recentWrap) renderRecent(recentWrap, list.slice(0, RECENT_MAX));
     try {
-      localStorage.setItem(RECENT_KEY, JSON.stringify([product, ...list].slice(0, RECENT_MAX + 1)));
+      localStorage.setItem(RECENT_KEY, JSON.stringify([product, ...list].slice(0, RECENT_MAX)));
     } catch (error) {
-      // Storage can be blocked; the section simply stays hidden.
+      // Storage can be blocked; the recently viewed strips simply stay hidden.
     }
   }
 
-  // Clones the first card in .product-recent_list as a template for each stored product.
-  function renderRecent(wrap, items) {
-    const section = wrap.closest('.section_product-recent');
-    const template = wrap.querySelector('.product-recent_item');
-    if (!items.length || !template) {
-      if (section) section.style.display = 'none';
-      return;
-    }
-    template.remove();
-    items.forEach((p) => {
-      const card = template.cloneNode(true);
-      const link = card.matches('a') ? card : card.querySelector('a');
-      if (link) link.href = p.url;
-      const img = card.querySelector('img');
-      if (img) {
-        img.src = p.image;
-        img.removeAttribute('srcset');
-        img.alt = p.name;
+  // Product card markup matching the CMS cards, in a list item so it gets a heart.
+  function productCard(p) {
+    const item = document.createElement('div');
+    item.className = 'product_item';
+    const card = document.createElement('a');
+    card.className = 'product-card w-inline-block';
+    card.href = p.url;
+    if (p.sku) card.dataset.sku = p.sku;
+    card.innerHTML =
+      '<div class="product-card_image-wrap"><img class="product-card_image" loading="lazy" alt=""></div>' +
+      '<div class="product-card_text"><div class="product-card_meta product-recent_brand"></div><div class="product-card_name"></div></div>';
+    const img = card.querySelector('img');
+    if (p.image) {
+      img.src = p.image;
+      img.alt = p.name;
+    } else img.remove();
+    card.querySelector('.product-card_meta').textContent = p.brand;
+    card.querySelector('.product-card_name').textContent = p.name;
+    item.append(card, makeHeart(p.url));
+    return item;
+  }
+  function fillList(list, items) {
+    list.replaceChildren(...items.map(productCard));
+  }
+  const ARROW =
+    '<div class="icon_svg"><svg aria-hidden="true" stroke-linejoin="round" stroke-linecap="round" stroke-width="2" stroke="currentColor" fill="none" viewBox="0 0 24 24" height="100%" width="100%" xmlns="http://www.w3.org/2000/svg"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg></div>';
+  function viewAllLink(href, text) {
+    const a = document.createElement('a');
+    a.className = 'link_arrow w-inline-block';
+    a.href = href;
+    a.innerHTML = `${text}${ARROW}`;
+    return a;
+  }
+  // A section in the site's usual layout: heading row, then a product grid.
+  function productSection(className, title, text) {
+    const section = document.createElement('section');
+    section.className = className;
+    section.innerHTML =
+      '<div class="padding-global padding-section-large"><div class="container-large">' +
+      '<div class="heading_row"><div class="heading_text"><h2 class="heading-style-h2"></h2><p class="text-size-medium"></p></div></div>' +
+      '<div class="product_list"></div></div></div>';
+    section.querySelector('h2').textContent = title;
+    section.querySelector('.heading_text p').textContent = text || '';
+    return section;
+  }
+
+  // -------------------------------------------------------
+  // RECENTLY VIEWED STRIPS
+  // -------------------------------------------------------
+
+  // Product pages use their own "Recently viewed" section; Home, Products and brand
+  // pages get one added above the closing call to action. Each is a slider showing
+  // 4 at a time (3 tablet, 2 mobile) with arrows; "View all" goes to the favourites
+  // page, which lists everything.
+  const path = location.pathname.replace(/\/$/, '') || '/';
+  const RECENT_ALL = '/favourites#recently-viewed';
+  const recentOthers = readRecent().filter((p) => p.url !== path).slice(0, RECENT_STRIP);
+  const CHEVRON = (d) =>
+    `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
+  function makeSlider(section, list) {
+    list.classList.add('recent_track');
+    fillList(list, recentOthers);
+    const controls = document.createElement('div');
+    controls.className = 'recent_controls';
+    controls.innerHTML =
+      `<button type="button" class="recent_arrow" data-dir="-1" aria-label="Previous products">${CHEVRON('m15 18-6-6 6-6')}</button>` +
+      `<button type="button" class="recent_arrow" data-dir="1" aria-label="Next products">${CHEVRON('m9 18 6-6-6-6')}</button>`;
+    controls.appendChild(viewAllLink(RECENT_ALL, 'View all'));
+    section.querySelector('.heading_row')?.appendChild(controls);
+    const [prev, next] = controls.querySelectorAll('.recent_arrow');
+    const update = () => {
+      prev.disabled = list.scrollLeft <= 2;
+      next.disabled = list.scrollLeft + list.clientWidth >= list.scrollWidth - 2;
+      controls.classList.toggle('is-static', prev.disabled && next.disabled);
+    };
+    controls.addEventListener('click', (e) => {
+      const arrow = e.target.closest('.recent_arrow');
+      if (arrow) list.scrollBy({ left: Number(arrow.dataset.dir) * list.clientWidth, behavior: 'smooth' });
+    });
+    list.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    requestAnimationFrame(update);
+  }
+  const nativeRecent = document.querySelector('.section_product-recent');
+  if (nativeRecent) {
+    const list = nativeRecent.querySelector('.product-recent_list');
+    if (!recentOthers.length || !list) nativeRecent.style.display = 'none';
+    else makeSlider(nativeRecent, list);
+  } else if (recentOthers.length && (path === '/' || path === '/products' || path.startsWith('/brands/'))) {
+    const section = productSection('section_product-recent', 'Recently viewed');
+    section.querySelector('.heading_text p').remove();
+    makeSlider(section, section.querySelector('.product_list'));
+    const cta = document.querySelector('main [class*="section_cta"]');
+    if (cta) cta.before(section);
+    else document.querySelector('main')?.appendChild(section);
+  }
+
+  // -------------------------------------------------------
+  // FAVOURITES PAGE (/favourites)
+  // -------------------------------------------------------
+
+  // Favourites (with a spreadsheet download), then recently viewed products that
+  // aren't favourites. Rendered after the page title; re-rendered on any change.
+  if (path === '/favourites') {
+    const main = document.querySelector('main') || document.body;
+    const favSection = productSection('section_favourites', 'Your favourites');
+    favSection.id = 'favourites';
+    const actions = document.createElement('div');
+    actions.className = 'button-group';
+    actions.innerHTML = '<button type="button" class="button is-secondary">Download for Excel</button>';
+    favSection.querySelector('.heading_row').appendChild(actions);
+    const favList = favSection.querySelector('.product_list');
+    const favEmpty = document.createElement('div');
+    favEmpty.className = 'fav-page_empty';
+    favEmpty.innerHTML =
+      '<p>No favourites yet. Tap the heart on any product to save it here.</p><div class="button-group" style="justify-content:center"><a href="/products" class="button w-inline-block"><div>Browse products</div></a></div>';
+    favList.after(favEmpty);
+
+    const recentSection = productSection('section_product-recent', 'Recently viewed', "Products you've looked at that aren't in your favourites.");
+    recentSection.id = 'recently-viewed';
+    const clear = document.createElement('button');
+    clear.type = 'button';
+    clear.className = 'fav-page_clear';
+    clear.textContent = 'Clear history';
+    recentSection.querySelector('.heading_row').appendChild(clear);
+
+    const title = main.querySelector('.section_page-title');
+    if (title) title.after(favSection, recentSection);
+    else main.prepend(favSection, recentSection);
+
+    const render = () => {
+      const n = favourites.length;
+      fillList(favList, favourites);
+      favList.style.display = n ? '' : 'none';
+      favEmpty.style.display = n ? 'none' : '';
+      actions.style.display = n ? '' : 'none';
+      favSection.querySelector('.heading_text p').textContent = n ? `${n} saved product${n === 1 ? '' : 's'}, stored on this device.` : '';
+      const recent = readRecent().filter((p) => !isFavourite(p.url));
+      fillList(recentSection.querySelector('.product_list'), recent);
+      recentSection.style.display = recent.length ? '' : 'none';
+    };
+    onFavouritesChange = render;
+    render();
+    if (location.hash === '#recently-viewed') requestAnimationFrame(() => recentSection.scrollIntoView());
+
+    clear.addEventListener('click', () => {
+      try {
+        localStorage.setItem(RECENT_KEY, JSON.stringify(readRecent().filter((p) => isFavourite(p.url))));
+      } catch (error) {
+        // Nothing to clear if storage is blocked.
       }
-      const set = (sel, text) => card.querySelectorAll(sel).forEach((el) => (el.textContent = text));
-      set('.product-recent_name', p.name);
-      set('.product-recent_brand', p.brand);
-      wrap.appendChild(card);
+      render();
+    });
+    window.addEventListener('storage', (e) => e.key === RECENT_KEY && render());
+
+    // CSV with a byte-order mark so Excel opens it with the right characters.
+    actions.querySelector('button').addEventListener('click', () => {
+      const cell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+      const rows = [['Product', 'Brand', 'SKU', 'Link'], ...favourites.map((p) => [p.name, p.brand, p.sku, location.origin + p.url])];
+      const csv = '﻿' + rows.map((r) => r.map(cell).join(',')).join('\r\n');
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+      a.download = 'chanelle-pet-favourites.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     });
   }
 })();
