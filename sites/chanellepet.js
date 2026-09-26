@@ -1,4 +1,4 @@
-// Last updated: 2026-09-26 10:56:44
+// Last updated: 2026-09-26 11:42:05
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -85,7 +85,7 @@
     .nav_icon-link.is-fav.is-active svg { fill: currentColor; }
     /* Tabular figures keep digits (especially "1") centred in the heart. */
     /* Centred on the heart itself; the bottom offset lifts it to the heart's optical middle. */
-    .fav-count { position: absolute; inset: 0 0 .2rem; display: flex; align-items: center; justify-content: center; color: var(--colors--white); font-size: .75rem; font-weight: 700; font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; line-height: 1; pointer-events: none; }
+    .fav-count { position: absolute; inset: 0 0 .1rem; display: flex; align-items: center; justify-content: center; color: var(--colors--white); font-size: .75rem; font-weight: 700; font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; line-height: 1; pointer-events: none; }
     .fav-count.is-long { font-size: .6875rem; }
     .fav-count:empty { display: none; }
     .fav-overlay { position: fixed; inset: 0; z-index: 998; background: var(--colors--dark-gray); opacity: 0; pointer-events: none; transition: opacity .3s; }
