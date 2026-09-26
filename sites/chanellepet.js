@@ -1,4 +1,4 @@
-// Last updated: 2026-09-26 10:43:58
+// Last updated: 2026-09-26 10:48:24
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -64,8 +64,9 @@
     .nav_icon-link.is-fav.is-active { color: var(--colors--pink); }
     .nav_icon-link.is-fav svg { fill: none; }
     .nav_icon-link.is-fav.is-active svg { fill: currentColor; }
-    .fav-count { position: absolute; inset: 0 0 .125rem; display: flex; align-items: center; justify-content: center; color: var(--colors--white); font-size: .6875rem; font-weight: 700; line-height: 1; letter-spacing: -.02em; pointer-events: none; }
-    .fav-count.is-long { font-size: .5625rem; }
+    /* Tabular figures keep digits (especially "1") centred in the heart. */
+    .fav-count { position: absolute; inset: 0 0 .1rem; display: flex; align-items: center; justify-content: center; color: var(--colors--white); font-size: .75rem; font-weight: 700; font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; line-height: 1; pointer-events: none; }
+    .fav-count.is-long { font-size: .6875rem; letter-spacing: -.04em; }
     .fav-count:empty { display: none; }
     .fav-overlay { position: fixed; inset: 0; z-index: 998; background: var(--colors--dark-gray); opacity: 0; pointer-events: none; transition: opacity .3s; }
     .fav-overlay.is-open { opacity: .5; pointer-events: auto; }
@@ -753,17 +754,6 @@
     if (label && !label.contains(field)) label.htmlFor = id;
   });
 
-  // Both site forms post to one Basin form, so each sends a hidden "Form" field naming it.
-  document.querySelectorAll('.w-form form[data-name]').forEach((form) => {
-    // Not the Products filter bar, which is also a Webflow form.
-    if (form.matches('[fs-list-element], .filters_form') || form.closest('.filters_form, .filters_bar') || form.querySelector('input[name="Form"]')) return;
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = 'Form';
-    input.value = form.dataset.name;
-    form.appendChild(input);
-  });
-
   // Placeholders by field name (the Webflow API can't set input placeholders).
   const PLACEHOLDERS = {
     Name: 'Your full name',
@@ -1271,7 +1261,8 @@
     if (message && !message.value) {
       message.value = `I'd like to ask about ${product.name}${product.sku ? ` (${product.sku})` : ''}.`;
     }
-    // Hidden fields so the enquiry (Webflow Forms or Basin) records which product it's about.
+    // Hidden fields so the enquiry records which product it's about (the form's Code Embed
+  // carries the Basin Form and _gotcha fields).
     const enquiryForm = document.querySelector('.product-enquiry_card form');
     if (enquiryForm) {
       [
