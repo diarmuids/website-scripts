@@ -1,4 +1,4 @@
-// Last updated: 2026-09-26 10:43:37
+// Last updated: 2026-09-26 10:43:58
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -755,7 +755,8 @@
 
   // Both site forms post to one Basin form, so each sends a hidden "Form" field naming it.
   document.querySelectorAll('.w-form form[data-name]').forEach((form) => {
-    if (form.closest('.filters_bar') || form.querySelector('input[name="Form"]')) return;
+    // Not the Products filter bar, which is also a Webflow form.
+    if (form.matches('[fs-list-element], .filters_form') || form.closest('.filters_form, .filters_bar') || form.querySelector('input[name="Form"]')) return;
     const input = document.createElement('input');
     input.type = 'hidden';
     input.name = 'Form';
