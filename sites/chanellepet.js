@@ -1,4 +1,4 @@
-// Last updated: 2026-09-26 11:47:54
+// Last updated: 2026-09-26 11:50:05
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -731,12 +731,31 @@
   addOfferBadges();
   addFavouriteButtons();
   syncFavourites();
+  // Lenis smooth scroll (site footer code, a global `lenis`) measures the page once;
+  // after Load more or filtering the page grows, so ask it to re-measure or it
+  // stops scrolling at the old bottom.
+  let resizeQueued = false;
+  const resizeLenis = () => {
+    if (resizeQueued) return;
+    resizeQueued = true;
+    requestAnimationFrame(() => {
+      resizeQueued = false;
+      try {
+        if (typeof lenis !== 'undefined' && lenis && typeof lenis.resize === 'function') lenis.resize();
+      } catch (error) {
+        // No Lenis on this page: nothing to do.
+      }
+    });
+  };
+
   // Finsweet load-more renders new items later; fix those as they appear.
   new MutationObserver(() => {
     fixItemLinks();
     addOfferBadges();
     addFavouriteButtons();
+    resizeLenis();
   }).observe(document.documentElement, { childList: true, subtree: true });
+  window.addEventListener('load', resizeLenis);
 
   const SEARCH_FIELD = 'name, brandname, sku';
   const RECENT_KEY = 'chanellePetRecentlyViewed';
