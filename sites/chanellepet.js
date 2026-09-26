@@ -1,4 +1,4 @@
-// Last updated: 2026-09-26 08:46:11
+// Last updated: 2026-09-26 08:47:08
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -1329,7 +1329,8 @@
 
   // Favourites (with a spreadsheet download), then recently viewed products that
   // aren't favourites. Rendered after the page title; re-rendered on any change.
-  if (path === '/favourites') {
+  // Not on Webflow's 404 page (served at this URL until the page exists).
+  if (path === '/favourites' && !document.querySelector('._404_wrapper')) {
     const main = document.querySelector('main') || document.body;
     const favSection = productSection('section_favourites', 'Your favourites');
     favSection.id = 'favourites';
