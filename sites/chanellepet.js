@@ -1,4 +1,4 @@
-// Last updated: 2026-09-26 11:50:05
+// Last updated: 2026-09-26 12:01:19
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -896,6 +896,48 @@
     addMissingCategories();
     addFilterAttributes();
     rewriteFilterParams();
+    // Each Pet, Category and Brand option shows how many products it has in total
+    // (as if it were the only filter), counted once from every item Finsweet loads.
+    // Totals don't change as other filters are ticked.
+    window.FinsweetAttributes = window.FinsweetAttributes || [];
+    window.FinsweetAttributes.push([
+      'list',
+      async (lists) => {
+        const list = lists && lists[0];
+        if (!list) return;
+        try {
+          await list.loadingPaginatedItems;
+        } catch (error) {
+          // Counts use whatever loaded.
+        }
+        const items = (list.items && (list.items.value || list.items)) || [];
+        const tally = { pet: new Map(), category: new Map(), brand: new Map() };
+        items.forEach((item) => {
+          Object.keys(tally).forEach((key) => {
+            const raw = String(item.fields?.[key]?.value ?? '').toLowerCase();
+            const values = key === 'brand' ? [raw.trim()] : raw.split('|').filter(Boolean).map((v) => `|${v}|`);
+            values.forEach((v) => v && tally[key].set(v, (tally[key].get(v) || 0) + 1));
+          });
+        });
+        document.querySelectorAll('.filters_dropdown[fs-list-field]').forEach((dropdown) => {
+          const counts = tally[dropdown.getAttribute('fs-list-field')];
+          if (!counts) return;
+          dropdown.querySelectorAll('.filters_checkbox').forEach((row) => {
+            const value = (row.querySelector('input')?.getAttribute('fs-list-value') || '').toLowerCase().trim();
+            if (!value) return;
+            let badge = row.querySelector('.filters_checkbox-count');
+            if (!badge) {
+              badge = document.createElement('span');
+              badge.className = 'filters_checkbox-count';
+              badge.style.cssText = 'margin-left:auto;padding-left:.75rem;font-size:.8125rem;color:var(--colors--dark-gray-50);font-variant-numeric:tabular-nums;';
+              row.appendChild(badge);
+            }
+            badge.textContent = (counts.get(value) || 0).toLocaleString('en-IE');
+          });
+        });
+      },
+    ]);
+
     // Under "Load more": "Showing 24 of 850 products", copied from the filter bar's
     // live Finsweet counts, and the button says how many the next click adds.
     const pager = document.querySelector('.pagination_component');
@@ -1208,7 +1250,10 @@
   function filterRows(dropdown, term) {
     const search = term.trim().toLowerCase();
     rowsOf(dropdown).forEach((row) => {
-      row.style.display = !search || row.textContent.toLowerCase().includes(search) ? '' : 'none';
+      // Match the option name only, not its count.
+      const label = [...row.children].find((c) => c.tagName !== 'INPUT' && !c.classList.contains('filters_checkbox-count'));
+      const name = (label || row).textContent.toLowerCase();
+      row.style.display = !search || name.includes(search) ? '' : 'none';
     });
     const empty = dropdown.querySelector('.filters_dropdown-empty');
     if (empty) empty.style.display = shownRows(dropdown).length ? 'none' : '';
