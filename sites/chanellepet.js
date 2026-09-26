@@ -1,4 +1,4 @@
-// Last updated: 2026-09-26 11:42:05
+// Last updated: 2026-09-26 11:47:54
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -877,6 +877,30 @@
     addMissingCategories();
     addFilterAttributes();
     rewriteFilterParams();
+    // Under "Load more": "Showing 24 of 850 products", copied from the filter bar's
+    // live Finsweet counts, and the button says how many the next click adds.
+    const pager = document.querySelector('.pagination_component');
+    const visibleEl = document.querySelector('.filters_count [fs-list-element="visible-count"]');
+    const resultsEl = document.querySelector('.filters_count [fs-list-element="results-count"]');
+    if (pager && visibleEl && resultsEl) {
+      const pageSize = document.querySelectorAll('[fs-list-element="list"] > .w-dyn-item').length || 24;
+      const line = document.createElement('div');
+      line.className = 'pagination_count';
+      line.style.cssText = 'margin-top:.875rem;text-align:center;font-size:.875rem;color:var(--colors--dark-gray-70);';
+      pager.after(line);
+      const num = (el) => Number(el.textContent.replace(/[^0-9]/g, '')) || 0;
+      const sync = () => {
+        const shown = num(visibleEl);
+        const total = num(resultsEl);
+        line.textContent = total ? `Showing ${shown.toLocaleString('en-IE')} of ${total.toLocaleString('en-IE')} products` : '';
+        const label = pager.querySelector('.w-pagination-next > div');
+        const left = total - shown;
+        if (label && left > 0) label.textContent = `Load ${Math.min(pageSize, left)} more`;
+      };
+      [visibleEl, resultsEl].forEach((el) => new MutationObserver(sync).observe(el, { childList: true, characterData: true, subtree: true }));
+      sync();
+    }
+
     // Default sort: featured first, unless the URL already asks for a sort.
     const sortSelect = document.querySelector('.filters_sort-select');
     if (sortSelect && !/[?&]sort/.test(location.search)) {
