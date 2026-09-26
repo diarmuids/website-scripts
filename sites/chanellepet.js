@@ -1,4 +1,4 @@
-// Last updated: 2026-09-25 15:38:33
+// Last updated: 2026-09-26 08:35:31
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -26,12 +26,258 @@
     });
   };
 
+  // -------------------------------------------------------
+  // FAVOURITES
+  // -------------------------------------------------------
+
+  // Visitors heart products on cards or the product page. The list lives in this
+  // browser's localStorage (no expiry, no login); a heart in the nav opens a panel
+  // listing them. Defined before the first card pass below, which uses it.
+  const FAV_KEY = 'chanellePetFavourites';
+  const HEART_PATH =
+    'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z';
+  const heartSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true" style="display:block"><path d="${HEART_PATH}"/></svg>`;
+
+  const favStyle = document.createElement('style');
+  favStyle.textContent = `
+    .product_item { position: relative; }
+    .fav-button { position: absolute; z-index: 3; top: .75rem; right: .75rem; width: 2.5rem; height: 2.5rem; padding: .6rem; border: 0; border-radius: var(--radius--radius-circle); background: var(--colors--white); color: var(--colors--dark-gray); box-shadow: 0 2px 8px rgba(15, 23, 42, .12); cursor: pointer; transition: transform .2s, color .2s; }
+    .fav-button svg { fill: none; transition: fill .2s; }
+    .fav-button:hover { color: var(--colors--pink); transform: scale(1.08); }
+    .fav-button.is-active { color: var(--colors--pink); }
+    .fav-button.is-active svg { fill: currentColor; }
+    .fav-button.is-pop { animation: fav-pop .35s ease; }
+    @keyframes fav-pop { 50% { transform: scale(1.25); } }
+    .product-hero_image-card { position: relative; }
+    .product-hero_image-card .fav-button { top: 1rem; right: 1rem; width: 3rem; height: 3rem; padding: .75rem; }
+    .nav_icon-link.is-fav { position: relative; }
+    .nav_icon-link.is-fav:hover, .nav_icon-link.is-fav.is-active { color: var(--colors--pink); }
+    .nav_icon-link.is-fav svg { fill: none; }
+    .nav_icon-link.is-fav.is-active svg { fill: currentColor; }
+    .fav-count { position: absolute; top: .2rem; right: .1rem; min-width: 1.125rem; height: 1.125rem; padding: 0 .25rem; border-radius: var(--radius--radius-circle); background: var(--colors--pink); color: var(--colors--white); font-size: .6875rem; font-weight: 700; line-height: 1.125rem; text-align: center; }
+    .fav-count:empty { display: none; }
+    .fav-overlay { position: fixed; inset: 0; z-index: 998; background: var(--colors--dark-gray); opacity: 0; pointer-events: none; transition: opacity .3s; }
+    .fav-overlay.is-open { opacity: .5; pointer-events: auto; }
+    .fav-panel { position: fixed; top: 0; right: 0; bottom: 0; z-index: 999; display: flex; flex-direction: column; width: min(26rem, 100vw); background: var(--colors--white); color: var(--colors--dark-gray); box-shadow: -8px 0 32px rgba(15, 23, 42, .15); transform: translateX(100%); visibility: hidden; transition: transform .3s ease, visibility 0s .3s; }
+    .fav-panel.is-open { transform: none; visibility: visible; transition: transform .3s ease; }
+    .fav-panel_head { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--colors--navy-tint); }
+    .fav-panel_title { margin: 0; font-family: var(--theme--heading-font); font-size: var(--font-size--large); font-weight: 700; }
+    .fav-panel_close { width: 2.5rem; height: 2.5rem; padding: .6rem; border: 0; border-radius: var(--radius--radius-circle); background: var(--colors--light-gray); color: inherit; cursor: pointer; }
+    .fav-panel_close:hover { color: var(--colors--pink); }
+    .fav-panel_list { flex: 1; overflow: auto; margin: 0; padding: .5rem 1.5rem; list-style: none; }
+    .fav-panel_item { display: flex; align-items: center; gap: 1rem; padding: .75rem 0; border-bottom: 1px solid var(--colors--navy-tint); }
+    .fav-panel_link { display: flex; flex: 1; align-items: center; gap: 1rem; min-width: 0; color: inherit; text-decoration: none; }
+    .fav-panel_link:hover .fav-panel_name { color: var(--colors--pink); }
+    .fav-panel_image { flex: none; width: 4rem; height: 4rem; padding: .25rem; border-radius: var(--radius--radius-input); background: var(--colors--light-gray); object-fit: contain; }
+    .fav-panel_brand { font-size: var(--font-size--tiny); text-transform: uppercase; letter-spacing: .05em; opacity: .7; }
+    .fav-panel_name { font-weight: 600; line-height: 1.3; transition: color .2s; }
+    .fav-panel_remove { flex: none; width: 2rem; height: 2rem; padding: .45rem; border: 0; border-radius: var(--radius--radius-circle); background: transparent; color: var(--colors--pink); cursor: pointer; }
+    .fav-panel_remove svg { fill: currentColor; }
+    .fav-panel_remove:hover { background: var(--colors--pink-tint); }
+    .fav-panel_empty { padding: 2.5rem 1.5rem; text-align: center; }
+    .fav-panel_empty p { margin: 0 0 1.5rem; }
+    .fav-panel_foot { padding: 1.25rem 1.5rem; border-top: 1px solid var(--colors--navy-tint); font-size: var(--font-size--small); opacity: .7; }
+  `;
+  document.head.appendChild(favStyle);
+
+  function readFavourites() {
+    try {
+      const list = JSON.parse(localStorage.getItem(FAV_KEY));
+      return Array.isArray(list) ? list : [];
+    } catch (error) {
+      return [];
+    }
+  }
+  function saveFavourites(list) {
+    try {
+      localStorage.setItem(FAV_KEY, JSON.stringify(list));
+    } catch (error) {
+      // Storage blocked (private mode etc.): the heart still toggles for this page view.
+    }
+    favourites = list;
+    syncFavourites();
+  }
+  let favourites = readFavourites();
+  const isFavourite = (url) => favourites.some((p) => p.url === url);
+
+  function toggleFavourite(product, button) {
+    const on = !isFavourite(product.url);
+    saveFavourites(on ? [product, ...favourites] : favourites.filter((p) => p.url !== product.url));
+    if (on && button) {
+      button.classList.remove('is-pop');
+      void button.offsetWidth;
+      button.classList.add('is-pop');
+    }
+  }
+
+  // One listener for every heart, so hearts on cards Finsweet clones still work.
+  let pageProduct = null;
+  function makeHeart(url) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'fav-button';
+    button.dataset.favUrl = url;
+    button.innerHTML = heartSvg;
+    paintHeart(button);
+    return button;
+  }
+  document.addEventListener('click', (e) => {
+    const button = e.target.closest('.fav-button');
+    if (!button) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const card = button.parentElement.querySelector(':scope > .product-card');
+    const product = card ? cardProduct(card) : pageProduct;
+    if (product?.url) toggleFavourite(product, button);
+  });
+
+  // Product cards: the heart sits on the list item, beside (not inside) the card link.
+  function cardProduct(card) {
+    const img = card.querySelector('.product-card_image');
+    return {
+      url: card.getAttribute('href') || '',
+      name: card.querySelector('.product-card_name')?.textContent.trim() || '',
+      brand: card.querySelector('[fs-list-field="brandname"]')?.textContent.trim() || '',
+      image: img ? img.currentSrc || img.src : '',
+    };
+  }
+  const addFavouriteButtons = (root = document) => {
+    root.querySelectorAll('.product-card').forEach((card) => {
+      const item = card.parentElement;
+      // CMS list items only (Recently viewed cards are clones sitting straight in the list).
+      if (!item?.classList.contains('w-dyn-item') || item.querySelector(':scope > .fav-button')) return;
+      const url = card.getAttribute('href') || '';
+      if (!url.startsWith('/product/')) return;
+      item.appendChild(makeHeart(url));
+    });
+  };
+
+  function paintHeart(button) {
+    const on = isFavourite(button.dataset.favUrl);
+    button.classList.toggle('is-active', on);
+    button.setAttribute('aria-pressed', String(on));
+    button.setAttribute('aria-label', on ? 'Remove from favourites' : 'Add to favourites');
+  }
+
+  // Nav heart with a count, opening the favourites panel.
+  const navRight = document.querySelector('.nav_right-wrapper');
+  let navFav = null;
+  if (navRight) {
+    navFav = document.createElement('button');
+    navFav.type = 'button';
+    navFav.className = 'nav_icon-link is-fav';
+    navFav.style.cssText = 'border:0;background:transparent;padding:0;';
+    navFav.innerHTML = `<div class="nav_icon">${heartSvg}</div><span class="fav-count"></span>`;
+    navFav.addEventListener('click', () => openPanel());
+    const search = navRight.querySelector('[data-search-toggle]');
+    navRight.insertBefore(navFav, search ? search.nextSibling : navRight.firstChild);
+  }
+
+  const favOverlay = document.createElement('div');
+  favOverlay.className = 'fav-overlay';
+  const favPanel = document.createElement('aside');
+  favPanel.className = 'fav-panel';
+  favPanel.setAttribute('role', 'dialog');
+  favPanel.setAttribute('aria-modal', 'true');
+  favPanel.setAttribute('aria-labelledby', 'fav-panel-title');
+  favPanel.setAttribute('data-lenis-prevent', '');
+  favPanel.innerHTML = `
+    <div class="fav-panel_head">
+      <h2 class="fav-panel_title" id="fav-panel-title">Your favourites</h2>
+      <button type="button" class="fav-panel_close" aria-label="Close favourites"><svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <ul class="fav-panel_list"></ul>
+    <div class="fav-panel_empty">
+      <p>No favourites yet. Tap the heart on any product to save it here.</p>
+      <div class="button-group" style="justify-content:center"><a href="/products" class="button w-inline-block"><div>Browse products</div></a></div>
+    </div>
+    <div class="fav-panel_foot">Saved on this device only.</div>`;
+  document.body.append(favOverlay, favPanel);
+  favPanel.querySelector('.fav-panel_close').addEventListener('click', () => closePanel());
+  favOverlay.addEventListener('click', () => closePanel());
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && favPanel.classList.contains('is-open')) closePanel();
+  });
+
+  function openPanel() {
+    renderPanel();
+    favPanel.classList.add('is-open');
+    favOverlay.classList.add('is-open');
+    navFav?.setAttribute('aria-expanded', 'true');
+    favPanel.querySelector('.fav-panel_close').focus();
+  }
+  function closePanel() {
+    favPanel.classList.remove('is-open');
+    favOverlay.classList.remove('is-open');
+    navFav?.setAttribute('aria-expanded', 'false');
+    navFav?.focus();
+  }
+
+  function renderPanel() {
+    const list = favPanel.querySelector('.fav-panel_list');
+    list.replaceChildren(
+      ...favourites.map((p) => {
+        const li = document.createElement('li');
+        li.className = 'fav-panel_item';
+        const link = document.createElement('a');
+        link.className = 'fav-panel_link';
+        link.href = p.url;
+        if (p.image) {
+          const img = document.createElement('img');
+          img.className = 'fav-panel_image';
+          img.src = p.image;
+          img.alt = '';
+          img.loading = 'lazy';
+          link.appendChild(img);
+        }
+        const text = document.createElement('div');
+        text.innerHTML = '<div class="fav-panel_brand"></div><div class="fav-panel_name"></div>';
+        text.children[0].textContent = p.brand;
+        text.children[1].textContent = p.name;
+        link.appendChild(text);
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'fav-panel_remove';
+        remove.setAttribute('aria-label', `Remove ${p.name} from favourites`);
+        remove.innerHTML = heartSvg;
+        remove.addEventListener('click', () => {
+          saveFavourites(favourites.filter((f) => f.url !== p.url));
+          favPanel.querySelector('.fav-panel_close').focus();
+        });
+        li.append(link, remove);
+        return li;
+      })
+    );
+    favPanel.querySelector('.fav-panel_empty').style.display = favourites.length ? 'none' : '';
+  }
+
+  // Repaint every heart, the nav count and (if open) the panel.
+  function syncFavourites() {
+    document.querySelectorAll('.fav-button').forEach(paintHeart);
+    if (navFav) {
+      const n = favourites.length;
+      navFav.querySelector('.fav-count').textContent = n ? String(n) : '';
+      navFav.classList.toggle('is-active', n > 0);
+      navFav.setAttribute('aria-label', n ? `Favourites (${n})` : 'Favourites');
+    }
+    if (favPanel.classList.contains('is-open')) renderPanel();
+  }
+  // Another tab changed the list.
+  window.addEventListener('storage', (e) => {
+    if (e.key !== FAV_KEY) return;
+    favourites = readFavourites();
+    syncFavourites();
+  });
+
   fixItemLinks();
   addOfferBadges();
+  addFavouriteButtons();
+  syncFavourites();
   // Finsweet load-more renders new items later; fix those as they appear.
   new MutationObserver(() => {
     fixItemLinks();
     addOfferBadges();
+    addFavouriteButtons();
   }).observe(document.documentElement, { childList: true, subtree: true });
 
   const SEARCH_FIELD = 'name, brandname, sku';
@@ -852,6 +1098,13 @@
     }
     const skuInput = document.querySelector('.product-enquiry_card input[name="SKU"]');
     if (skuInput) skuInput.value = product.sku;
+
+    // Favourite heart on the product image.
+    const imageCard = document.querySelector('.product-hero_image-card');
+    if (imageCard) {
+      pageProduct = product;
+      imageCard.appendChild(makeHeart(product.url));
+    }
 
     const list = readRecent().filter((p) => p.url !== product.url);
     const recentWrap = document.querySelector('.product-recent_list');
