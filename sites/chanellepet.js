@@ -1,4 +1,4 @@
-// Last updated: 2026-09-26 10:13:15
+// Last updated: 2026-09-26 10:16:41
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -56,11 +56,16 @@
     @keyframes fav-pop { 50% { transform: scale(1.25); } }
     .product-hero_image-card { position: relative; }
     .product-hero_image-card .fav-button { top: 1rem; right: 1rem; width: 3rem; height: 3rem; padding: .75rem; }
-    .nav_icon-link.is-fav { position: relative; }
-    .nav_icon-link.is-fav:hover, .nav_icon-link.is-fav.is-active { color: var(--colors--pink); }
+    /* Nav heart: same box as the search icon, a slightly larger heart, and the count
+       in white inside the filled heart. */
+    .nav_icon-link.is-fav { position: relative; flex: none; margin: 0; }
+    .nav_icon-link.is-fav .nav_icon { width: 1.625rem; height: 1.625rem; }
+    .nav_icon-link.is-fav:hover { color: var(--colors--pink); }
+    .nav_icon-link.is-fav.is-active { color: var(--colors--pink-dark); }
     .nav_icon-link.is-fav svg { fill: none; }
     .nav_icon-link.is-fav.is-active svg { fill: currentColor; }
-    .fav-count { position: absolute; top: .2rem; right: .1rem; min-width: 1.125rem; height: 1.125rem; padding: 0 .25rem; border-radius: var(--radius--radius-circle); background: var(--colors--pink-dark); color: var(--colors--white); font-size: .6875rem; font-weight: 700; line-height: 1.125rem; text-align: center; }
+    .fav-count { position: absolute; inset: 0 0 .125rem; display: flex; align-items: center; justify-content: center; color: var(--colors--white); font-size: .6875rem; font-weight: 700; line-height: 1; letter-spacing: -.02em; pointer-events: none; }
+    .fav-count.is-long { font-size: .5625rem; }
     .fav-count:empty { display: none; }
     .fav-overlay { position: fixed; inset: 0; z-index: 998; background: var(--colors--dark-gray); opacity: 0; pointer-events: none; transition: opacity .3s; }
     .fav-overlay.is-open { opacity: .5; pointer-events: auto; }
@@ -346,7 +351,9 @@
     document.querySelectorAll('.fav-button').forEach(paintHeart);
     if (navFav) {
       const n = favourites.length;
-      navFav.querySelector('.fav-count').textContent = n ? String(n) : '';
+      const count = navFav.querySelector('.fav-count');
+      count.textContent = n ? (n > 99 ? '99+' : String(n)) : '';
+      count.classList.toggle('is-long', n > 9);
       navFav.classList.toggle('is-active', n > 0);
       navFav.setAttribute('aria-label', n ? `Favourites (${n})` : 'Favourites');
     }
@@ -1233,6 +1240,20 @@
     // "Ask about this product" links to #product-enquiry (the API could not set this id).
     const enquirySection = document.querySelector('.section_product-enquiry');
     if (enquirySection && !enquirySection.id) enquirySection.id = 'product-enquiry';
+
+    // The product being asked about, shown under the enquiry intro (classes styled in Webflow).
+    const enquiryText = enquirySection?.querySelector('.cta_text');
+    if (enquiryText && !enquirySection.querySelector('.product-enquiry_product')) {
+      const chip = document.createElement('div');
+      chip.className = 'product-enquiry_product';
+      chip.innerHTML = '<img class="product-enquiry_product-image" alt=""><div><div class="product-enquiry_product-name"></div><div class="product-enquiry_product-sku"></div></div>';
+      const chipImg = chip.querySelector('img');
+      if (product.image) chipImg.src = product.image;
+      else chipImg.remove();
+      chip.querySelector('.product-enquiry_product-name').textContent = product.name;
+      chip.querySelector('.product-enquiry_product-sku').textContent = [product.brand, product.sku && `SKU ${product.sku}`].filter(Boolean).join(' · ');
+      enquiryText.after(chip);
+    }
 
     // Pre-fill the enquiry form with the product being viewed.
     const message = document.querySelector('.product-enquiry_card textarea');
