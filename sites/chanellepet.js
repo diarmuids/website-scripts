@@ -1,4 +1,4 @@
-// Last updated: 2026-09-26 10:41:43
+// Last updated: 2026-09-26 10:43:37
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -751,6 +751,16 @@
     const wrapper = field.closest('.form_field-wrapper, .w-checkbox, label');
     const label = wrapper?.matches('label') ? wrapper : wrapper?.querySelector('label');
     if (label && !label.contains(field)) label.htmlFor = id;
+  });
+
+  // Both site forms post to one Basin form, so each sends a hidden "Form" field naming it.
+  document.querySelectorAll('.w-form form[data-name]').forEach((form) => {
+    if (form.closest('.filters_bar') || form.querySelector('input[name="Form"]')) return;
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'Form';
+    input.value = form.dataset.name;
+    form.appendChild(input);
   });
 
   // Placeholders by field name (the Webflow API can't set input placeholders).
