@@ -1,4 +1,4 @@
-// Last updated: 2026-09-28 15:22:59
+// Last updated: 2026-09-28 15:24:55
 
 // Sitewide PS: new-build site script (sites/sitewideps-new.js).
 // Loaded by the new Webflow build's footer loader: dev.wsitefiles.com/sites/sitewideps-new.js,
@@ -62,6 +62,7 @@
   // combo nav_logo-img.is-on-dark (white logo); light: nav_logo-img.is-on-light
   // (original colours, overriding the dark-hero variant's white filter).
   // While the mobile menu is open, nav_logo-img.is-open wins, so neither is set.
+  // The preloader curtain (head code) is ignored so it cannot turn the logo white.
   const MEDIA = ["IMG", "VIDEO", "CANVAS", "PICTURE", "IFRAME"];
   const tone = (el) => {
     if (MEDIA.includes(el.tagName)) return "dark";
@@ -88,7 +89,7 @@
         const r = logo.getBoundingClientRect();
         const stack = document.elementsFromPoint(r.left + r.width / 2, r.top + r.height / 2);
         for (const el of stack) {
-          if (nav.contains(el) || el === document.documentElement) continue;
+          if (nav.contains(el) || el === document.documentElement || el.closest(".preloader_component")) continue;
           const t = tone(el);
           if (t) { result = t; break; }
         }
