@@ -1,4 +1,4 @@
-// Last updated: 2026-09-28 15:24:55
+// Last updated: 2026-09-28 16:15:36
 
 // Sitewide PS: new-build site script (sites/sitewideps-new.js).
 // Loaded by the new Webflow build's footer loader: dev.wsitefiles.com/sites/sitewideps-new.js,
@@ -36,9 +36,13 @@
   // Shrink the nav bar once the page scrolls. nav_container's height comes from
   // Nav/height; the native combos nav_container.is-scrolled (Nav/height-scrolled)
   // and nav_logo-img.is-scrolled (smaller logo) take over, and each class's own
-  // transition animates it.
+  // transition animates it. nav_link.is-scrolled puts the regular grey/navy pills
+  // back over the home page's white nav variant; the CTAs are skipped so they
+  // keep their own navy combos.
   const init = () => {
-    const targets = document.querySelectorAll(".nav_container, .nav_logo-img");
+    const targets = document.querySelectorAll(
+      ".nav_container, .nav_logo-img, .nav_component .nav_link:not(.is-cta):not(.is-cta-light)"
+    );
     if (!targets.length) return;
     let scrolled = null;
     const sync = () => {
