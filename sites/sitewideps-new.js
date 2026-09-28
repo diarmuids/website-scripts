@@ -1,4 +1,4 @@
-// Last updated: 2026-09-28 19:49:49
+// Last updated: 2026-09-28 19:52:54
 
 // Sitewide PS: new-build site script (sites/sitewideps-new.js).
 // Loaded by the new Webflow build's footer loader: dev.wsitefiles.com/sites/sitewideps-new.js,
@@ -169,7 +169,7 @@
   // News categories.
   // 1. Article pages: the header category ([data-news-category="link"], bound to
   //    News Category > Name) becomes a link to the News page with that filter set
-  //    (/about/news?category=<name>, the query Finsweet List reads).
+  //    (/about/news?category_equal=<name>, the query Finsweet List v2 writes and reads).
   // 2. News page: each filter pill's radio (.news_filter-input) gets its category
   //    name as fs-list-value. The MCP cannot bind an attribute to a CMS field, so
   //    the name is copied from the pill text here, and Finsweet Attributes (List:
@@ -181,7 +181,7 @@
       const name = el.textContent.trim();
       if (!name || el.querySelector("a")) return;
       const a = document.createElement("a");
-      a.href = `${NEWS_PATH}?category=${encodeURIComponent(name)}`;
+      a.href = `${NEWS_PATH}?category_equal=${encodeURIComponent(name)}`;
       a.textContent = name;
       a.style.color = "inherit";
       a.style.textDecoration = "none";
