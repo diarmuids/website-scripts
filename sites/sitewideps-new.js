@@ -1,4 +1,4 @@
-// Last updated: 2026-09-28 19:11:05
+// Last updated: 2026-09-28 19:49:49
 
 // Sitewide PS: new-build site script (sites/sitewideps-new.js).
 // Loaded by the new Webflow build's footer loader: dev.wsitefiles.com/sites/sitewideps-new.js,
@@ -159,6 +159,49 @@
         });
       }).observe(list, { attributes: true, attributeFilter: ["class"] });
     });
+  };
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();
+
+(() => {
+  // News categories.
+  // 1. Article pages: the header category ([data-news-category="link"], bound to
+  //    News Category > Name) becomes a link to the News page with that filter set
+  //    (/about/news?category=<name>, the query Finsweet List reads).
+  // 2. News page: each filter pill's radio (.news_filter-input) gets its category
+  //    name as fs-list-value. The MCP cannot bind an attribute to a CMS field, so
+  //    the name is copied from the pill text here, and Finsweet Attributes (List:
+  //    filter, URL query, load more) is loaded afterwards so it reads the values.
+  const NEWS_PATH = "/about/news";
+
+  const init = () => {
+    document.querySelectorAll('[data-news-category="link"]').forEach((el) => {
+      const name = el.textContent.trim();
+      if (!name || el.querySelector("a")) return;
+      const a = document.createElement("a");
+      a.href = `${NEWS_PATH}?category=${encodeURIComponent(name)}`;
+      a.textContent = name;
+      a.style.color = "inherit";
+      a.style.textDecoration = "none";
+      el.textContent = "";
+      el.appendChild(a);
+    });
+
+    if (!document.querySelector('[fs-list-element="list"]')) return;
+    document.querySelectorAll(".news_filter-input").forEach((input) => {
+      const name = input.parentElement.textContent.trim();
+      input.setAttribute("fs-list-value", name);
+      input.value = name;
+    });
+    if (document.querySelector("script[src*='@finsweet/attributes']")) return;
+    const s = document.createElement("script");
+    s.type = "module";
+    s.async = true;
+    s.src = "https://cdn.jsdelivr.net/npm/@finsweet/attributes@2/attributes.js";
+    s.setAttribute("fs-list", "");
+    document.head.appendChild(s);
   };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
