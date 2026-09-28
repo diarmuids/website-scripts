@@ -1,4 +1,4 @@
-// Last updated: 2026-09-28 13:40:11
+// Last updated: 2026-09-28 15:17:34
 
 // Sitewide PS: new-build site script (sites/sitewideps-new.js).
 // Loaded by the new Webflow build's footer loader: dev.wsitefiles.com/sites/sitewideps-new.js,
@@ -25,6 +25,28 @@
     };
 
     new MutationObserver(sync).observe(button, { attributes: true, attributeFilter: ["class"] });
+    sync();
+  };
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();
+
+(() => {
+  // Shrink the nav bar once the page scrolls. nav_container's height comes from
+  // Nav/height; the native combo nav_container.is-scrolled swaps it for
+  // Nav/height-scrolled, and nav_container's own transition animates it.
+  const init = () => {
+    const bars = document.querySelectorAll(".nav_container");
+    if (!bars.length) return;
+    let scrolled = null;
+    const sync = () => {
+      const now = window.scrollY > 20;
+      if (now === scrolled) return;
+      scrolled = now;
+      bars.forEach((el) => el.classList.toggle("is-scrolled", now));
+    };
+    window.addEventListener("scroll", sync, { passive: true });
     sync();
   };
 
