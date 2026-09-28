@@ -1,4 +1,4 @@
-// Last updated: 2026-09-28 18:37:06
+// Last updated: 2026-09-28 19:11:05
 
 // Sitewide PS: new-build site script (sites/sitewideps-new.js).
 // Loaded by the new Webflow build's footer loader: dev.wsitefiles.com/sites/sitewideps-new.js,
@@ -159,46 +159,6 @@
         });
       }).observe(list, { attributes: true, attributeFilter: ["class"] });
     });
-  };
-
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
-  else init();
-})();
-
-(() => {
-  // Nav overflow at custom widths (Webflow's desktop breakpoints are 992 and
-  // 1280, so 1250/1150 are handled here). News and Contact show in the main nav
-  // by default (nav_link.is-wide-only) with hidden copies in the Company
-  // dropdown (nav_dropdown-link.is-overflow). On desktop:
-  //   below 1250px  Contact moves into Company
-  //   below 1150px  News moves too
-  // via the native combos nav_link.is-wide-only.is-collapsed (hidden) and
-  // nav_dropdown-link.is-overflow.is-expanded (shown). Below 992 the mobile
-  // menu shows every link, so nothing is collapsed.
-  const RULES = [
-    { href: "/contact", below: 1250 },
-    { href: "/about/news", below: 1150 },
-  ];
-  const init = () => {
-    const nav = document.querySelector(".nav_component");
-    if (!nav) return;
-    const pick = (sel, href) =>
-      [...nav.querySelectorAll(sel)].filter((el) => new URL(el.href, location.href).pathname === href);
-    const rules = RULES.map((r) => ({
-      ...r,
-      links: pick(".nav_link.is-wide-only", r.href),
-      copies: pick(".nav_dropdown-link.is-overflow", r.href),
-    }));
-    const sync = () => {
-      const w = window.innerWidth;
-      rules.forEach((r) => {
-        const collapse = w >= 992 && w < r.below;
-        r.links.forEach((el) => el.classList.toggle("is-collapsed", collapse));
-        r.copies.forEach((el) => el.classList.toggle("is-expanded", collapse));
-      });
-    };
-    window.addEventListener("resize", sync);
-    sync();
   };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
