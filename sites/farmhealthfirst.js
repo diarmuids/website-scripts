@@ -1,4 +1,4 @@
-// Last updated: 2026-09-10 15:18:50
+// Last updated: 2026-09-28 13:29:27
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -108,6 +108,20 @@ const countryContentReady = (async function () {
 
   const cachedCountry = readCachedCountry();
 
+  // Time out so a stalled lookup cannot block everything waiting on country content.
+  function lookUpCountry() {
+    return $.ajax({
+      url: 'https://ipapi.co/json/',
+      dataType: 'json',
+      timeout: 3000
+    }).then(function (response) {
+      const resolvedCountry = response.country_code === 'IE' ? 'IE' : 'UK';
+
+      cacheCountry(resolvedCountry);
+      return resolvedCountry;
+    });
+  }
+
   try {
     const searchParams = new URLSearchParams(location.search);
     const queryFlags = location.search
@@ -139,18 +153,15 @@ const countryContentReady = (async function () {
 
     if (test) {
       applyCountry(test === 'IE' ? 'IE' : 'UK', true);
-    } else if (cachedCountry?.isFresh) {
+    } else if (cachedCountry) {
+      // Use the last known country straight away and refresh it for the next
+      // page, so the article never swaps or waits mid-page.
       applyCountry(cachedCountry.country, true);
+      if (!cachedCountry.isFresh) lookUpCountry().catch(function () {});
     } else {
-      // Keep the last known selection visible while an expired cache refreshes.
       // On a first visit, use UK as the immediate fallback instead of showing both.
-      applyCountry(cachedCountry?.country || 'UK', false);
-
-      const response = await $.getJSON('https://ipapi.co/json/');
-      const resolvedCountry = response.country_code === 'IE' ? 'IE' : 'UK';
-
-      cacheCountry(resolvedCountry);
-      applyCountry(resolvedCountry, true);
+      applyCountry('UK', false);
+      applyCountry(await lookUpCountry(), true);
     }
   } catch (error) {
     console.warn('Country lookup unavailable');
