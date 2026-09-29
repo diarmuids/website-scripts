@@ -1,4 +1,4 @@
-// Last updated: 2026-09-28 19:52:54
+// Last updated: 2026-09-29 07:35:19
 
 // Sitewide PS: new-build site script (sites/sitewideps-new.js).
 // Loaded by the new Webflow build's footer loader: dev.wsitefiles.com/sites/sitewideps-new.js,
@@ -88,11 +88,22 @@
     if (!logos.length) return;
     const ctas = [...nav.querySelectorAll(".nav_link.is-cta, .nav_link.is-cta-light")];
 
+    // Only large areas count: small things (a button, a card image, a tag)
+    // passing behind are skipped and the section around them decides. An area
+    // must be at least 240px wide and cover the item from 32px above (or the
+    // top of the screen) to 64px below its centre.
+    const large = (hit, y) => {
+      const b = hit.getBoundingClientRect();
+      return b.width >= 240 && b.top <= Math.max(0, y - 32) && b.bottom >= y + 64;
+    };
+
     const behind = (el) => {
       const r = el.getBoundingClientRect();
-      const stack = document.elementsFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-      for (const hit of stack) {
+      const x = r.left + r.width / 2;
+      const y = r.top + r.height / 2;
+      for (const hit of document.elementsFromPoint(x, y)) {
         if (nav.contains(hit) || hit === document.documentElement || hit.closest(".preloader_component")) continue;
+        if (!large(hit, y)) continue;
         const t = tone(hit);
         if (t) return t;
       }
@@ -166,7 +177,8 @@
 })();
 
 (() => {
-  // News categories.
+  // News articles and categories.
+  // 0. Article byline fallback (see below).
   // 1. Article pages: the header category ([data-news-category="link"], bound to
   //    News Category > Name) becomes a link to the News page with that filter set
   //    (/about/news?category_equal=<name>, the query Finsweet List v2 writes and reads).
@@ -177,6 +189,12 @@
   const NEWS_PATH = "/about/news";
 
   const init = () => {
+    // Article byline: the name is bound to Author > Name; with no author set the
+    // element renders empty, so show its data-article-author fallback ("Sitewide").
+    document.querySelectorAll("[data-article-author]").forEach((el) => {
+      if (!el.textContent.trim()) el.textContent = el.getAttribute("data-article-author");
+    });
+
     document.querySelectorAll('[data-news-category="link"]').forEach((el) => {
       const name = el.textContent.trim();
       if (!name || el.querySelector("a")) return;
