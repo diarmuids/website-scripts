@@ -1,4 +1,4 @@
-// Last updated: 2026-09-29 09:08:51
+// Last updated: 2026-09-29 09:22:41
 
 // Sitewide PS: new-build site script (sites/sitewideps-new.js).
 // Loaded by the new Webflow build's footer loader: dev.wsitefiles.com/sites/sitewideps-new.js,
@@ -333,18 +333,20 @@
 })();
 
 (() => {
-  // Testimonial cards: "Read case study" links to the referenced Case Study.
-  // The MCP cannot bind a link to a referenced item's page, so a hidden
-  // element bound to Case Study > Slug ([data-case-study-slug]) sits next to
-  // the link ([data-case-study-link]); the link gets /case-studies/<slug>, or
-  // is hidden when no case study is set.
+  // Testimonial cards: the "Read case study" button (the site button component,
+  // inside div.testimonial-card_cta[data-case-study-link]) links to the
+  // referenced Case Study. The MCP cannot bind a link to a referenced item's
+  // page, so a hidden element bound to Case Study > Slug
+  // ([data-case-study-slug]) sits in the card; the button gets
+  // /case-studies/<slug>, or its wrapper is hidden when no case study is set.
   const init = () => {
-    document.querySelectorAll("[data-case-study-link]").forEach((link) => {
-      const card = link.closest(".testimonial-card") || link.parentElement;
+    document.querySelectorAll("[data-case-study-link]").forEach((wrap) => {
+      const link = wrap.tagName === "A" ? wrap : wrap.querySelector("a");
+      const card = wrap.closest(".testimonial-card") || wrap.parentElement;
       const slugEl = card && card.querySelector("[data-case-study-slug]");
       const slug = slugEl ? slugEl.textContent.trim() : "";
-      if (slug) link.href = `/case-studies/${slug}`;
-      else link.style.display = "none";
+      if (slug && link) link.href = `/case-studies/${slug}`;
+      else wrap.style.display = "none";
     });
   };
 
