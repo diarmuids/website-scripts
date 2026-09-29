@@ -1,4 +1,4 @@
-// Last updated: 2026-09-29 17:36:48
+// Last updated: 2026-09-29 18:06:04
 
 // Sitewide PS: new-build site script (sites/sitewideps-new.js).
 // Loaded by the new Webflow build's footer loader: dev.wsitefiles.com/sites/sitewideps-new.js,
@@ -500,6 +500,50 @@
       if (!el) return;
       e.preventDefault();
       el.scrollBy({ left: (e.key === "ArrowRight" ? 1 : -1) * step(el), behavior: "smooth" });
+    });
+  };
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();
+
+(() => {
+  // Slider arrows outside the home page (e.g. the Testimonial Slider component):
+  // a [data-slider-group] holds the [data-slider] track and [data-slider="prev"] /
+  // [data-slider="next"] buttons. Each click moves one card; the buttons get
+  // .is-disabled at either end. (Home's own groups have no data-slider-group and
+  // keep their page script.)
+  const init = () => {
+    document.querySelectorAll("[data-slider-group]").forEach((group) => {
+      const track = group.querySelector("[data-slider='true']");
+      const prev = group.querySelector("[data-slider='prev']");
+      const next = group.querySelector("[data-slider='next']");
+      if (!track || !prev || !next) return;
+      const step = () => {
+        const item = track.querySelector(".w-dyn-item");
+        if (!item) return track.clientWidth;
+        const gap = parseFloat(getComputedStyle(item.parentElement).columnGap) || 0;
+        return item.getBoundingClientRect().width + gap;
+      };
+      const setState = (btn, off) => {
+        btn.classList.toggle("is-disabled", off);
+        btn.setAttribute("aria-disabled", off ? "true" : "false");
+      };
+      const update = () => {
+        const max = track.scrollWidth - track.clientWidth;
+        setState(prev, track.scrollLeft <= 1);
+        setState(next, max <= 1 || track.scrollLeft >= max - 1);
+      };
+      [[prev, -1], [next, 1]].forEach(([btn, dir]) => {
+        btn.addEventListener("click", () => {
+          if (btn.classList.contains("is-disabled")) return;
+          track.scrollBy({ left: dir * step(), behavior: "smooth" });
+        });
+      });
+      track.addEventListener("scroll", update, { passive: true });
+      window.addEventListener("resize", update);
+      window.addEventListener("load", update);
+      update();
     });
   };
 
