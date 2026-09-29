@@ -1,4 +1,4 @@
-// Last updated: 2026-09-29 16:13:50
+// Last updated: 2026-09-29 17:36:48
 
 // Sitewide PS: new-build site script (sites/sitewideps-new.js).
 // Loaded by the new Webflow build's footer loader: dev.wsitefiles.com/sites/sitewideps-new.js,
@@ -381,7 +381,7 @@
 (() => {
   // Testimonial stats: the two stats sit side by side (flex-wrap) and a card
   // with longer labels wraps sooner than the others. When any card's stats
-  // wrap, every card gets .is-stacked (stats in a column; CSS in
+  // wrap, every card gets .is-stacked (each stat takes a full line; CSS in
   // global_site-styles) so they all fold together. Rechecked on resize.
   const init = () => {
     const rows = [...document.querySelectorAll(".testimonial-card_stats")];
