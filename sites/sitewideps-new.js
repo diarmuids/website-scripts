@@ -1,4 +1,4 @@
-// Last updated: 2026-09-29 08:00:38
+// Last updated: 2026-09-29 08:51:58
 
 // Sitewide PS: new-build site script (sites/sitewideps-new.js).
 // Loaded by the new Webflow build's footer loader: dev.wsitefiles.com/sites/sitewideps-new.js,
@@ -233,6 +233,69 @@
     s.src = "https://cdn.jsdelivr.net/npm/@finsweet/attributes@2/attributes.js";
     s.setAttribute("fs-list", "");
     document.head.appendChild(s);
+  };
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();
+
+(() => {
+  // Case Studies list: the sticky number in the left column (.cases_number,
+  // position: sticky natively) follows the case study at the middle of the
+  // screen: 01, 02, 03... The old digits roll out and the new ones roll in on
+  // the same mechanical ease as the nav dropdowns (up when scrolling down,
+  // down when scrolling back). Mobile has no sticky number; the cards stack
+  // natively there (cases_item position: sticky).
+  const EASE = "cubic-bezier(0.7, 0, 0.2, 1)";
+  const init = () => {
+    const num = document.querySelector(".cases_number");
+    const items = [...document.querySelectorAll(".cases_list .cases_item")];
+    if (!num || !items.length) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const label = (i) => String(i).padStart(2, "0");
+    let current = 1;
+    let busy = null;
+
+    const show = (i) => {
+      if (i === current) return;
+      const dir = i > current ? 1 : -1;
+      current = i;
+      if (reduce) {
+        num.textContent = label(i);
+        return;
+      }
+      if (busy) busy.cancel();
+      busy = num.animate(
+        [
+          { transform: "translateY(0)", opacity: 1 },
+          { transform: `translateY(${-dir * 0.35}em)`, opacity: 0 },
+        ],
+        { duration: 140, easing: EASE }
+      );
+      busy.onfinish = () => {
+        busy = null;
+        num.textContent = label(current);
+        num.animate(
+          [
+            { transform: `translateY(${dir * 0.35}em)`, opacity: 0 },
+            { transform: "translateY(0)", opacity: 1 },
+          ],
+          { duration: 200, easing: EASE }
+        );
+      };
+    };
+
+    // A thin line across the middle of the viewport: whichever card crosses it
+    // is the current one.
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) show(items.indexOf(e.target) + 1);
+        });
+      },
+      { rootMargin: "-50% 0px -50% 0px" }
+    );
+    items.forEach((el) => io.observe(el));
   };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
