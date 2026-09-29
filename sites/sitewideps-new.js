@@ -1,4 +1,4 @@
-// Last updated: 2026-09-29 09:56:34
+// Last updated: 2026-09-29 12:38:19
 
 // Sitewide PS: new-build site script (sites/sitewideps-new.js).
 // Loaded by the new Webflow build's footer loader: dev.wsitefiles.com/sites/sitewideps-new.js,
@@ -331,6 +331,25 @@
       { passive: true }
     );
     sync();
+  };
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();
+
+(() => {
+  // CMS links to an item's own page. The API cannot set a "current item" link
+  // inside Collection Lists on template pages (it renders "#"), so a hidden
+  // Text Block (.link-slug) bound to the item's Slug carries the path prefix in
+  // data-link-prefix (e.g. "/case-studies/"). The link it sits in, or the first
+  // link beside it, gets prefix + slug. Used by the More case studies rows, the
+  // Industries case study rows and the Industries service "Learn more" buttons.
+  const init = () => {
+    document.querySelectorAll("[data-link-prefix]").forEach((el) => {
+      const slug = el.textContent.trim();
+      const link = el.closest("a") || (el.parentElement && el.parentElement.querySelector("a"));
+      if (slug && link) link.setAttribute("href", el.getAttribute("data-link-prefix") + slug);
+    });
   };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
