@@ -1,4 +1,4 @@
-// Last updated: 2026-09-29 08:59:28
+// Last updated: 2026-09-29 09:04:13
 
 // Sitewide PS: new-build site script (sites/sitewideps-new.js).
 // Loaded by the new Webflow build's footer loader: dev.wsitefiles.com/sites/sitewideps-new.js,
@@ -244,61 +244,88 @@
 
 (() => {
   // Case Studies list: the sticky number in the left column (.cases_number,
-  // position: sticky natively) follows the case study at the middle of the
-  // screen: 01, 02, 03... The old digits roll out and the new ones roll in on
-  // the same mechanical ease as the nav dropdowns (up when scrolling down,
-  // down when scrolling back). Mobile has no sticky number; the cards stack
-  // natively there (cases_item position: sticky).
+  // position: sticky natively) shows which case study is at the top. It moves
+  // on only when a case study's top edge comes within 20px of the bottom of
+  // the nav (just before it slides under it), and only the digits that change
+  // slide: up when scrolling down, down when scrolling back (01 -> 02 moves just
+  // the "2"). Each digit sits in an overflow-hidden slot built here, so there is
+  // no fade or flicker. Mobile has no sticky number; the cards stack natively
+  // there (cases_item position: sticky).
   const EASE = "cubic-bezier(0.7, 0, 0.2, 1)";
+  const OFFSET = 20;
   const init = () => {
     const num = document.querySelector(".cases_number");
     const items = [...document.querySelectorAll(".cases_list .cases_item")];
     if (!num || !items.length) return;
+    const nav = document.querySelector(".nav_container");
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const label = (i) => String(i).padStart(2, "0");
+
+    const slot = (ch) => {
+      const s = document.createElement("span");
+      s.style.cssText = "display:inline-block;position:relative;overflow:hidden;vertical-align:top;";
+      const d = document.createElement("span");
+      d.style.cssText = "display:inline-block;";
+      d.textContent = ch;
+      s.appendChild(d);
+      return s;
+    };
+    num.textContent = "";
+    const slots = label(1).split("").map((ch) => num.appendChild(slot(ch)));
     let current = 1;
-    let busy = null;
+
+    const roll = (s, ch, dir) => {
+      // Settle any roll still in flight: keep the newest digit, drop the rest.
+      const kids = [...s.children];
+      kids.forEach((k) => k.getAnimations().forEach((a) => a.cancel()));
+      kids.slice(0, -1).forEach((k) => k.remove());
+      const old = kids[kids.length - 1];
+      old.style.position = "";
+      if (old.textContent === ch) return;
+      if (reduce) {
+        old.textContent = ch;
+        return;
+      }
+      const next = document.createElement("span");
+      next.style.cssText = "display:inline-block;position:absolute;left:0;top:0;";
+      next.textContent = ch;
+      s.appendChild(next);
+      const opts = { duration: 420, easing: EASE, fill: "forwards" };
+      old.animate([{ transform: "translateY(0)" }, { transform: `translateY(${-dir * 100}%)` }], opts);
+      next.animate([{ transform: `translateY(${dir * 100}%)` }, { transform: "translateY(0)" }], opts).onfinish = () => {
+        next.style.position = "";
+        next.getAnimations().forEach((a) => a.cancel());
+        old.remove();
+      };
+    };
 
     const show = (i) => {
       if (i === current) return;
       const dir = i > current ? 1 : -1;
       current = i;
-      if (reduce) {
-        num.textContent = label(i);
-        return;
-      }
-      if (busy) busy.cancel();
-      busy = num.animate(
-        [
-          { transform: "translateY(0)", opacity: 1 },
-          { transform: `translateY(${-dir * 0.35}em)`, opacity: 0 },
-        ],
-        { duration: 140, easing: EASE }
-      );
-      busy.onfinish = () => {
-        busy = null;
-        num.textContent = label(current);
-        num.animate(
-          [
-            { transform: `translateY(${dir * 0.35}em)`, opacity: 0 },
-            { transform: "translateY(0)", opacity: 1 },
-          ],
-          { duration: 200, easing: EASE }
-        );
-      };
+      label(i).split("").forEach((ch, k) => roll(slots[k], ch, dir));
     };
 
-    // A thin line across the middle of the viewport: whichever card crosses it
-    // is the current one.
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) show(items.indexOf(e.target) + 1);
-        });
+    let queued = false;
+    const sync = () => {
+      queued = false;
+      const line = (nav ? nav.getBoundingClientRect().bottom : 0) + OFFSET;
+      let i = 1;
+      items.forEach((el, k) => {
+        if (el.getBoundingClientRect().top <= line) i = k + 1;
+      });
+      show(i);
+    };
+    window.addEventListener(
+      "scroll",
+      () => {
+        if (queued) return;
+        queued = true;
+        requestAnimationFrame(sync);
       },
-      { rootMargin: "-50% 0px -50% 0px" }
+      { passive: true }
     );
-    items.forEach((el) => io.observe(el));
+    sync();
   };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
