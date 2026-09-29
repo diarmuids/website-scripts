@@ -1,4 +1,4 @@
-// Last updated: 2026-09-29 09:22:41
+// Last updated: 2026-09-29 09:29:28
 
 // Sitewide PS: new-build site script (sites/sitewideps-new.js).
 // Loaded by the new Webflow build's footer loader: dev.wsitefiles.com/sites/sitewideps-new.js,
@@ -348,6 +348,42 @@
       if (slug && link) link.href = `/case-studies/${slug}`;
       else wrap.style.display = "none";
     });
+  };
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();
+
+(() => {
+  // Testimonial stats: the two stats sit side by side (flex-wrap) and a card
+  // with longer labels wraps sooner than the others. When any card's stats
+  // wrap, every card gets .is-stacked (stats in a column; CSS in
+  // global_site-styles) so they all fold together. Rechecked on resize.
+  const init = () => {
+    const rows = [...document.querySelectorAll(".testimonial-card_stats")];
+    if (!rows.length) return;
+    const wraps = (row) => {
+      const tops = [...row.querySelectorAll(".testimonial-card_stat")]
+        .filter((s) => s.offsetParent)
+        .map((s) => Math.round(s.getBoundingClientRect().top));
+      return tops.length > 1 && tops.some((t) => t !== tops[0]);
+    };
+    const sync = () => {
+      rows.forEach((r) => r.classList.remove("is-stacked"));
+      const fold = rows.some(wraps);
+      rows.forEach((r) => r.classList.toggle("is-stacked", fold));
+    };
+    let queued = false;
+    window.addEventListener("resize", () => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => {
+        queued = false;
+        sync();
+      });
+    });
+    if (document.fonts) document.fonts.ready.then(sync);
+    sync();
   };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
