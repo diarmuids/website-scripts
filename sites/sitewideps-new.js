@@ -1,4 +1,4 @@
-// Last updated: 2026-09-29 09:29:28
+// Last updated: 2026-09-29 09:56:34
 
 // Sitewide PS: new-build site script (sites/sitewideps-new.js).
 // Loaded by the new Webflow build's footer loader: dev.wsitefiles.com/sites/sitewideps-new.js,
@@ -249,8 +249,9 @@
   // the nav (just before it slides under it), and only the digits that change
   // slide: up when scrolling down, down when scrolling back (01 -> 02 moves just
   // the "2"). Each digit sits in an overflow-hidden slot built here, so there is
-  // no fade or flicker. Mobile has no sticky number; the cards stack natively
-  // there (cases_item position: sticky).
+  // no fade or flicker. Tablet works like desktop. From landscape down the
+  // number sticks under the nav (top 5.25rem) and the cards stack natively
+  // beneath it (cases_item position: sticky, top 9rem).
   const EASE = "cubic-bezier(0.7, 0, 0.2, 1)";
   const OFFSET = 20;
   const init = () => {
@@ -312,7 +313,11 @@
       const line = (nav ? nav.getBoundingClientRect().bottom : 0) + OFFSET;
       let i = 1;
       items.forEach((el, k) => {
-        if (el.getBoundingClientRect().top <= line) i = k + 1;
+        // Sticky cards (landscape and below) stop under the number, so they
+        // count once they are within OFFSET of their stuck position.
+        const cs = getComputedStyle(el);
+        const at = cs.position === "sticky" ? parseFloat(cs.top) + OFFSET : line;
+        if (el.getBoundingClientRect().top <= at) i = k + 1;
       });
       show(i);
     };
