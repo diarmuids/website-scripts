@@ -1,4 +1,4 @@
-// Last updated: 2026-09-29 12:38:19
+// Last updated: 2026-09-29 16:13:50
 
 // Sitewide PS: new-build site script (sites/sitewideps-new.js).
 // Loaded by the new Webflow build's footer loader: dev.wsitefiles.com/sites/sitewideps-new.js,
@@ -408,6 +408,99 @@
     });
     if (document.fonts) document.fonts.ready.then(sync);
     sync();
+  };
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();
+
+(() => {
+  // Horizontal sliders ([data-slider] on the scrolling Collection List Wrapper,
+  // e.g. the home services and case studies rows). Adds, on top of the native
+  // scroll and the arrow buttons:
+  //   - mouse click and drag (snaps to the nearest card on release; a drag does
+  //     not trigger the card's link)
+  //   - Shift + mouse wheel, and sideways trackpad swipes, scroll sideways
+  //     (the event stops here so Lenis does not also scroll the page)
+  //   - Left / Right arrow keys move one card while the pointer is over the
+  //     slider or after it has been clicked / focused (it has tabindex="0")
+  const init = () => {
+    const sliders = [...document.querySelectorAll("[data-slider]")];
+    if (!sliders.length) return;
+    let hovered = null;
+    let active = null;
+
+    const step = (el) => {
+      const item = el.querySelector(".w-dyn-item") || el.firstElementChild;
+      if (!item) return el.clientWidth * 0.8;
+      const list = item.parentElement;
+      const gap = parseFloat(getComputedStyle(list).columnGap) || 0;
+      return item.getBoundingClientRect().width + gap;
+    };
+
+    sliders.forEach((el) => {
+      el.addEventListener("pointerenter", () => (hovered = el));
+      el.addEventListener("pointerleave", () => { if (hovered === el) hovered = null; });
+      el.addEventListener("focus", () => (active = el));
+
+      el.addEventListener("wheel", (e) => {
+        const sideways = Math.abs(e.deltaX) > Math.abs(e.deltaY);
+        if (!e.shiftKey && !sideways) return;
+        const delta = sideways ? e.deltaX : e.deltaY;
+        const max = el.scrollWidth - el.clientWidth;
+        if ((delta < 0 && el.scrollLeft <= 0) || (delta > 0 && el.scrollLeft >= max - 1)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        el.scrollBy({ left: delta, behavior: "auto" });
+      }, { passive: false });
+
+      let down = false, dragged = false, startX = 0, startLeft = 0;
+      el.style.cursor = "grab";
+      el.addEventListener("dragstart", (e) => e.preventDefault());
+      el.addEventListener("pointerdown", (e) => {
+        active = el;
+        if (e.pointerType !== "mouse" || e.button !== 0) return;
+        down = true; dragged = false; startX = e.clientX; startLeft = el.scrollLeft;
+      });
+      window.addEventListener("pointermove", (e) => {
+        if (!down) return;
+        const dx = e.clientX - startX;
+        if (!dragged && Math.abs(dx) < 5) return;
+        if (!dragged) {
+          dragged = true;
+          el.style.scrollSnapType = "none";
+          el.style.scrollBehavior = "auto";
+          el.style.cursor = "grabbing";
+          document.body.style.userSelect = "none";
+        }
+        el.scrollLeft = startLeft - dx;
+      });
+      window.addEventListener("pointerup", () => {
+        if (!down) return;
+        down = false;
+        el.style.cursor = "grab";
+        document.body.style.userSelect = "";
+        if (!dragged) return;
+        const s = step(el);
+        const target = Math.round(el.scrollLeft / s) * s;
+        el.scrollTo({ left: target, behavior: "smooth" });
+        setTimeout(() => { el.style.scrollSnapType = ""; el.style.scrollBehavior = ""; }, 450);
+      });
+      // Swallow the click that ends a drag so links inside the cards stay put.
+      el.addEventListener("click", (e) => {
+        if (dragged) { e.preventDefault(); e.stopPropagation(); dragged = false; }
+      }, true);
+    });
+
+    document.addEventListener("pointerdown", (e) => { if (!e.target.closest("[data-slider]")) active = null; });
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      if (e.target.closest("input, textarea, select, [contenteditable]")) return;
+      const el = hovered || active;
+      if (!el) return;
+      e.preventDefault();
+      el.scrollBy({ left: (e.key === "ArrowRight" ? 1 : -1) * step(el), behavior: "smooth" });
+    });
   };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
