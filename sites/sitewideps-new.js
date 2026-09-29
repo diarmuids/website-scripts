@@ -1,4 +1,4 @@
-// Last updated: 2026-09-29 08:51:58
+// Last updated: 2026-09-29 08:59:28
 
 // Sitewide PS: new-build site script (sites/sitewideps-new.js).
 // Loaded by the new Webflow build's footer loader: dev.wsitefiles.com/sites/sitewideps-new.js,
@@ -91,9 +91,12 @@
     // Only large areas count: small things (a button, a card image, a tag)
     // passing behind are skipped and the section around them decides. An area
     // must be at least 240px wide and cover the item from 32px above (or the
-    // top of the screen) to 64px below its centre.
+    // top of the screen) to 64px below its centre. Full-width bands (90% of the
+    // viewport or more, e.g. the nav spacer on a dark page) always count, even
+    // when they are short.
     const large = (hit, y) => {
       const b = hit.getBoundingClientRect();
+      if (b.width >= window.innerWidth * 0.9 && b.top <= y && b.bottom >= y) return true;
       return b.width >= 240 && b.top <= Math.max(0, y - 32) && b.bottom >= y + 64;
     };
 
