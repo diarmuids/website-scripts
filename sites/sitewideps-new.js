@@ -1,4 +1,4 @@
-// Last updated: 2026-09-29 07:35:19
+// Last updated: 2026-09-29 08:00:38
 
 // Sitewide PS: new-build site script (sites/sitewideps-new.js).
 // Loaded by the new Webflow build's footer loader: dev.wsitefiles.com/sites/sitewideps-new.js,
@@ -141,9 +141,12 @@
 
 (() => {
   // Nav dropdown open animation: a mechanical "stack". Webflow adds w--open to
-  // the dropdown list; the panel then wipes down from the top and its links
-  // drop into place one after another on a short, hard-stopping ease. Closing
-  // is left to Webflow (instant). Web Animations only: no styles are left behind.
+  // the dropdown list; the panel opens and its links drop into place one after
+  // another on a short, hard-stopping ease. Desktop: the floating panel wipes
+  // down from the top. Mobile menu (below 992px): the list sits in the page
+  // flow, so it slides open by height and the links below move down with it
+  // instead of jumping. Closing is left to Webflow (instant). Web Animations
+  // only: no styles are left behind.
   const EASE = "cubic-bezier(0.7, 0, 0.2, 1)";
   const init = () => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -154,10 +157,20 @@
         if (open === wasOpen) return;
         wasOpen = open;
         if (!open) return;
-        list.animate(
-          [{ clipPath: "inset(0 0 100% 0)" }, { clipPath: "inset(0 0 0% 0)" }],
-          { duration: 260, easing: EASE }
-        );
+        if (window.innerWidth < 992) {
+          list.animate(
+            [
+              { height: "0px", overflow: "hidden" },
+              { height: `${list.scrollHeight}px`, overflow: "hidden" },
+            ],
+            { duration: 360, easing: EASE }
+          );
+        } else {
+          list.animate(
+            [{ clipPath: "inset(0 0 100% 0)" }, { clipPath: "inset(0 0 0% 0)" }],
+            { duration: 260, easing: EASE }
+          );
+        }
         const links = [...list.querySelectorAll(".nav_dropdown-link")].filter((el) => el.offsetParent);
         links.forEach((el, i) => {
           el.animate(
