@@ -1,4 +1,4 @@
-// Last updated: 2026-09-29 09:04:13
+// Last updated: 2026-09-29 09:08:51
 
 // Sitewide PS: new-build site script (sites/sitewideps-new.js).
 // Loaded by the new Webflow build's footer loader: dev.wsitefiles.com/sites/sitewideps-new.js,
@@ -326,6 +326,26 @@
       { passive: true }
     );
     sync();
+  };
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();
+
+(() => {
+  // Testimonial cards: "Read case study" links to the referenced Case Study.
+  // The MCP cannot bind a link to a referenced item's page, so a hidden
+  // element bound to Case Study > Slug ([data-case-study-slug]) sits next to
+  // the link ([data-case-study-link]); the link gets /case-studies/<slug>, or
+  // is hidden when no case study is set.
+  const init = () => {
+    document.querySelectorAll("[data-case-study-link]").forEach((link) => {
+      const card = link.closest(".testimonial-card") || link.parentElement;
+      const slugEl = card && card.querySelector("[data-case-study-slug]");
+      const slug = slugEl ? slugEl.textContent.trim() : "";
+      if (slug) link.href = `/case-studies/${slug}`;
+      else link.style.display = "none";
+    });
   };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
