@@ -1,4 +1,4 @@
-// Last updated: 2026-09-29 20:02:24
+// Last updated: 2026-09-30 09:16:30
 
 // OCOD Law site script. Loaded from the site head by the Studio loader
 // (dev.wsitefiles.com first, wsitefiles.com as the fallback), so it can run before
@@ -335,6 +335,19 @@
     script.textContent = JSON.stringify({ '@context': 'https://schema.org', '@graph': graph });
     document.head.appendChild(script);
   }
+
+  // -------------------------------------------------------
+  // APPOINTMENT POPUP
+  // -------------------------------------------------------
+
+  // The popup opens through a Webflow interaction bound to the nav button's
+  // classes (.nav-link.nl-cta). Any other button marked data-appointment="open"
+  // (the footer one) forwards its click there, so there is one open behaviour.
+  document.addEventListener('click', (event) => {
+    if (!event.target.closest('[data-appointment="open"]')) return;
+    const trigger = document.querySelector('.nav-link.nl-cta');
+    if (trigger) trigger.click();
+  });
 
   function init() {
     // Schema reads the FAQ rich text before initFaqs() restructures it.
