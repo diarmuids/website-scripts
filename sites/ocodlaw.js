@@ -1,4 +1,4 @@
-// Last updated: 2026-09-30 09:59:10
+// Last updated: 2026-09-30 10:03:47
 
 // OCOD Law site script. Loaded from the site head by the Studio loader
 // (dev.wsitefiles.com first, wsitefiles.com as the fallback), so it can run before
@@ -363,7 +363,10 @@
   // keyboard focus on the div ones, no jump to the top from href="#", and Space
   // (plus Enter on the divs) activating them as on a real button.
   const APPOINTMENT_TRIGGERS =
-    '.nav-link.nl-cta, .top-nav-link.tnl-book, a[role="button"][href="#"], [data-appointment="open"]';
+    '.nav-link.nl-cta, .top-nav-link.tnl-book, a[role="button"][href="#"], .service-cta-link[href="#"], [data-appointment="open"]';
+  // Triggers that Webflow opens the popup for itself: the two class-based
+  // interactions, and any element carrying its own (data-w-id).
+  const OWN_INTERACTION = '.nav-link.nl-cta, .top-nav-link.tnl-book, [data-w-id]';
 
   function initAppointmentTriggers() {
     document.querySelectorAll(APPOINTMENT_TRIGGERS).forEach((el) => {
@@ -377,9 +380,10 @@
     const trigger = event.target.closest('[role="button"]');
     if (!trigger) return;
     if (trigger.matches('a[href="#"]')) event.preventDefault();
-    // A trigger with no interaction of its own (the Contact page one) is marked
-    // data-appointment="open" and forwards its click to the nav trigger.
-    if (trigger.matches('[data-appointment="open"]')) {
+    // A trigger with no interaction of its own (the Contact page one, and the
+    // one in the location page contact block) forwards its click to the nav
+    // trigger.
+    if (trigger.matches(APPOINTMENT_TRIGGERS) && !trigger.matches(OWN_INTERACTION)) {
       const navTrigger = document.querySelector('.nav-link.nl-cta');
       if (navTrigger) navTrigger.click();
     }
