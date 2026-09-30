@@ -1,4 +1,4 @@
-// Last updated: 2026-09-30 09:16:30
+// Last updated: 2026-09-30 09:46:13
 
 // OCOD Law site script. Loaded from the site head by the Studio loader
 // (dev.wsitefiles.com first, wsitefiles.com as the fallback), so it can run before
@@ -340,19 +340,49 @@
   // APPOINTMENT POPUP
   // -------------------------------------------------------
 
-  // The popup opens through a Webflow interaction bound to the nav button's
-  // classes (.nav-link.nl-cta). Any other button marked data-appointment="open"
-  // (the footer one) forwards its click there, so there is one open behaviour.
+  // The "Book Appointment" triggers are native Webflow links and divs that open
+  // the popup through Webflow interactions. They act as buttons, not links, so
+  // they get button semantics here: the role and popup hint for screen readers,
+  // keyboard focus on the div ones, no jump to the top from href="#", and Space
+  // (plus Enter on the divs) activating them as on a real button.
+  const APPOINTMENT_TRIGGERS =
+    '.nav-link.nl-cta, .top-nav-link.tnl-book, a[role="button"][href="#"], [data-appointment="open"]';
+
+  function initAppointmentTriggers() {
+    document.querySelectorAll(APPOINTMENT_TRIGGERS).forEach((el) => {
+      el.setAttribute('role', 'button');
+      el.setAttribute('aria-haspopup', 'dialog');
+      if (el.tagName !== 'A' && !el.hasAttribute('tabindex')) el.tabIndex = 0;
+    });
+  }
+
   document.addEventListener('click', (event) => {
-    if (!event.target.closest('[data-appointment="open"]')) return;
-    const trigger = document.querySelector('.nav-link.nl-cta');
-    if (trigger) trigger.click();
+    const trigger = event.target.closest('[role="button"]');
+    if (!trigger) return;
+    if (trigger.matches('a[href="#"]')) event.preventDefault();
+    // A trigger with no interaction of its own (the Contact page one) is marked
+    // data-appointment="open" and forwards its click to the nav trigger.
+    if (trigger.matches('[data-appointment="open"]')) {
+      const navTrigger = document.querySelector('.nav-link.nl-cta');
+      if (navTrigger) navTrigger.click();
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    const trigger = event.target.closest('[role="button"]');
+    if (!trigger || !trigger.matches(APPOINTMENT_TRIGGERS)) return;
+    const isLink = trigger.tagName === 'A';
+    if (event.key === ' ' || (event.key === 'Enter' && !isLink)) {
+      event.preventDefault();
+      trigger.click();
+    }
   });
 
   function init() {
     // Schema reads the FAQ rich text before initFaqs() restructures it.
     initSchema();
     initFaqs();
+    initAppointmentTriggers();
   }
 
   if (document.readyState === 'loading') {
