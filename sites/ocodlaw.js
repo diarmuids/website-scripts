@@ -1,4 +1,4 @@
-// Last updated: 2026-09-30 09:46:13
+// Last updated: 2026-09-30 09:51:38
 
 // OCOD Law site script. Loaded from the site head by the Studio loader
 // (dev.wsitefiles.com first, wsitefiles.com as the fallback), so it can run before
@@ -153,6 +153,7 @@
         closes: '17:15',
       },
     ],
+    foundingDate: '1990',
     founder: [
       { '@type': 'Person', name: "Pat F. O'Connor" },
       { '@type': 'Person', name: "Michael O'Donoghue" },
