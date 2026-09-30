@@ -1,4 +1,4 @@
-// Last updated: 2026-09-30 09:51:38
+// Last updated: 2026-09-30 09:59:10
 
 // OCOD Law site script. Loaded from the site head by the Studio loader
 // (dev.wsitefiles.com first, wsitefiles.com as the fallback), so it can run before
@@ -10,96 +10,112 @@
   window.ocodlawLoaded = true;
 
   // -------------------------------------------------------
-  // STYLES (non-native: see each rule's note)
-  // -------------------------------------------------------
-
-  const style = document.createElement('style');
-  style.textContent = `
-/* Location pages template, FAQs (page-faqs_rich-text, main column under the content):
-   these elements are created at runtime by initFaqs() below, so they have no
-   Designer classes. */
-.page-faqs_item { border-bottom: 1px solid var(--old-lace); }
-.page-faqs_question { display: flex; justify-content: space-between; align-items: center; grid-column-gap: 1rem; padding: 1.25rem 0; cursor: pointer; list-style: none; }
-/* Hides Safari's default disclosure triangle; list-style covers other browsers. */
-.page-faqs_question::-webkit-details-marker { display: none; }
-.page-faqs_question h3 { margin: 0; font-size: 1.25rem; line-height: 1.4; }
-.page-faqs_toggle { display: flex; flex: none; width: 1.25rem; height: 1.25rem; color: var(--dark-slate-blue); transition: transform 300ms ease; }
-.page-faqs_item.is-open .page-faqs_toggle { transform: rotate(180deg); }
-.page-faqs_answer { overflow: hidden; }
-.page-faqs_answer-inner { padding-bottom: 1.25rem; }
-.page-faqs_answer p { margin: 0; }
-`;
-  document.head.appendChild(style);
-
-  // -------------------------------------------------------
   // LOCATION PAGE FAQS
   // -------------------------------------------------------
 
-  // The FAQs rich text is h3 question + p answer pairs. Each pair becomes a native
-  // <details> accordion item (keyboard and screen-reader support built in), all
-  // closed to start. The answer's height is animated open and shut; a down caret
-  // turns to point up while the item is open.
-  const CARET =
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+  // The service pages list their FAQs with a native CMS list and a Webflow
+  // interaction. The location pages hold theirs in one rich text field (h3
+  // question + answer paragraphs), so this rebuilds that rich text into the same
+  // structure with the same Webflow classes (faq-item, faq-question,
+  // faq-open-icon, faq-answer-outer, faq-answer). The look therefore comes from
+  // the Designer's own FAQ styles, and a change there restyles both.
+  //
+  // Behaviour matches the "FAQ open" / "FAQ close" interactions: all closed to
+  // start, the answer's height opens over 300ms and closes over 200ms, and the
+  // upright bar of the plus turns flat while open. The click is handled here and
+  // kept from Webflow's own .faq-item interaction, which would otherwise run on
+  // top of it without the initial closed state.
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const FAQ_OPEN_MS = 300;
+  const FAQ_CLOSE_MS = 200;
 
-  function toggleFaq(item, answer) {
-    const opening = !item.classList.contains('is-open');
-    item.classList.toggle('is-open', opening);
-    if (opening) item.open = true;
-    if (reduceMotion) {
-      item.open = opening;
-      return;
-    }
-    const from = opening ? 0 : answer.offsetHeight;
-    const to = opening ? answer.scrollHeight : 0;
-    answer.getAnimations().forEach((a) => a.cancel());
-    const animation = answer.animate(
-      { height: [`${from}px`, `${to}px`] },
-      { duration: 300, easing: 'ease' }
-    );
-    animation.onfinish = () => {
-      if (!opening) item.open = false;
-    };
+  function toggleFaq(item) {
+    const outer = item.querySelector('.faq-answer-outer');
+    const bar = item.querySelector('.faq-icon-vert');
+    const question = item.querySelector('.faq-question');
+    const opening = question.getAttribute('aria-expanded') !== 'true';
+    const duration = reduceMotion ? 0 : opening ? FAQ_OPEN_MS : FAQ_CLOSE_MS;
+    question.setAttribute('aria-expanded', String(opening));
+
+    bar.style.transition = `transform ${duration}ms ease-in-out`;
+    bar.style.transform = opening ? 'rotate(90deg)' : '';
+
+    const from = outer.offsetHeight;
+    outer.style.height = opening ? 'auto' : '0px';
+    if (!duration || !outer.animate) return;
+    const to = opening ? outer.scrollHeight : 0;
+    outer.getAnimations().forEach((animation) => animation.cancel());
+    outer.animate({ height: [`${from}px`, `${to}px`] }, { duration, easing: 'ease-in-out' });
   }
 
   function initFaqs() {
     document.querySelectorAll('.page-faqs_rich-text').forEach((rt) => {
-      rt.querySelectorAll('h3').forEach((heading) => {
-        const item = document.createElement('details');
-        item.className = 'page-faqs_item';
+      const headings = [...rt.querySelectorAll(':scope > h3')];
+      if (!headings.length) return;
 
-        const question = document.createElement('summary');
-        question.className = 'page-faqs_question';
-        heading.parentNode.insertBefore(item, heading);
+      const wrapper = document.createElement('div');
+      wrapper.className = 'faq-wrapper fw-services';
+      const list = document.createElement('div');
+      list.className = 'faq-list';
+      wrapper.appendChild(list);
+
+      headings.forEach((heading, i) => {
+        const item = document.createElement('div');
+        item.className = 'faq-item';
+
+        const question = document.createElement('div');
+        question.className = 'faq-question';
+        question.setAttribute('role', 'button');
+        question.setAttribute('tabindex', '0');
+        question.setAttribute('aria-expanded', 'false');
+        question.setAttribute('aria-controls', `page-faq-${i + 1}`);
+
+        // Everything up to the next question is this item's answer. Collected
+        // before the heading moves, while it still has its siblings.
+        const answerNodes = [];
+        let node = heading.nextSibling;
+        while (node && !(node.nodeType === 1 && node.tagName === 'H3')) {
+          answerNodes.push(node);
+          node = node.nextSibling;
+        }
+
+        // The heading stays an h3 for document structure but takes the
+        // question's own text style, as the service page questions are plain text.
+        heading.style.cssText = 'margin:0;font:inherit;color:inherit;';
         question.appendChild(heading);
 
-        const toggle = document.createElement('span');
-        toggle.className = 'page-faqs_toggle';
-        toggle.innerHTML = CARET;
-        question.appendChild(toggle);
-        item.appendChild(question);
+        const icon = document.createElement('div');
+        icon.className = 'faq-open-icon';
+        icon.setAttribute('aria-hidden', 'true');
+        icon.innerHTML = '<div class="faq-icon-hoz"></div><div class="faq-icon-vert"></div>';
+        question.appendChild(icon);
 
-        // Everything up to the next question is this item's answer. The inner
-        // wrapper carries the padding so the animated height includes it.
+        const outer = document.createElement('div');
+        outer.className = 'faq-answer-outer';
+        outer.id = `page-faq-${i + 1}`;
+        outer.style.height = '0px';
         const answer = document.createElement('div');
-        answer.className = 'page-faqs_answer';
-        const inner = document.createElement('div');
-        inner.className = 'page-faqs_answer-inner';
-        answer.appendChild(inner);
-        let node = item.nextSibling;
-        while (node && !(node.nodeType === 1 && node.tagName === 'H3')) {
-          const next = node.nextSibling;
-          inner.appendChild(node);
-          node = next;
-        }
-        item.appendChild(answer);
+        answer.className = 'faq-answer w-richtext';
+        answerNodes.forEach((answerNode) => answer.appendChild(answerNode));
+        outer.appendChild(answer);
 
-        question.addEventListener('click', (event) => {
+        item.append(question, outer);
+        list.appendChild(item);
+
+        item.addEventListener('click', (event) => {
+          event.stopPropagation();
+          // A click on a link inside an answer follows the link instead.
+          if (event.target.closest('a')) return;
+          toggleFaq(item);
+        });
+        question.addEventListener('keydown', (event) => {
+          if (event.key !== 'Enter' && event.key !== ' ') return;
           event.preventDefault();
-          toggleFaq(item, answer);
+          toggleFaq(item);
         });
       });
+
+      rt.replaceChildren(wrapper);
     });
   }
 
