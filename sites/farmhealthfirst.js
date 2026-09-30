@@ -1,4 +1,4 @@
-// Last updated: 2026-09-28 13:29:27
+// Last updated: 2026-09-30 16:03:16
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -533,6 +533,107 @@ document.addEventListener('click', function (event) {
       subtree: true
     });
   }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+
+// SUBSCRIBE POPUP - OPEN ON ARRIVAL EVERY 48 HOURS UNTIL SUBSCRIBED
+(function () {
+  const storageKey = 'farm-health-first-subscribe-popup';
+  const gateEmailKey = 'fhfLearnVideoEmail';
+  const popupSelector = '.global_subscribe-popup';
+  const gatePopupSelector =
+    '.learn_email-gate-popup, .learn-video_email-gate-popup';
+  const showInterval = 48 * 60 * 60 * 1000;
+  const openDelay = 3000;
+
+  function readState() {
+    try {
+      return JSON.parse(localStorage.getItem(storageKey)) || {};
+    } catch (error) {
+      return {};
+    }
+  }
+
+  function saveState(changes) {
+    try {
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify(Object.assign(readState(), changes))
+      );
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function hasSubscribed() {
+    if (readState().subscribed) return true;
+
+    // Visitors who subscribed through the CPD video gate are already on the list.
+    try {
+      return !!localStorage.getItem(gateEmailKey);
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function openPopup() {
+    const popup = document.querySelector(popupSelector);
+
+    if (!popup || getComputedStyle(popup).display !== 'none') return;
+
+    const container = popup.querySelector('.global_subscribe-container');
+    const timing = { duration: 400, easing: 'ease' };
+
+    // Leave the same inline styles as the Webflow open interaction, so its
+    // close interaction and the Subscribe buttons keep working afterwards.
+    popup.style.display = 'flex';
+    popup.style.opacity = '1';
+    popup.animate([{ opacity: 0 }, { opacity: 1 }], timing);
+
+    if (container) {
+      container.style.transform = 'translate3d(0px, 0px, 0px)';
+      container.animate([
+        { transform: 'translate3d(0px, 10px, 0px)' },
+        { transform: 'translate3d(0px, 0px, 0px)' }
+      ], timing);
+    }
+  }
+
+  function init() {
+    if (!document.querySelector(popupSelector)) return;
+
+    // Add ?popup to any page address to open it straight away when checking it.
+    if (new URLSearchParams(location.search).has('popup')) {
+      openPopup();
+      return;
+    }
+
+    if (
+      hasSubscribed() ||
+      Date.now() - Number(readState().shownAt) < showInterval ||
+      document.querySelector(gatePopupSelector) ||
+      location.pathname.replace(/\/$/, '') === '/subscribe'
+    ) {
+      return;
+    }
+
+    window.setTimeout(function () {
+      // Without storage the popup would reopen on every page, so skip it.
+      if (hasSubscribed() || !saveState({ shownAt: Date.now() })) return;
+
+      openPopup();
+    }, openDelay);
+  }
+
+  document.addEventListener('fhf:subscription-success', function () {
+    saveState({ subscribed: true });
+  });
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
