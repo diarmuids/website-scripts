@@ -1,4 +1,4 @@
-// Last updated: 2026-09-30 16:03:16
+// Last updated: 2026-09-30 16:13:37
 
 function sentenceCaseSidebarLabel(value) {
   const lowerCaseLabel = String(value || '').trim().toLowerCase();
@@ -549,7 +549,7 @@ document.addEventListener('click', function (event) {
   const gatePopupSelector =
     '.learn_email-gate-popup, .learn-video_email-gate-popup';
   const showInterval = 48 * 60 * 60 * 1000;
-  const openDelay = 3000;
+  const openDelay = 1000;
 
   function readState() {
     try {
@@ -605,8 +605,28 @@ document.addEventListener('click', function (event) {
     }
   }
 
+  // Stop the page behind scrolling while the popup is open, however it was
+  // opened or closed (arrival, Subscribe button, close button, underlay).
+  function lockScrollWhileOpen(popup) {
+    function sync() {
+      const isOpen = getComputedStyle(popup).display !== 'none';
+
+      document.documentElement.style.overflow = isOpen ? 'hidden' : '';
+    }
+
+    new MutationObserver(sync).observe(popup, {
+      attributes: true,
+      attributeFilter: ['style']
+    });
+    sync();
+  }
+
   function init() {
-    if (!document.querySelector(popupSelector)) return;
+    const popup = document.querySelector(popupSelector);
+
+    if (!popup) return;
+
+    lockScrollWhileOpen(popup);
 
     // Add ?popup to any page address to open it straight away when checking it.
     if (new URLSearchParams(location.search).has('popup')) {
