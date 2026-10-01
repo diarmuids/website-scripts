@@ -1,4 +1,4 @@
-// Last updated: 2026-09-26 12:01:19
+// Last updated: 2026-10-01 17:39:57
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -88,43 +88,10 @@
     .fav-count { position: absolute; inset: 0 0 .1rem; display: flex; align-items: center; justify-content: center; color: var(--colors--white); font-size: .75rem; font-weight: 700; font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; line-height: 1; pointer-events: none; }
     .fav-count.is-long { font-size: .6875rem; }
     .fav-count:empty { display: none; }
-    .fav-overlay { position: fixed; inset: 0; z-index: 998; background: var(--colors--dark-gray); opacity: 0; pointer-events: none; transition: opacity .3s; }
-    .fav-overlay.is-open { opacity: .5; pointer-events: auto; }
-    .fav-panel { position: fixed; top: 0; right: 0; bottom: 0; z-index: 999; display: flex; flex-direction: column; width: min(26rem, 100vw); background: var(--colors--white); color: var(--colors--dark-gray); box-shadow: -8px 0 32px rgba(15, 23, 42, .15); transform: translateX(100%); visibility: hidden; transition: transform .3s ease, visibility 0s .3s; }
-    .fav-panel.is-open { transform: none; visibility: visible; transition: transform .3s ease; }
-    .fav-panel_head { display: flex; align-items: flex-start; justify-content: space-between; padding: 1.25rem 1.5rem .25rem; }
-    .fav-panel_title { margin: 0; font-family: var(--theme--heading-font); font-size: 1.5rem; font-weight: 700; line-height: 1.15; }
-    .fav-panel_close { width: 2.5rem; height: 2.5rem; padding: .6rem; border: 0; border-radius: var(--radius--radius-circle); background: var(--colors--light-gray); color: inherit; cursor: pointer; }
-    .fav-panel_close:hover { color: var(--colors--pink); }
-    .fav-panel_list { flex: 1; overflow-x: hidden; overflow-y: auto; scrollbar-gutter: stable; margin: 0; padding: .5rem 1.5rem; list-style: none; }
-    .fav-panel_item { display: flex; align-items: center; gap: 1rem; padding: .75rem 0; border-bottom: 1px solid var(--colors--navy-tint); }
-    .fav-panel_link { display: flex; flex: 1; align-items: center; gap: 1rem; min-width: 0; color: inherit; text-decoration: none; }
-    .fav-panel_link:hover .fav-panel_name { color: var(--colors--pink); }
-    .fav-panel_image { flex: none; width: 4rem; height: 4rem; padding: .25rem; border-radius: var(--radius--radius-input); background: var(--colors--light-gray); object-fit: contain; }
-    .fav-panel_brand { font-size: var(--font-size--tiny); text-transform: uppercase; letter-spacing: .05em; opacity: .7; }
-    .fav-panel_name { font-weight: 600; line-height: 1.3; transition: color .2s; }
-    /* One line each; long names end in an ellipsis and scroll on hover (ellipsisScroll). */
-    .fav-panel_text { flex: 1; min-width: 0; }
-    .fav-panel_brand, .fav-panel_name { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-    .fav-panel_remove { flex: none; width: 2rem; height: 2rem; padding: .45rem; border: 0; border-radius: var(--radius--radius-circle); background: transparent; color: var(--colors--pink); cursor: pointer; }
-    .fav-panel_remove svg { fill: currentColor; }
-    .fav-panel_remove:hover { background: var(--colors--pink-tint); }
-    .fav-panel_empty { padding: 2.5rem 1.5rem; text-align: center; }
-    .fav-panel_empty p { margin: 0 0 1.5rem; }
-    /* Three equal buttons across the panel: View on page, Download, Recently viewed (grey). */
-    .fav-panel_bar { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto; align-items: stretch; gap: .5rem; padding: .875rem 1.5rem 1rem; border-bottom: 1px solid var(--colors--navy-tint); }
-    .fav-panel_bar .button, .fav-panel_bar .fav-download > summary { width: 100%; min-height: 0; padding: .6rem .5rem; font-size: .875rem; line-height: 1.2; white-space: nowrap; }
-    .fav-panel_bar .fav-download > summary { gap: .4rem; }
-    .fav-panel_bar .button.fav-panel_recent { background-color: var(--colors--navy-tint); color: var(--colors--dark-gray); }
-    .fav-panel_bar .button.fav-panel_recent:hover { background-color: var(--colors--dark-gray-15); }
-    .fav-panel_bar.is-empty { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .fav-panel_note { margin: .25rem 0 0; font-size: .8125rem; opacity: .7; }
-    .fav-panel_bar.is-empty .fav-download { display: none; }
     .fav-toast { position: fixed; left: 50%; bottom: 1.5rem; z-index: 1000; display: flex; align-items: center; gap: 1rem; max-width: calc(100vw - 2rem); padding: .75rem .75rem .75rem 1.25rem; border-radius: var(--radius--radius-button); background: var(--colors--dark-gray); color: var(--colors--white); font-size: var(--font-size--small); box-shadow: 0 8px 24px rgba(15, 23, 42, .25); transform: translate(-50%, 150%); opacity: 0; transition: transform .3s ease, opacity .3s; pointer-events: none; }
     .fav-toast.is-open { transform: translate(-50%, 0); opacity: 1; pointer-events: auto; }
     .fav-toast_undo { padding: .4rem .9rem; border: 0; border-radius: var(--radius--radius-button); background: var(--colors--pink); color: var(--colors--white); font: inherit; font-weight: 700; cursor: pointer; }
     .fav-toast_undo:hover { background: var(--colors--white); color: var(--colors--pink); }
-    .fav-page_actions { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }
     .recent_track { display: grid; grid-auto-flow: column; grid-template-columns: none; grid-template-rows: auto; grid-auto-columns: calc((100% - 3 * var(--spacing--medium)) / 4); overflow: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
     .recent_track::-webkit-scrollbar { display: none; }
     .recent_track > * { scroll-snap-align: start; }
@@ -136,20 +103,6 @@
     .recent_arrow:disabled { opacity: .35; cursor: default; }
     @media (max-width: 991px) { .recent_track { grid-auto-columns: calc((100% - 2 * var(--spacing--medium)) / 3); } }
     @media (max-width: 767px) { .recent_track { grid-auto-columns: calc((100% - var(--spacing--small)) / 2); } }
-    .fav-download { position: relative; }
-    .fav-download > summary { list-style: none; cursor: pointer; gap: .6rem; }
-    .fav-download > summary::-webkit-details-marker { display: none; }
-    .fav-download_chevron { width: .5rem; height: .5rem; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(-2px) rotate(45deg); transition: transform .2s; }
-    .fav-download[open] .fav-download_chevron { transform: translateY(2px) rotate(-135deg); }
-    .fav-download_menu { position: absolute; right: 0; top: calc(100% + .2rem); z-index: 20; display: grid; min-width: 11rem; padding: .3rem; border: 1px solid var(--colors--dark-gray-15); border-radius: var(--radius--radius-block); background: var(--colors--white); box-shadow: 0 12px 32px rgba(15, 23, 42, .14); }
-    .fav-download_menu button { display: flex; align-items: center; gap: .55rem; padding: .45rem .7rem; border: 0; border-radius: var(--radius--radius-input); background: none; color: var(--colors--dark-gray); font: inherit; font-size: var(--font-size--small); font-weight: 600; white-space: nowrap; text-align: left; cursor: pointer; }
-    .fav-download_menu svg { flex: none; width: 1.375rem; height: 1.375rem; }
-    .fav-download_menu button:hover, .fav-download_menu button:focus-visible { background: var(--colors--pink-tint); color: var(--colors--pink); }
-    @media (max-width: 767px) { .fav-download_menu { left: 0; right: auto; } }
-    .fav-page_empty { padding: 2.5rem; border-radius: var(--radius--radius-block); background: var(--colors--light-gray); text-align: center; }
-    .fav-page_empty p { margin: 0 0 1.5rem; }
-    .fav-page_clear { padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
-    .fav-page_clear:hover { color: var(--colors--pink); }
   `;
   document.head.appendChild(favStyle);
 
@@ -300,55 +253,55 @@
   // FAVOURITES DOWNLOADS (panel and /favourites page)
   // -------------------------------------------------------
 
-  // A "Download" menu: each favourite's product page is read for its details (spec
-  // table, short summary, main image), then written as PDF, Excel, CSV or text. The
-  // Excel and PDF libraries load only when first used.
-  // File-type icons: a page with a coloured label (PDF red, Excel green, CSV teal, text grey).
-  const fileIcon = (label, colour) =>
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 1.75h7.5l5.25 5.25v13.25a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V3.75a2 2 0 0 1 2-2z" fill="#fff" stroke="#94a3b8" stroke-width="1.5"/><path d="M14.5 1.75V7h5.25" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linejoin="round"/><rect x="1" y="11.5" width="16" height="8" rx="1.75" fill="${colour}"/><text x="9" y="17.6" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="6.2" font-weight="700" fill="#fff">${label}</text></svg>`;
-  const EXPORT_TYPES = [
-    ['pdf', 'PDF', fileIcon('PDF', '#E2312D')],
-    ['xlsx', 'Excel', fileIcon('XLS', '#1D6F42')],
-    ['csv', 'CSV', fileIcon('CSV', '#0E7C66')],
-    ['txt', 'Text', fileIcon('TXT', '#64748B')],
-  ];
-  function makeDownloadMenu() {
-    const download = document.createElement('details');
-    download.className = 'fav-download';
-    download.innerHTML =
-      '<summary class="button is-secondary">Download<span class="fav-download_chevron" aria-hidden="true"></span></summary>' +
-      '<div class="fav-download_menu">' +
-      EXPORT_TYPES.map(([ext, name, icon]) => `<button type="button" data-export="${ext}">${icon}${name} (.${ext})</button>`)
-        .join('') +
-      '</div>';
-    const summaryEl = download.querySelector('summary');
+  // Downloads: each favourite's product page is read for its details (spec table,
+  // short summary, main image), then written as PDF, Excel, CSV or text. The Excel
+  // and PDF libraries load only when first used.
+  // The Download menus are Webflow elements (the favourites panel and the
+  // /favourites page): .fav-download holds a role="button" toggle and a hidden
+  // .fav-download_menu of role="button" options carrying data-export="pdf|xlsx|csv|txt".
+  function initDownloadMenu(download) {
+    const toggle = download.querySelector('.fav-download_toggle');
+    const menu = download.querySelector('.fav-download_menu');
+    const label = download.querySelector('.fav-download_label');
+    const chevron = download.querySelector('.fav-download_chevron');
+    if (!toggle || !menu) return;
+    toggle.setAttribute('aria-haspopup', 'true');
+    let open = false;
+    const setOpen = (on) => {
+      open = on;
+      menu.style.display = on ? 'flex' : '';
+      toggle.setAttribute('aria-expanded', String(on));
+      if (chevron) chevron.style.transform = on ? 'rotate(180deg)' : '';
+    };
+    setOpen(false);
+    toggle.addEventListener('click', () => setOpen(!open));
     document.addEventListener('click', (e) => {
-      if (download.open && !download.contains(e.target)) download.open = false;
+      if (open && !download.contains(e.target)) setOpen(false);
     });
     download.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && download.open) {
+      if (e.key === 'Escape' && open) {
         e.stopPropagation();
-        download.open = false;
-        summaryEl.focus();
+        setOpen(false);
+        toggle.focus();
       }
     });
-    download.querySelectorAll('[data-export]').forEach((button) =>
-      button.addEventListener('click', async () => {
-        download.open = false;
-        const label = summaryEl.firstChild.textContent;
-        summaryEl.firstChild.textContent = 'Preparing…';
-        summaryEl.setAttribute('aria-busy', 'true');
+    download.querySelectorAll('[data-export]').forEach((option) =>
+      option.addEventListener('click', async () => {
+        if (!EXPORTERS[option.dataset.export] || toggle.getAttribute('aria-busy')) return;
+        setOpen(false);
+        const text = label?.textContent;
+        if (label) label.textContent = 'Preparing…';
+        toggle.setAttribute('aria-busy', 'true');
         try {
           const items = await favouriteDetails();
-          await EXPORTERS[button.dataset.export](items);
+          await EXPORTERS[option.dataset.export](items);
         } catch (error) {
           showToast('Sorry, the download failed. Please try again.', false);
         }
-        summaryEl.firstChild.textContent = label;
-        summaryEl.removeAttribute('aria-busy');
+        if (label) label.textContent = text;
+        toggle.removeAttribute('aria-busy');
       })
     );
-    return download;
   }
 
   const detailCache = new Map();
@@ -617,93 +570,112 @@
     return doc;
   }
 
-  const favOverlay = document.createElement('div');
-  favOverlay.className = 'fav-overlay';
-  const favPanel = document.createElement('aside');
-  favPanel.className = 'fav-panel';
-  favPanel.setAttribute('role', 'dialog');
-  favPanel.setAttribute('aria-modal', 'true');
-  favPanel.setAttribute('aria-labelledby', 'fav-panel-title');
-  favPanel.setAttribute('data-lenis-prevent', '');
-  favPanel.innerHTML = `
-    <div class="fav-panel_head">
-      <div>
-        <h2 class="fav-panel_title" id="fav-panel-title">Favourites</h2>
-        <p class="fav-panel_note">Saved on this device only.</p>
-      </div>
-      <button type="button" class="fav-panel_close" aria-label="Close favourites"><svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-    </div>
-    <div class="fav-panel_bar">
-      <a href="/favourites" class="button w-inline-block"><div>View on page</div></a>
-      <a href="/recently-viewed" class="button fav-panel_recent w-inline-block"><div>Recent</div></a>
-    </div>
-    <ul class="fav-panel_list"></ul>
-    <div class="fav-panel_empty">
-      <p>No favourites yet. Tap the heart on any product to save it here.</p>
-      <div class="button-group" style="justify-content:center"><a href="/products" class="button w-inline-block"><div>Browse products</div></a></div>
-    </div>`;
-  // Download sits between "View on page" and the Recently viewed link.
-  favPanel.querySelector('.fav-panel_recent').before(makeDownloadMenu());
-  document.body.append(favOverlay, favPanel);
-  favPanel.querySelector('.fav-panel_close').addEventListener('click', () => closePanel());
-  favOverlay.addEventListener('click', () => closePanel());
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && favPanel.classList.contains('is-open')) closePanel();
-  });
+  // The favourites panel is a Webflow element in the global component
+  // (.fav-panel_component, display none until opened). Its first .fav-panel_item is
+  // the row template; the sample rows are cleared on load and the visitor's own
+  // favourites are written in on every open.
+  const favPanel = document.querySelector('.fav-panel_component');
+  const favDialog = favPanel?.querySelector('.fav-panel_wrapper');
+  const favOverlay = favPanel?.querySelector('.fav-panel_overlay');
+  const favClose = favPanel?.querySelector('.fav-panel_close');
+  const panelList = favPanel?.querySelector('.fav-panel_list');
+  const panelTemplate = panelList?.querySelector('.fav-panel_item')?.cloneNode(true);
+  const panelDownload = favPanel?.querySelector('.fav-download');
+  panelList?.replaceChildren();
+  const PANEL_MS = 350;
+  const PANEL_EASE = 'cubic-bezier(.4, 0, .2, 1)';
+  let panelOpen = false;
+  let panelAnims = [];
+  if (favPanel) {
+    favDialog?.setAttribute('role', 'dialog');
+    favDialog?.setAttribute('aria-modal', 'true');
+    favDialog?.setAttribute('data-lenis-prevent', '');
+    if (favPanel.querySelector('#fav-panel-title')) favDialog?.setAttribute('aria-labelledby', 'fav-panel-title');
+    favPanel.querySelectorAll('.fav-panel_close, .fav-panel_overlay').forEach((el) => el.addEventListener('click', () => closePanel()));
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && panelOpen) closePanel();
+    });
+    if (panelDownload) initDownloadMenu(panelDownload);
+  } else if (navFav) {
+    navFav.remove();
+    navFav = null;
+  }
 
+  // Slide the panel in from the right while the overlay fades up to its Webflow opacity.
+  function animatePanel(opening) {
+    panelAnims.forEach((a) => a.cancel());
+    const shade = favOverlay ? getComputedStyle(favOverlay).opacity : 1;
+    const out = { transform: 'translateX(100%)' };
+    const into = { transform: 'none' };
+    const options = { duration: PANEL_MS, easing: PANEL_EASE, fill: 'forwards' };
+    panelAnims = [
+      favDialog?.animate(opening ? [out, into] : [into, out], options),
+      favOverlay?.animate(opening ? [{ opacity: 0 }, { opacity: shade }] : [{ opacity: shade }, { opacity: 0 }], options),
+    ].filter(Boolean);
+    return panelAnims[0];
+  }
   function openPanel() {
+    if (!favPanel) return;
     renderPanel();
-    favPanel.classList.add('is-open');
-    favOverlay.classList.add('is-open');
+    panelOpen = true;
+    favPanel.style.display = 'block';
+    animatePanel(true);
     navFav?.setAttribute('aria-expanded', 'true');
-    favPanel.querySelector('.fav-panel_close').focus();
+    favClose?.focus();
   }
   function closePanel() {
-    favPanel.classList.remove('is-open');
-    favOverlay.classList.remove('is-open');
+    if (!panelOpen) return;
+    panelOpen = false;
+    const anim = animatePanel(false);
+    const hide = () => {
+      if (panelOpen) return;
+      favPanel.style.display = '';
+      panelAnims.forEach((a) => a.cancel());
+    };
+    if (anim) anim.onfinish = hide;
+    else hide();
     navFav?.setAttribute('aria-expanded', 'false');
     navFav?.focus();
   }
 
   function renderPanel() {
-    const list = favPanel.querySelector('.fav-panel_list');
-    list.replaceChildren(
+    if (!panelList || !panelTemplate) return;
+    panelList.replaceChildren(
       ...favourites.map((p) => {
-        const li = document.createElement('li');
-        li.className = 'fav-panel_item';
-        const link = document.createElement('a');
-        link.className = 'fav-panel_link';
-        link.href = p.url;
-        if (p.image) {
-          const img = document.createElement('img');
-          img.className = 'fav-panel_image';
+        const item = panelTemplate.cloneNode(true);
+        const link = item.querySelector('.fav-panel_link');
+        if (link) link.href = p.url;
+        const img = item.querySelector('.fav-panel_image');
+        if (img && p.image) {
+          img.removeAttribute('srcset');
+          img.removeAttribute('sizes');
           img.src = p.image;
           img.alt = '';
           img.loading = 'lazy';
-          link.appendChild(img);
+        } else img?.remove();
+        const brand = item.querySelector('.fav-panel_brand');
+        if (brand) brand.textContent = p.brand || '';
+        const name = item.querySelector('.fav-panel_name');
+        if (name) {
+          name.textContent = p.name;
+          ellipsisScroll(name, item);
         }
-        const text = document.createElement('div');
-        text.className = 'fav-panel_text';
-        text.innerHTML = '<div class="fav-panel_brand"></div><div class="fav-panel_name"></div>';
-        text.children[0].textContent = p.brand;
-        text.children[1].textContent = p.name;
-        ellipsisScroll(text.children[1], li);
-        link.appendChild(text);
-        const remove = document.createElement('button');
-        remove.type = 'button';
-        remove.className = 'fav-panel_remove';
-        remove.setAttribute('aria-label', `Remove ${p.name} from favourites`);
-        remove.innerHTML = heartSvg;
-        remove.addEventListener('click', () => {
-          toggleFavourite(p);
-          favPanel.querySelector('.fav-panel_close').focus();
-        });
-        li.append(link, remove);
-        return li;
+        const remove = item.querySelector('.fav-panel_remove');
+        if (remove) {
+          remove.setAttribute('aria-label', `Remove ${p.name} from favourites`);
+          remove.addEventListener('click', () => {
+            toggleFavourite(p);
+            favClose?.focus();
+          });
+        }
+        return item;
       })
     );
-    favPanel.querySelector('.fav-panel_empty').style.display = favourites.length ? 'none' : '';
-    favPanel.querySelector('.fav-panel_bar').classList.toggle('is-empty', !favourites.length);
+    const n = favourites.length;
+    panelList.style.display = n ? '' : 'none';
+    const empty = favPanel.querySelector('.fav-panel_empty');
+    if (empty) empty.style.display = n ? 'none' : '';
+    if (panelDownload) panelDownload.style.display = n ? '' : 'none';
   }
 
   // Repaint every heart, the nav count and (if open) the panel.
@@ -717,7 +689,7 @@
       navFav.classList.toggle('is-active', n > 0);
       navFav.setAttribute('aria-label', n ? `Favourites (${n})` : 'Favourites');
     }
-    if (favPanel.classList.contains('is-open')) renderPanel();
+    if (panelOpen) renderPanel();
     onFavouritesChange?.();
   }
   // Another tab changed the list.
@@ -766,6 +738,20 @@
   // -------------------------------------------------------
   // PRODUCT FILTERS (Finsweet Attributes v2 List)
   // -------------------------------------------------------
+
+  // The Pet, Category and Brand dropdowns (Div Blocks) get their Finsweet fields
+  // here, keyed by their toggle text: the Webflow API could not write them.
+  function addDropdownFields() {
+    const DROPDOWN_FIELDS = {
+      pet: { 'fs-list-field': 'pet', 'fs-list-operator': 'contain', 'fs-list-tagvalues': 'separate' },
+      category: { 'fs-list-field': 'category', 'fs-list-operator': 'contain', 'fs-list-tagvalues': 'separate' },
+      brand: { 'fs-list-field': 'brand', 'fs-list-tagvalues': 'separate' },
+    };
+    document.querySelectorAll('div.filters_dropdown:not([fs-list-field])').forEach((dropdown) => {
+      const key = dropdown.querySelector('.filters_dropdown-toggle')?.textContent.trim().toLowerCase();
+      Object.entries(DROPDOWN_FIELDS[key] || {}).forEach(([name, value]) => dropdown.setAttribute(name, value));
+    });
+  }
 
   // Attributes the Webflow API could not write on these elements.
   function addFilterAttributes() {
@@ -892,6 +878,7 @@
   }
 
   if (document.querySelector('[fs-list-element="list"]')) {
+    addDropdownFields();
     flattenCheckboxes();
     addMissingCategories();
     addFilterAttributes();
@@ -1104,10 +1091,10 @@
 
     // Category dropdown (same markup as the Products filters, so it gets the
     // search, Clear, count badge and keyboard behaviour).
-    const dropdown = document.createElement('details');
+    const dropdown = document.createElement('div');
     dropdown.className = 'filters_dropdown';
     dropdown.innerHTML =
-      '<summary class="filters_dropdown-toggle">Category<div class="icon_svg" style="width:1rem;height:1rem"><svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></div></summary>' +
+      '<div class="filters_dropdown-toggle" role="button" tabindex="0"><div>Category</div><div class="icon_svg" style="width:1rem;height:1rem"><svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></div></div>' +
       `<div class="filters_dropdown-list">${categories
         .map((c) => `<label class="filters_checkbox"><input type="checkbox" class="filters_checkbox-input" value="${c}"><span>${labelOf(c)}</span></label>`)
         .join('')}</div>`;
@@ -1146,8 +1133,8 @@
       count.textContent = `Showing ${shown} of ${items.length} brands`;
       clearSearch.style.display = term ? '' : 'none';
       // Count badge / active state on the Category toggle.
-      const summary = dropdown.querySelector('summary');
-      summary.classList.toggle('is-active', cats.length > 0);
+      const dropdownToggle = dropdown.querySelector('.filters_dropdown-toggle');
+      dropdownToggle.classList.toggle('is-active', cats.length > 0);
       const dClear = dropdown.querySelector('.filters_dropdown-clear');
       if (dClear) dClear.style.display = cats.length ? '' : 'none';
     }
@@ -1161,6 +1148,71 @@
     });
     apply();
   }
+
+  // -------------------------------------------------------
+  // ON-PAGE BUTTONS AND ACCORDIONS
+  // -------------------------------------------------------
+
+  // Divs with role="button" (accordion toggles, panel close, download options…)
+  // answer Enter and Space like a real button.
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const el = e.target.closest?.('div[role="button"]');
+    if (!el || el !== e.target) return;
+    e.preventDefault();
+    el.click();
+  });
+
+  // Accordions are Div Blocks: .accordion_item > .accordion_toggle (role="button")
+  // + .accordion_content. Items with data-open="true" start open. The content slides
+  // open and shut (height and padding) and the chevron turns.
+  const ACCORDION_MS = 500;
+  const ACCORDION_EASE = 'cubic-bezier(.4, 0, .2, 1)';
+  document.querySelectorAll('.accordion_item').forEach((item, i) => {
+    const toggle = item.querySelector('.accordion_toggle');
+    const content = item.querySelector('.accordion_content');
+    const icon = item.querySelector('.accordion_icon');
+    if (!toggle || !content) return;
+    content.id ||= `accordion-content-${i + 1}`;
+    toggle.setAttribute('aria-controls', content.id);
+    if (icon) icon.style.transition = `transform ${ACCORDION_MS}ms ${ACCORDION_EASE}`;
+    let open = item.dataset.open === 'true';
+    let anim = null;
+    const paint = () => {
+      toggle.setAttribute('aria-expanded', String(open));
+      if (icon) icon.style.transform = open ? 'rotate(180deg)' : '';
+    };
+    content.style.display = open ? '' : 'none';
+    paint();
+    toggle.addEventListener('click', () => {
+      // Start from wherever a running animation has got to.
+      const live = getComputedStyle(content);
+      const from = anim && {
+        height: `${content.offsetHeight}px`,
+        paddingTop: live.paddingTop,
+        paddingBottom: live.paddingBottom,
+        opacity: live.opacity,
+      };
+      anim?.cancel();
+      open = !open;
+      paint();
+      content.style.display = '';
+      if (reduceMotion) {
+        if (!open) content.style.display = 'none';
+        return;
+      }
+      const cs = getComputedStyle(content);
+      const full = { height: `${content.offsetHeight}px`, paddingTop: cs.paddingTop, paddingBottom: cs.paddingBottom, opacity: 1 };
+      const shut = { height: '0px', paddingTop: '0px', paddingBottom: '0px', opacity: 0 };
+      content.style.overflow = 'hidden';
+      anim = content.animate([from || (open ? shut : full), open ? full : shut], { duration: ACCORDION_MS, easing: ACCORDION_EASE });
+      anim.onfinish = () => {
+        anim = null;
+        content.style.overflow = '';
+        if (!open) content.style.display = 'none';
+      };
+    });
+  });
 
   // -------------------------------------------------------
   // FORMS
@@ -1181,7 +1233,8 @@
     if (label && !label.contains(field)) label.htmlFor = id;
   });
 
-  // Placeholders by field name (the Webflow API can't set input placeholders).
+  // Placeholders by field name, for forms whose fields have none set in Webflow
+  // (the product enquiry form; the contact form has its own).
   const PLACEHOLDERS = {
     Name: 'Your full name',
     Business: 'Shop, practice or business',
@@ -1212,20 +1265,50 @@
     sync();
   });
 
-  // Filter dropdowns are native <details>: keep one open at a time and close on outside click.
+  // Filter dropdowns (Products, and the Suppliers one built above) are Div Blocks:
+  // .filters_dropdown > .filters_dropdown-toggle (role="button") +
+  // .filters_dropdown-list, which is display none in Webflow until opened. Each gets
+  // a <details>-style `open` property and `toggle` event for the code below.
+  document.querySelectorAll('div.filters_dropdown').forEach((dropdown) => {
+    const toggle = dropdown.querySelector('.filters_dropdown-toggle');
+    const list = dropdown.querySelector('.filters_dropdown-list');
+    const icon = toggle?.querySelector('.icon_svg');
+    if (!toggle || !list) return;
+    let isOpen = false;
+    const paint = () => {
+      list.style.display = isOpen ? 'flex' : '';
+      toggle.setAttribute('aria-expanded', String(isOpen));
+      if (icon) icon.style.transform = isOpen ? 'rotate(180deg)' : '';
+    };
+    Object.defineProperty(dropdown, 'open', {
+      get: () => isOpen,
+      set: (on) => {
+        if (Boolean(on) === isOpen) return;
+        isOpen = Boolean(on);
+        paint();
+        dropdown.dispatchEvent(new Event('toggle'));
+      },
+    });
+    paint();
+    toggle.addEventListener('click', () => {
+      dropdown.open = !dropdown.open;
+    });
+  });
+
+  // Keep one filter dropdown open at a time and close them on an outside click.
   const dropdowns = () => document.querySelectorAll('.filters_dropdown');
   document.addEventListener(
     'toggle',
     (e) => {
       const opened = e.target;
       if (!opened.matches || !opened.matches('.filters_dropdown') || !opened.open) return;
-      dropdowns().forEach((d) => d !== opened && d.removeAttribute('open'));
+      dropdowns().forEach((d) => d !== opened && (d.open = false));
     },
     true,
   );
   document.addEventListener('click', (e) => {
     if (e.target.closest('.filters_dropdown')) return;
-    dropdowns().forEach((d) => d.removeAttribute('open'));
+    dropdowns().forEach((d) => (d.open = false));
   });
 
   // Dropdown search and keyboard use. Longer option lists get a search box that is
@@ -1261,8 +1344,8 @@
   }
 
   function closeDropdown(dropdown) {
-    dropdown.removeAttribute('open');
-    dropdown.querySelector('summary')?.focus();
+    dropdown.open = false;
+    dropdown.querySelector('.filters_dropdown-toggle')?.focus();
   }
 
   // Each dropdown gets a head row: search box (longer lists) plus a "Clear" button
@@ -1291,7 +1374,7 @@
     const head = addDropdownHead(dropdown);
     const list = dropdown.querySelector('.filters_dropdown-list');
     if (!head || rowsOf(dropdown).length < 7 || list.querySelector('.filters_dropdown-search')) return;
-    const name = dropdown.querySelector('summary')?.textContent.trim() || 'options';
+    const name = dropdown.querySelector('.filters_dropdown-toggle')?.textContent.trim() || 'options';
 
     const search = document.createElement('input');
     search.type = 'search';
@@ -1413,12 +1496,12 @@
   const updateFilterCount = () => {
     if (!drawer) return;
     drawer.querySelectorAll('.filters_dropdown').forEach((dropdown) => {
-      const summary = dropdown.querySelector('summary');
-      if (!summary) return;
+      const dropdownToggle = dropdown.querySelector('.filters_dropdown-toggle');
+      if (!dropdownToggle) return;
       const n = dropdown.querySelectorAll('input[type="checkbox"]:checked').length;
       // The count sits over the chevron so the toggle never changes width.
-      const icon = summary.querySelector('.icon_svg');
-      let badge = summary.querySelector('.filters_dropdown-count');
+      const icon = dropdownToggle.querySelector('.icon_svg');
+      let badge = dropdownToggle.querySelector('.filters_dropdown-count');
       if (!badge && icon) {
         // Badge and chevron share a holder; only the chevron rotates when open.
         const slot = document.createElement('span');
@@ -1434,7 +1517,7 @@
         badge.style.display = n ? '' : 'none';
         icon.querySelector('svg').style.visibility = n ? 'hidden' : '';
       }
-      summary.classList.toggle('is-active', n > 0);
+      dropdownToggle.classList.toggle('is-active', n > 0);
       const clear = dropdown.querySelector('.filters_dropdown-clear');
       if (clear) clear.style.display = n ? '' : 'none';
       const head = dropdown.querySelector('.filters_dropdown-head');
@@ -1726,29 +1809,48 @@
     }
   }
 
-  // Product card markup matching the CMS cards, in a list item so it gets a heart.
-  function productCard(p) {
-    const item = document.createElement('div');
-    item.className = 'product_item';
-    const card = document.createElement('a');
-    card.className = 'product-card w-inline-block';
+  // Product card for the script's lists. Lists built in Webflow (the /favourites and
+  // /recently-viewed pages, the product page strip) hold sample cards: the first one
+  // is kept as the template, so card changes made in the Designer carry through.
+  // Other lists get the same markup as the CMS cards.
+  function productCard(p, template) {
+    let item;
+    if (template) {
+      item = template.cloneNode(true);
+      item.querySelectorAll('.fav-button').forEach((b) => b.remove());
+    } else {
+      item = document.createElement('div');
+      item.className = 'product_item';
+      item.innerHTML =
+        '<a class="product-card w-inline-block"><div class="product-card_image-wrap"><img class="product-card_image" loading="lazy" alt=""></div>' +
+        '<div class="product-card_text"><div class="product-card_meta product-recent_brand"></div><div class="product-card_name"></div></div></a>';
+    }
+    const card = item.querySelector('.product-card');
     card.href = p.url;
     if (p.sku) card.dataset.sku = p.sku;
-    card.innerHTML =
-      '<div class="product-card_image-wrap"><img class="product-card_image" loading="lazy" alt=""></div>' +
-      '<div class="product-card_text"><div class="product-card_meta product-recent_brand"></div><div class="product-card_name"></div></div>';
-    const img = card.querySelector('img');
-    if (p.image) {
+    const img = card.querySelector('.product-card_image');
+    if (img && p.image) {
+      img.removeAttribute('srcset');
+      img.removeAttribute('sizes');
       img.src = p.image;
       img.alt = p.name;
-    } else img.remove();
-    card.querySelector('.product-card_meta').textContent = p.brand;
-    card.querySelector('.product-card_name').textContent = p.name;
-    item.append(card, makeHeart(p.url));
+      img.loading = 'lazy';
+    } else img?.remove();
+    const meta = card.querySelector('.product-card_meta');
+    if (meta) {
+      meta.classList.add('product-recent_brand');
+      meta.textContent = p.brand || '';
+    }
+    const name = card.querySelector('.product-card_name');
+    if (name) name.textContent = p.name;
+    item.appendChild(makeHeart(p.url));
     return item;
   }
+  const listTemplates = new WeakMap();
   function fillList(list, items) {
-    list.replaceChildren(...items.map(productCard));
+    if (!listTemplates.has(list)) listTemplates.set(list, list.querySelector('.product_item')?.cloneNode(true) || null);
+    const template = listTemplates.get(list);
+    list.replaceChildren(...items.map((p) => productCard(p, template)));
   }
   const ARROW =
     '<div class="icon_svg"><svg aria-hidden="true" stroke-linejoin="round" stroke-linecap="round" stroke-width="2" stroke="currentColor" fill="none" viewBox="0 0 24 24" height="100%" width="100%" xmlns="http://www.w3.org/2000/svg"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg></div>';
@@ -1776,7 +1878,7 @@
   // RECENTLY VIEWED AND FAVOURITES PAGES AND STRIPS
   // -------------------------------------------------------
 
-  // /favourites lists every favourite (with a spreadsheet download) and ends with a
+  // /favourites lists every favourite (with a Download menu) and ends with a
   // Recently viewed strip; /recently-viewed lists everything viewed and ends with a
   // Favourites strip (the only place that strip appears). Product, Home, Products and
   // brand pages get a Recently viewed strip above the closing call to action.
@@ -1829,80 +1931,64 @@
     else (document.querySelector('main') || document.body).appendChild(section);
     return refresh;
   }
-  // Content goes after the page title (or first in main).
-  function placeAfterTitle(...sections) {
-    const main = document.querySelector('main') || document.body;
-    const title = main.querySelector('.section_page-title');
-    if (title) title.after(...sections);
-    else main.prepend(...sections);
-  }
   const recentOthers = () => readRecent().filter((p) => p.url !== path);
   const refreshers = [];
+  // A strip built in Webflow (.section_product-recent with a .product-recent_list),
+  // else one made here on the pages that show it.
+  const nativeStrip = document.querySelector('.section_product-recent');
+  const nativeStripList = nativeStrip?.querySelector('.product-recent_list');
+  function strip(title, getItems, viewAll) {
+    if (nativeStrip && nativeStripList) return makeStrip(nativeStrip, nativeStripList, getItems, viewAll);
+    return stripSection(title, getItems, viewAll);
+  }
+  const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
+  // Both list pages are built in Webflow with sample cards, which are replaced here.
   if (isFavPage) {
-    // The page title names the page, so the list itself has no heading of its own.
-    const favSection = productSection('section_favourites', '');
-    favSection.querySelector('h2').remove();
-    const actions = document.createElement('div');
-    actions.className = 'button-group';
-    actions.appendChild(makeDownloadMenu());
-    favSection.querySelector('.heading_row').appendChild(actions);
-    const favList = favSection.querySelector('.product_list');
-    const favEmpty = document.createElement('div');
-    favEmpty.className = 'fav-page_empty';
-    favEmpty.innerHTML =
-      '<p>No favourites yet. Tap the heart on any product to save it here.</p><div class="button-group" style="justify-content:center"><a href="/products" class="button w-inline-block"><div>Browse products</div></a></div>';
-    favList.after(favEmpty);
-    placeAfterTitle(favSection);
-    refreshers.push(() => {
-      const n = favourites.length;
-      fillList(favList, favourites);
-      favList.style.display = n ? '' : 'none';
-      favEmpty.style.display = n ? 'none' : '';
-      actions.style.display = n ? '' : 'none';
-      favSection.querySelector('.heading_text p').textContent = n ? `${n} saved product${n === 1 ? '' : 's'}, stored on this device.` : '';
-    });
-    refreshers.push(stripSection('Recently viewed', recentOthers, '/recently-viewed'));
-
-  } else if (isRecentPage) {
-    const recentSection = productSection('section_recent', '');
-    recentSection.querySelector('h2').remove();
-    const clear = document.createElement('button');
-    clear.type = 'button';
-    clear.className = 'fav-page_clear';
-    clear.textContent = 'Clear history';
-    recentSection.querySelector('.heading_row').appendChild(clear);
-    const recentList = recentSection.querySelector('.product_list');
-    const recentEmpty = document.createElement('div');
-    recentEmpty.className = 'fav-page_empty';
-    recentEmpty.innerHTML =
-      "<p>Nothing here yet. Products you look at will show up here.</p><div class=\"button-group\" style=\"justify-content:center\"><a href=\"/products\" class=\"button w-inline-block\"><div>Browse products</div></a></div>";
-    recentList.after(recentEmpty);
-    placeAfterTitle(recentSection);
-    refreshers.push(() => {
-      const items = readRecent();
-      fillList(recentList, items);
-      recentList.style.display = items.length ? '' : 'none';
-      recentEmpty.style.display = items.length ? 'none' : '';
-      clear.style.display = items.length ? '' : 'none';
-      recentSection.querySelector('.heading_text p').textContent = items.length ? `The last ${items.length} product${items.length === 1 ? '' : 's'} you looked at, on this device.` : '';
-    });
-    refreshers.push(stripSection('Your favourites', () => favourites, '/favourites'));
-    clear.addEventListener('click', () => {
-      try {
-        localStorage.removeItem(RECENT_KEY);
-      } catch (error) {
-        // Nothing to clear if storage is blocked.
-      }
-      refreshers.forEach((fn) => fn());
-    });
-  } else {
-    const nativeRecent = document.querySelector('.section_product-recent');
-    const list = nativeRecent?.querySelector('.product-recent_list');
-    if (nativeRecent && list) refreshers.push(makeStrip(nativeRecent, list, recentOthers, '/recently-viewed'));
-    else if (path === '/' || path === '/products' || path.startsWith('/brands/')) {
-      refreshers.push(stripSection('Recently viewed', recentOthers, '/recently-viewed'));
+    const favSection = document.querySelector('.section_favourites');
+    const favList = favSection?.querySelector('.product_list');
+    if (favList) {
+      const favEmpty = favSection.querySelector('.fav-page_empty');
+      const count = favSection.querySelector('.fav-page_count');
+      const actions = favSection.querySelector('.fav-page_actions');
+      favSection.querySelectorAll('.fav-download').forEach(initDownloadMenu);
+      refreshers.push(() => {
+        const n = favourites.length;
+        fillList(favList, favourites);
+        favList.style.display = n ? '' : 'none';
+        if (favEmpty) favEmpty.style.display = n ? 'none' : '';
+        if (actions) actions.style.display = n ? '' : 'none';
+        if (count) count.textContent = n ? `${plural(n, 'saved product')}, stored on this device.` : '';
+      });
     }
+    refreshers.push(strip('Recently viewed', recentOthers, '/recently-viewed'));
+  } else if (isRecentPage) {
+    const recentSection = document.querySelector('.section_recent');
+    const recentList = recentSection?.querySelector('.product_list');
+    if (recentList) {
+      const recentEmpty = recentSection.querySelector('.fav-page_empty');
+      const count = recentSection.querySelector('.fav-page_count');
+      const clear = recentSection.querySelector('.fav-page_clear');
+      refreshers.push(() => {
+        const items = readRecent();
+        fillList(recentList, items);
+        recentList.style.display = items.length ? '' : 'none';
+        if (recentEmpty) recentEmpty.style.display = items.length ? 'none' : '';
+        if (clear) clear.style.display = items.length ? '' : 'none';
+        if (count) count.textContent = items.length ? `The last ${plural(items.length, 'product')} you looked at, on this device.` : '';
+      });
+      clear?.addEventListener('click', () => {
+        try {
+          localStorage.removeItem(RECENT_KEY);
+        } catch (error) {
+          // Nothing to clear if storage is blocked.
+        }
+        refreshers.forEach((fn) => fn());
+      });
+    }
+    refreshers.push(strip('Your favourites', () => favourites, '/favourites'));
+  } else if (nativeStrip || path === '/' || path === '/products' || path.startsWith('/brands/')) {
+    refreshers.push(strip('Recently viewed', recentOthers, '/recently-viewed'));
   }
   refreshers.forEach((fn) => fn());
   // On the two list pages, hearts toggled here (or in another tab) re-render the lists.
