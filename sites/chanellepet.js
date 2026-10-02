@@ -1,4 +1,4 @@
-// Last updated: 2026-10-01 17:39:57
+// Last updated: 2026-10-02 18:10:30
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -1248,20 +1248,21 @@
     }
   });
 
-  // Privacy checkbox: flatten Webflow's nested label into <label><input><span> and
-  // drive the pink custom box from the checked state.
-  document.querySelectorAll('.form_checkbox-field').forEach((row) => {
-    const inner = row.querySelector('label.form_checkbox-icon');
-    const input = row.querySelector('input[type="checkbox"]');
-    if (!input) return;
-    if (inner) {
-      row.removeAttribute('for');
-      input.removeAttribute('id');
-      input.className = 'form_checkbox-input';
-      inner.replaceWith(input);
-    }
+  // Selects show their "Select …" prompt in grey; once a real option is picked they
+  // get the is-filled combo (Colors/dark-gray in Webflow).
+  document.querySelectorAll('select.form_input').forEach((select) => {
+    const sync = () => select.classList.toggle('is-filled', select.value !== '');
+    select.addEventListener('change', sync);
+    select.form?.addEventListener('reset', () => setTimeout(sync, 0));
+    sync();
+  });
+
+  // Privacy checkbox (Webflow checkbox: .form_checkbox-field > input.form_checkbox-input
+  // + text): the is-checked combo draws the pink ticked box.
+  document.querySelectorAll('.form_checkbox-field input[type="checkbox"]').forEach((input) => {
     const sync = () => input.classList.toggle('is-checked', input.checked);
     input.addEventListener('change', sync);
+    input.form?.addEventListener('reset', () => setTimeout(sync, 0));
     sync();
   });
 
