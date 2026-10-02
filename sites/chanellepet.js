@@ -1,4 +1,4 @@
-// Last updated: 2026-10-02 18:10:30
+// Last updated: 2026-10-02 18:36:27
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -1164,53 +1164,16 @@
   });
 
   // Accordions are Div Blocks: .accordion_item > .accordion_toggle (role="button")
-  // + .accordion_content. Items with data-open="true" start open. The content slides
-  // open and shut (height and padding) and the chevron turns.
-  const ACCORDION_MS = 500;
-  const ACCORDION_EASE = 'cubic-bezier(.4, 0, .2, 1)';
-  document.querySelectorAll('.accordion_item').forEach((item, i) => {
-    const toggle = item.querySelector('.accordion_toggle');
-    const content = item.querySelector('.accordion_content');
-    const icon = item.querySelector('.accordion_icon');
-    if (!toggle || !content) return;
+  // + .accordion_content. The open/close animation is the native Webflow interaction
+  // "Accordion [TOGGLE]"; this only keeps aria-expanded in step for screen readers.
+  document.querySelectorAll('.accordion_toggle').forEach((toggle, i) => {
+    const content = toggle.parentElement?.querySelector(':scope > .accordion_content');
+    if (!content) return;
     content.id ||= `accordion-content-${i + 1}`;
     toggle.setAttribute('aria-controls', content.id);
-    if (icon) icon.style.transition = `transform ${ACCORDION_MS}ms ${ACCORDION_EASE}`;
-    let open = item.dataset.open === 'true';
-    let anim = null;
-    const paint = () => {
-      toggle.setAttribute('aria-expanded', String(open));
-      if (icon) icon.style.transform = open ? 'rotate(180deg)' : '';
-    };
-    content.style.display = open ? '' : 'none';
-    paint();
+    toggle.setAttribute('aria-expanded', 'false');
     toggle.addEventListener('click', () => {
-      // Start from wherever a running animation has got to.
-      const live = getComputedStyle(content);
-      const from = anim && {
-        height: `${content.offsetHeight}px`,
-        paddingTop: live.paddingTop,
-        paddingBottom: live.paddingBottom,
-        opacity: live.opacity,
-      };
-      anim?.cancel();
-      open = !open;
-      paint();
-      content.style.display = '';
-      if (reduceMotion) {
-        if (!open) content.style.display = 'none';
-        return;
-      }
-      const cs = getComputedStyle(content);
-      const full = { height: `${content.offsetHeight}px`, paddingTop: cs.paddingTop, paddingBottom: cs.paddingBottom, opacity: 1 };
-      const shut = { height: '0px', paddingTop: '0px', paddingBottom: '0px', opacity: 0 };
-      content.style.overflow = 'hidden';
-      anim = content.animate([from || (open ? shut : full), open ? full : shut], { duration: ACCORDION_MS, easing: ACCORDION_EASE });
-      anim.onfinish = () => {
-        anim = null;
-        content.style.overflow = '';
-        if (!open) content.style.display = 'none';
-      };
+      toggle.setAttribute('aria-expanded', String(toggle.getAttribute('aria-expanded') !== 'true'));
     });
   });
 
