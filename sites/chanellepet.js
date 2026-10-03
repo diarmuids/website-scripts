@@ -1,4 +1,4 @@
-// Last updated: 2026-10-03 11:45:42
+// Last updated: 2026-10-03 12:21:02
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -1587,9 +1587,87 @@
     updateFilterCount();
     setTimeout(updateFilterCount, 600);
   });
+  // Finsweet applies filters from the URL (?pet_contain=["|dog|"]) to the list and
+  // the tags but leaves the boxes unticked, so tick them here (no change event:
+  // Finsweet already has them) before the counts are drawn.
+  function tickFiltersFromUrl() {
+    new URLSearchParams(location.search).forEach((raw, key) => {
+      const match = key.match(/^(.+)_(contain|equal)$/);
+      if (!match) return;
+      const field = match[1];
+      let values;
+      try {
+        values = [].concat(JSON.parse(raw));
+      } catch (error) {
+        values = [raw];
+      }
+      values = values.map((v) => String(v).toLowerCase().trim());
+      if (field === SEARCH_FIELD) {
+        const search = document.querySelector('.filters_search-input');
+        if (search && !search.value) search.value = values.join(' ');
+        return;
+      }
+      document.querySelectorAll(`[fs-list-field="${CSS.escape(field)}"]`).forEach((el) => {
+        if (el.closest('[fs-list-element="list"]')) return;
+        const inputs = el.matches('input') ? [el] : [...el.querySelectorAll('input[type="checkbox"]')];
+        inputs.forEach((input) => {
+          const value = (input.getAttribute('fs-list-value') || 'true').toLowerCase().trim();
+          if (values.includes(value)) input.checked = true;
+        });
+      });
+    });
+  }
   document.addEventListener('cp:filters-ready', () => {
+    tickFiltersFromUrl();
     [0, 100, 400].forEach((delay) => setTimeout(updateFilterCount, delay));
   });
+
+  // Active filter chips in the search bar: one chip shows as is; two or more fold
+  // into a "3 filters" pill (.filters_tags-more) and hovering, focusing or tapping
+  // it drops the chips down as a list (.filters_tags is-open) to remove them.
+  const tagsBox = document.querySelector('.filters_tags.is-inline');
+  const tagsMore = document.querySelector('.filters_tags-more');
+  if (tagsBox && tagsMore) {
+    const tagsWrap = tagsBox.closest('.filters_clear-wrap') || tagsBox.parentElement;
+    const moreText = tagsMore.querySelector('[data-tags-count]');
+    let open = false;
+    let closeTimer;
+    const shownTags = () => [...tagsBox.querySelectorAll('[fs-list-element="tag"]')].filter((tag) => tag.style.display !== 'none' && !tag.hasAttribute('fs-list-element-template'));
+    const paintTags = () => {
+      const n = shownTags().length;
+      const many = n > 1;
+      if (!many) open = false;
+      tagsMore.classList.toggle('is-visible', many);
+      if (moreText) moreText.textContent = `${n} filters`;
+      tagsBox.classList.toggle('is-collapsed', many && !open);
+      tagsBox.classList.toggle('is-open', many && open);
+      tagsMore.setAttribute('aria-expanded', String(many && open));
+    };
+    const setOpen = (on) => {
+      clearTimeout(closeTimer);
+      open = on;
+      paintTags();
+    };
+    new MutationObserver(paintTags).observe(tagsBox, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+    paintTags();
+    if (canHover) {
+      tagsMore.addEventListener('mouseenter', () => setOpen(true));
+      tagsBox.addEventListener('mouseenter', () => clearTimeout(closeTimer));
+      tagsWrap.addEventListener('mouseleave', () => {
+        closeTimer = setTimeout(() => setOpen(false), 250);
+      });
+    }
+    tagsMore.addEventListener('click', () => setOpen(!open));
+    document.addEventListener('click', (e) => {
+      if (open && !e.target.closest('.filters_tags-more, .filters_tags')) setOpen(false);
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && open) {
+        setOpen(false);
+        tagsMore.focus();
+      }
+    });
+  }
 
   // -------------------------------------------------------
   // BRAND PAGES (/brands/slug)
@@ -1692,6 +1770,7 @@
   // Once the page is scrolled, the pink top bar folds away and the nav gets shorter.
   const navTop = document.querySelector('.nav_top');
   const navContainer = document.querySelector('.nav_container');
+  const navLogo = document.querySelector('.nav_logo-link');
   if (navTop || navContainer) {
     let compact = null;
     const onScroll = () => {
@@ -1700,6 +1779,7 @@
       compact = next;
       navTop?.classList.toggle('is-collapsed', next);
       navContainer?.classList.toggle('is-compact', next);
+      navLogo?.classList.toggle('is-compact', next);
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
