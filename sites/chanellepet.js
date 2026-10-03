@@ -1,4 +1,4 @@
-// Last updated: 2026-10-03 10:11:15
+// Last updated: 2026-10-03 11:36:44
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -88,10 +88,6 @@
     .fav-count { position: absolute; inset: 0 0 .1rem; display: flex; align-items: center; justify-content: center; color: var(--colors--white); font-size: .75rem; font-weight: 700; font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; line-height: 1; pointer-events: none; }
     .fav-count.is-long { font-size: .6875rem; }
     .fav-count:empty { display: none; }
-    .fav-toast { position: fixed; left: 50%; bottom: 1.5rem; z-index: 1000; display: flex; align-items: center; gap: 1rem; max-width: calc(100vw - 2rem); padding: .75rem .75rem .75rem 1.25rem; border-radius: var(--radius--radius-button); background: var(--colors--dark-gray); color: var(--colors--white); font-size: var(--font-size--small); box-shadow: 0 8px 24px rgba(15, 23, 42, .25); transform: translate(-50%, 150%); opacity: 0; transition: transform .3s ease, opacity .3s; pointer-events: none; }
-    .fav-toast.is-open { transform: translate(-50%, 0); opacity: 1; pointer-events: auto; }
-    .fav-toast_undo { padding: .4rem .9rem; border: 0; border-radius: var(--radius--radius-button); background: var(--colors--pink); color: var(--colors--white); font: inherit; font-weight: 700; cursor: pointer; }
-    .fav-toast_undo:hover { background: var(--colors--white); color: var(--colors--pink); }
     .recent_track { display: grid; grid-auto-flow: column; grid-template-columns: none; grid-template-rows: auto; grid-auto-columns: calc((100% - 3 * var(--spacing--medium)) / 4); overflow: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
     .recent_track::-webkit-scrollbar { display: none; }
     .recent_track > * { scroll-snap-align: start; }
@@ -170,16 +166,17 @@
     undoFavourite(redo);
   });
 
-  const favToast = document.createElement('div');
-  favToast.className = 'fav-toast';
-  favToast.setAttribute('role', 'status');
-  favToast.innerHTML = '<span class="fav-toast_text"></span><button type="button" class="fav-toast_undo">Undo</button>';
-  favToast.querySelector('.fav-toast_undo').addEventListener('click', () => undoFavourite(false));
+  // The toast is a native element in the Global component (.fav-toast_component,
+  // hidden until it gets the is-open combo); its filler text is replaced here.
+  const favToast = document.querySelector('.fav-toast_component');
+  const favToastText = favToast?.querySelector('.fav-toast_text');
+  const favToastUndo = favToast?.querySelector('.fav-toast_undo');
+  favToastUndo?.addEventListener('click', () => undoFavourite(false));
   let toastTimer;
   function showToast(text, withUndo) {
-    if (!favToast.isConnected) document.body.appendChild(favToast);
-    favToast.querySelector('.fav-toast_text').textContent = text;
-    favToast.querySelector('.fav-toast_undo').style.display = withUndo ? '' : 'none';
+    if (!favToast) return;
+    if (favToastText) favToastText.textContent = text;
+    if (favToastUndo) favToastUndo.style.display = withUndo ? '' : 'none';
     favToast.classList.add('is-open');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => favToast.classList.remove('is-open'), 5000);
@@ -212,8 +209,8 @@
     return {
       url: card.getAttribute('href') || '',
       name: card.querySelector('.product-card_name')?.textContent.trim() || '',
-      brand: card.querySelector('[fs-list-field="brandname"], .product-recent_brand')?.textContent.trim() || '',
-      sku: card.querySelector('[fs-list-field="sku"]')?.textContent.trim() || card.dataset.sku || '',
+      brand: card.querySelector('.product-card_brand, [fs-list-field="brandname"], .product-recent_brand')?.textContent.trim() || '',
+      sku: card.querySelector('.product-card_sku, [fs-list-field="sku"]')?.textContent.trim() || card.dataset.sku || '',
       image: img ? img.currentSrc || img.src : '',
     };
   }
@@ -922,6 +919,9 @@
             badge.textContent = (counts.get(value) || 0).toLocaleString('en-IE');
           });
         });
+        // Filters restored from the URL (a reload, or a ?pet=dog link) are ticked by
+        // now: light up the counts, Clear all and chips straight away.
+        setTimeout(() => document.dispatchEvent(new Event('cp:filters-ready')), 0);
       },
     ]);
 
@@ -949,11 +949,58 @@
       sync();
     }
 
-    // Default sort: featured first, unless the URL already asks for a sort.
+    // Sort: the native dropdown (.filters_dropdown[data-sort-dropdown]) drives the
+    // hidden Finsweet select. Featured is the default unless the URL asks for a sort.
     const sortSelect = document.querySelector('.filters_sort-select');
-    if (sortSelect && !/[?&]sort/.test(location.search)) {
-      sortSelect.value = 'rank-desc';
-      window.addEventListener('load', () => sortSelect.dispatchEvent(new Event('change', { bubbles: true })));
+    const sortDropdown = document.querySelector('[data-sort-dropdown]');
+    if (sortSelect) {
+      const sortOptions = sortDropdown ? [...sortDropdown.querySelectorAll('[data-sort]')] : [];
+      const sortLabel = sortDropdown?.querySelector('[data-sort-label]');
+      const paintSort = () => {
+        const value = sortSelect.value || 'rank-desc';
+        sortOptions.forEach((option) => {
+          const on = option.dataset.sort === value;
+          option.classList.toggle('is-active', on);
+          option.setAttribute('aria-selected', String(on));
+          if (on && sortLabel) sortLabel.textContent = option.textContent.trim();
+        });
+      };
+      const pickSort = (option) => {
+        sortSelect.value = option.dataset.sort;
+        sortSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        paintSort();
+        closeDropdown(sortDropdown);
+      };
+      sortOptions.forEach((option) => {
+        option.addEventListener('click', () => pickSort(option));
+        option.addEventListener('keydown', (e) => {
+          const i = sortOptions.indexOf(option);
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            pickSort(option);
+          } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            sortOptions[(i + (e.key === 'ArrowDown' ? 1 : -1) + sortOptions.length) % sortOptions.length].focus();
+          } else if (e.key === 'Escape') {
+            closeDropdown(sortDropdown);
+          }
+        });
+      });
+      sortDropdown?.addEventListener('toggle', () => {
+        if (sortDropdown.open && canHover) (sortOptions.find((o) => o.classList.contains('is-active')) || sortOptions[0])?.focus({ preventScroll: true });
+      });
+      // Finsweet keeps the sort in the URL (e.g. ?…_sort=name-asc); restore it.
+      const urlSort = [...new URLSearchParams(location.search)].find(([key]) => /sort/i.test(key))?.[1];
+      if (urlSort && sortOptions.some((option) => option.dataset.sort === urlSort)) {
+        sortSelect.value = urlSort;
+      } else {
+        sortSelect.value = 'rank-desc';
+        window.addEventListener('load', () => sortSelect.dispatchEvent(new Event('change', { bubbles: true })));
+      }
+      paintSort();
+      // Finsweet may set the select itself as it restores the URL.
+      sortSelect.addEventListener('change', paintSort);
+      window.addEventListener('load', () => setTimeout(paintSort, 600));
     }
   }
 
@@ -1260,14 +1307,12 @@
   });
 
   // Keep one filter dropdown open at a time and close them on an outside click.
-  // Dropdowns in the sticky sidebar (/products-sidebar) are sections instead: any
-  // number stay open until their own toggle closes them.
-  const dropdowns = () => [...document.querySelectorAll('.filters_dropdown')].filter((d) => !d.closest('.products_sidebar'));
+  const dropdowns = () => document.querySelectorAll('.filters_dropdown');
   document.addEventListener(
     'toggle',
     (e) => {
       const opened = e.target;
-      if (!opened.matches || !opened.matches('.filters_dropdown') || !opened.open || opened.closest('.products_sidebar')) return;
+      if (!opened.matches || !opened.matches('.filters_dropdown') || !opened.open) return;
       dropdowns().forEach((d) => d !== opened && (d.open = false));
     },
     true,
@@ -1386,7 +1431,7 @@
     });
   }
 
-  document.querySelectorAll('.filters_dropdown').forEach(addDropdownSearch);
+  document.querySelectorAll('.filters_dropdown:not([data-sort-dropdown])').forEach(addDropdownSearch);
   // Short lists (no search box): the Clear button floats at the top right of the
   // list instead of adding a row, so nothing jumps when it appears.
   document.querySelectorAll('.filters_dropdown-head').forEach((head) => {
@@ -1461,7 +1506,7 @@
   // something to clear, and the mobile "Filters" button shows the total.
   const updateFilterCount = () => {
     if (!drawer) return;
-    drawer.querySelectorAll('.filters_dropdown').forEach((dropdown) => {
+    drawer.querySelectorAll('.filters_dropdown:not([data-sort-dropdown])').forEach((dropdown) => {
       const dropdownToggle = dropdown.querySelector('.filters_dropdown-toggle');
       if (!dropdownToggle) return;
       const n = dropdown.querySelectorAll('input[type="checkbox"]:checked').length;
@@ -1525,6 +1570,9 @@
     updateFilterCount();
     setTimeout(updateFilterCount, 600);
   });
+  document.addEventListener('cp:filters-ready', () => {
+    [0, 100, 400].forEach((delay) => setTimeout(updateFilterCount, delay));
+  });
 
   // -------------------------------------------------------
   // BRAND PAGES (/brands/slug)
@@ -1539,7 +1587,7 @@
     const list = document.querySelector('.section_brand-products .product_list');
     if (brandName && list) {
       list.querySelectorAll('.product_item').forEach((item) => {
-        const meta = item.querySelector('.product-card_meta')?.textContent.trim().toLowerCase();
+        const meta = item.querySelector('.product-card_brand, .product-card_meta')?.textContent.trim().toLowerCase();
         if (meta !== brandName) item.remove();
       });
       if (!list.children.length) list.closest('.section_brand-products').style.display = 'none';
@@ -1789,7 +1837,7 @@
       item.className = 'product_item';
       item.innerHTML =
         '<a class="product-card w-inline-block"><div class="product-card_image-wrap"><img class="product-card_image" loading="lazy" alt=""></div>' +
-        '<div class="product-card_text"><div class="product-card_meta product-recent_brand"></div><div class="product-card_name"></div></div></a>';
+        '<div class="product-card_text"><div class="product-card_meta"><div class="product-card_sku"></div><div class="product-card_dot">·</div><div class="product-card_brand"></div></div><div class="product-card_name"></div></div></a>';
     }
     const card = item.querySelector('.product-card');
     card.href = p.url;
@@ -1802,10 +1850,16 @@
       img.alt = p.name;
       img.loading = 'lazy';
     } else img?.remove();
-    const meta = card.querySelector('.product-card_meta');
-    if (meta) {
-      meta.classList.add('product-recent_brand');
-      meta.textContent = p.brand || '';
+    // Meta line: product code · brand (the code and dot hide when there's no code).
+    const sku = card.querySelector('.product-card_sku');
+    const brand = card.querySelector('.product-card_brand');
+    if (sku || brand) {
+      if (sku) sku.textContent = p.sku || '';
+      card.querySelectorAll('.product-card_sku, .product-card_dot').forEach((el) => (el.style.display = p.sku ? '' : 'none'));
+      if (brand) brand.textContent = p.brand || '';
+    } else {
+      const meta = card.querySelector('.product-card_meta');
+      if (meta) meta.textContent = p.brand || '';
     }
     const name = card.querySelector('.product-card_name');
     if (name) name.textContent = p.name;
@@ -1953,7 +2007,7 @@
       });
     }
     refreshers.push(strip('Your favourites', () => favourites, '/favourites'));
-  } else if (nativeStrip || path === '/' || path === '/products' || path === '/products-sidebar' || path.startsWith('/brands/')) {
+  } else if (nativeStrip || path === '/' || path === '/products' || path.startsWith('/brands/')) {
     refreshers.push(strip('Recently viewed', recentOthers, '/recently-viewed'));
   }
   refreshers.forEach((fn) => fn());
