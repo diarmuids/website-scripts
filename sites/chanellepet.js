@@ -1,4 +1,4 @@
-// Last updated: 2026-10-03 11:36:44
+// Last updated: 2026-10-03 11:45:42
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -33,18 +33,35 @@
   // One-line text cut off with an ellipsis (the element's CSS does the cutting); while
   // the pointer is over `hoverEl` it scrolls slowly left to show the rest, then slides back.
   function ellipsisScroll(textEl, hoverEl) {
-    // text-indent moves the text itself, so the CSS ellipsis still shows at rest.
+    // On hover a cut-off name slides quickly to its end, pauses, slides back, pauses,
+    // and repeats until the pointer leaves. text-indent moves the text itself, so the
+    // CSS ellipsis still shows at rest.
+    let run = null;
     hoverEl.addEventListener('mouseenter', () => {
       const overflow = textEl.scrollWidth - textEl.clientWidth;
-      if (overflow <= 0) return;
+      if (overflow <= 0 || reduceMotion) return;
       textEl.style.textOverflow = 'clip';
-      textEl.style.transition = `text-indent ${Math.max(1, overflow / 30)}s linear 0.3s`;
-      textEl.style.textIndent = `-${overflow + 4}px`;
+      const slide = Math.max(400, (overflow / 160) * 1000); // ~160px a second
+      const pause = 900;
+      const total = 2 * slide + 2 * pause;
+      const end = `-${overflow + 4}px`;
+      run?.cancel();
+      run = textEl.animate(
+        [
+          { textIndent: '0px', offset: 0, easing: 'ease-in-out' },
+          { textIndent: end, offset: slide / total },
+          { textIndent: end, offset: (slide + pause) / total, easing: 'ease-in-out' },
+          { textIndent: '0px', offset: (2 * slide + pause) / total },
+          { textIndent: '0px', offset: 1 },
+        ],
+        { duration: total, delay: 200, iterations: Infinity, easing: 'linear' },
+      );
     });
     hoverEl.addEventListener('mouseleave', () => {
-      textEl.style.transition = 'text-indent 0.4s ease';
-      textEl.style.textIndent = '';
-      setTimeout(() => (textEl.style.textOverflow = ''), 400);
+      if (!run) return;
+      run.cancel();
+      run = null;
+      textEl.style.textOverflow = '';
     });
   }
 
