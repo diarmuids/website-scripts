@@ -1,4 +1,4 @@
-// Last updated: 2026-10-02 18:36:27
+// Last updated: 2026-10-03 10:11:15
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -1260,12 +1260,14 @@
   });
 
   // Keep one filter dropdown open at a time and close them on an outside click.
-  const dropdowns = () => document.querySelectorAll('.filters_dropdown');
+  // Dropdowns in the sticky sidebar (/products-sidebar) are sections instead: any
+  // number stay open until their own toggle closes them.
+  const dropdowns = () => [...document.querySelectorAll('.filters_dropdown')].filter((d) => !d.closest('.products_sidebar'));
   document.addEventListener(
     'toggle',
     (e) => {
       const opened = e.target;
-      if (!opened.matches || !opened.matches('.filters_dropdown') || !opened.open) return;
+      if (!opened.matches || !opened.matches('.filters_dropdown') || !opened.open || opened.closest('.products_sidebar')) return;
       dropdowns().forEach((d) => d !== opened && (d.open = false));
     },
     true,
@@ -1951,7 +1953,7 @@
       });
     }
     refreshers.push(strip('Your favourites', () => favourites, '/favourites'));
-  } else if (nativeStrip || path === '/' || path === '/products' || path.startsWith('/brands/')) {
+  } else if (nativeStrip || path === '/' || path === '/products' || path === '/products-sidebar' || path.startsWith('/brands/')) {
     refreshers.push(strip('Recently viewed', recentOthers, '/recently-viewed'));
   }
   refreshers.forEach((fn) => fn());
