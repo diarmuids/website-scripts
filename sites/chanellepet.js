@@ -1,4 +1,4 @@
-// Last updated: 2026-10-03 12:21:02
+// Last updated: 2026-10-03 16:33:50
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -1622,25 +1622,48 @@
     [0, 100, 400].forEach((delay) => setTimeout(updateFilterCount, delay));
   });
 
+  // Desktop: once the filter bar sticks under the nav it gets is-stuck (square top
+  // corners, so it meets the nav's bottom border).
+  const stickyFilters = document.querySelector('.products_filters');
+  const stickyBar = stickyFilters?.querySelector('.filters_bar');
+  if (stickyFilters && stickyBar) {
+    let ticking = false;
+    const checkStuck = () => {
+      ticking = false;
+      const style = getComputedStyle(stickyFilters);
+      const stuck = style.position === 'sticky' && window.scrollY > 0 && stickyFilters.getBoundingClientRect().top <= parseFloat(style.top) + 0.5;
+      stickyBar.classList.toggle('is-stuck', stuck);
+    };
+    const onStickyScroll = () => {
+      if (!ticking) (ticking = true), requestAnimationFrame(checkStuck);
+    };
+    window.addEventListener('scroll', onStickyScroll, { passive: true });
+    window.addEventListener('resize', onStickyScroll);
+    checkStuck();
+  }
+
   // Active filter chips in the search bar: one chip shows as is; two or more fold
   // into a "3 filters" pill (.filters_tags-more) and hovering, focusing or tapping
   // it drops the chips down as a list (.filters_tags is-open) to remove them.
-  const tagsBox = document.querySelector('.filters_tags.is-inline');
   const tagsMore = document.querySelector('.filters_tags-more');
-  if (tagsBox && tagsMore) {
-    const tagsWrap = tagsBox.closest('.filters_clear-wrap') || tagsBox.parentElement;
+  const tagsWrap = tagsMore?.closest('.filters_clear-wrap');
+  if (tagsMore && tagsWrap) {
+    // Finsweet swaps the tags box for its own copy once it loads, so look it up each time.
+    const tagsBox = () => tagsWrap.querySelector('.filters_tags');
     const moreText = tagsMore.querySelector('[data-tags-count]');
     let open = false;
     let closeTimer;
-    const shownTags = () => [...tagsBox.querySelectorAll('[fs-list-element="tag"]')].filter((tag) => tag.style.display !== 'none' && !tag.hasAttribute('fs-list-element-template'));
     const paintTags = () => {
-      const n = shownTags().length;
+      const box = tagsBox();
+      if (!box) return;
+      const n = [...box.querySelectorAll('[fs-list-element="tag"]')].filter((tag) => tag.style.display !== 'none').length;
       const many = n > 1;
       if (!many) open = false;
       tagsMore.classList.toggle('is-visible', many);
-      if (moreText) moreText.textContent = `${n} filters`;
-      tagsBox.classList.toggle('is-collapsed', many && !open);
-      tagsBox.classList.toggle('is-open', many && open);
+      const label = `${n} filters`;
+      if (moreText && moreText.textContent !== label) moreText.textContent = label;
+      box.classList.toggle('is-collapsed', many && !open);
+      box.classList.toggle('is-open', many && open);
       tagsMore.setAttribute('aria-expanded', String(many && open));
     };
     const setOpen = (on) => {
@@ -1648,11 +1671,13 @@
       open = on;
       paintTags();
     };
-    new MutationObserver(paintTags).observe(tagsBox, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+    new MutationObserver(paintTags).observe(tagsWrap, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
     paintTags();
     if (canHover) {
       tagsMore.addEventListener('mouseenter', () => setOpen(true));
-      tagsBox.addEventListener('mouseenter', () => clearTimeout(closeTimer));
+      tagsWrap.addEventListener('mouseover', (e) => {
+        if (e.target.closest('.filters_tags')) clearTimeout(closeTimer);
+      });
       tagsWrap.addEventListener('mouseleave', () => {
         closeTimer = setTimeout(() => setOpen(false), 250);
       });
