@@ -1,4 +1,4 @@
-// Last updated: 2026-10-04 13:22:09
+// Last updated: 2026-10-04 13:30:36
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -649,13 +649,15 @@
           img.alt = '';
           img.loading = 'lazy';
         } else img?.remove();
-        const brand = item.querySelector('.fav-panel_brand');
+        // Top line matches the product cards: brand · code (product-card_meta classes);
+        // the name wraps onto two lines (text-style-2lines).
+        const brand = item.querySelector('.product-card_brand, .fav-panel_brand');
         if (brand) brand.textContent = p.brand || '';
+        const sku = item.querySelector('.product-card_sku');
+        if (sku) sku.textContent = p.sku || '';
+        item.querySelectorAll('.product-card_sku, .product-card_dot').forEach((el) => (el.style.display = p.sku ? '' : 'none'));
         const name = item.querySelector('.fav-panel_name');
-        if (name) {
-          name.textContent = p.name;
-          ellipsisScroll(name, item);
-        }
+        if (name) name.textContent = p.name;
         const remove = item.querySelector('.fav-panel_remove');
         if (remove) {
           remove.setAttribute('aria-label', `Remove ${p.name} from favourites`);
