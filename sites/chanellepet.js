@@ -1,4 +1,4 @@
-// Last updated: 2026-10-04 08:38:41
+// Last updated: 2026-10-04 08:42:33
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -1245,21 +1245,6 @@
     const wrapper = field.closest('.form_field-wrapper, .w-checkbox, label');
     const label = wrapper?.matches('label') ? wrapper : wrapper?.querySelector('label');
     if (label && !label.contains(field)) label.htmlFor = id;
-  });
-
-  // Placeholders by field name, for forms whose fields have none set in Webflow
-  // (the product enquiry form; the contact form has its own).
-  const PLACEHOLDERS = {
-    Name: 'Your full name',
-    Business: 'Shop, practice or business',
-    Email: 'you@business.ie',
-    Phone: 'e.g. 087 123 4567',
-    Message: 'How can we help?',
-  };
-  document.querySelectorAll('form input[name], form textarea[name]').forEach((field) => {
-    if (PLACEHOLDERS[field.name] && (!field.placeholder || field.placeholder === 'Example text')) {
-      field.placeholder = PLACEHOLDERS[field.name];
-    }
   });
 
   // Selects show their "Select …" prompt in grey; once a real option is picked they
