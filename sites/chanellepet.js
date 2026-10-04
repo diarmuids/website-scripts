@@ -1,4 +1,4 @@
-// Last updated: 2026-10-04 08:57:16
+// Last updated: 2026-10-04 09:21:50
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -1606,7 +1606,12 @@
         updateFilterCount();
       }, 100);
     }
-    [50, 250, 600].forEach((delay) => setTimeout(updateFilterCount, delay));
+    // A chip's x drops its filter from Finsweet and the URL but leaves the box ticked:
+    // re-read every box from the URL once Finsweet has updated it.
+    if (e.target.closest('[fs-list-element="tag-remove"]')) {
+      [250, 700].forEach((delay) => setTimeout(() => tickFiltersFromUrl(true), delay));
+    }
+    [50, 250, 600, 800].forEach((delay) => setTimeout(updateFilterCount, delay));
   });
   // Finsweet applies filters from the URL after load without firing change events.
   window.addEventListener('load', () => {
@@ -1616,7 +1621,14 @@
   // Finsweet applies filters from the URL (?pet_contain=["|dog|"]) to the list and
   // the tags but leaves the boxes unticked, so tick them here (no change event:
   // Finsweet already has them) before the counts are drawn.
-  function tickFiltersFromUrl() {
+  // With reset, boxes not in the URL are unticked too (after a chip is removed).
+  function tickFiltersFromUrl(reset = false) {
+    if (reset) {
+      document.querySelectorAll('.filters_bar [fs-list-field]').forEach((el) => {
+        if (el.closest('[fs-list-element="list"]')) return;
+        (el.matches('input') ? [el] : [...el.querySelectorAll('input[type="checkbox"]')]).forEach((input) => (input.checked = false));
+      });
+    }
     new URLSearchParams(location.search).forEach((raw, key) => {
       const match = key.match(/^(.+)_(contain|equal)$/);
       if (!match) return;
@@ -1708,7 +1720,8 @@
         closeTimer = setTimeout(() => setOpen(false), 250);
       });
     }
-    tagsMore.addEventListener('click', () => setOpen(!open));
+    // Hover has usually opened it already, so a click only opens; on touch it toggles.
+    tagsMore.addEventListener('click', () => setOpen(canHover ? true : !open));
     document.addEventListener('click', (e) => {
       if (open && !e.target.closest('.filters_tags-more, .filters_tags')) setOpen(false);
     });
