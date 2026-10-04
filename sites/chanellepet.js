@@ -1,4 +1,4 @@
-// Last updated: 2026-10-03 16:33:50
+// Last updated: 2026-10-04 08:38:41
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -92,18 +92,9 @@
     @keyframes fav-pop { 50% { transform: scale(1.25); } }
     .product-hero_image-card { position: relative; }
     .product-hero_image-card .fav-button { top: 1rem; right: 1rem; width: 3rem; height: 3rem; padding: .75rem; }
-    /* Nav heart: same box as the search icon, a slightly larger heart, and the count
-       in white inside the filled heart. */
-    .nav_icon-link.is-fav { position: relative; flex: none; margin: 0; }
-    .nav_icon-link.is-fav .nav_icon { position: relative; width: 1.625rem; height: 1.625rem; }
-    .nav_icon-link.is-fav:hover { color: var(--colors--pink); }
-    .nav_icon-link.is-fav.is-active { color: var(--colors--pink); }
-    .nav_icon-link.is-fav svg { fill: none; }
-    .nav_icon-link.is-fav.is-active svg { fill: currentColor; }
-    /* Tabular figures keep digits (especially "1") centred in the heart. */
-    /* Centred on the heart itself; the bottom offset lifts it to the heart's optical middle. */
-    .fav-count { position: absolute; inset: 0 0 .1rem; display: flex; align-items: center; justify-content: center; color: var(--colors--white); font-size: .75rem; font-weight: 700; font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; line-height: 1; pointer-events: none; }
-    .fav-count.is-long { font-size: .6875rem; }
+    /* Nav heart (native in the Nav component, filled in the Designer): outline only
+       while there are no favourites. */
+    .nav_icon-link.is-fav:not(.is-active) svg { fill: none; }
     .fav-count:empty { display: none; }
     .recent_track { display: grid; grid-auto-flow: column; grid-template-columns: none; grid-template-rows: auto; grid-auto-columns: calc((100% - 3 * var(--spacing--medium)) / 4); overflow: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
     .recent_track::-webkit-scrollbar { display: none; }
@@ -249,19 +240,10 @@
     button.setAttribute('aria-label', on ? 'Remove from favourites' : 'Add to favourites');
   }
 
-  // Nav heart with a count, opening the favourites panel.
-  const navRight = document.querySelector('.nav_right-wrapper');
-  let navFav = null;
-  if (navRight) {
-    navFav = document.createElement('button');
-    navFav.type = 'button';
-    navFav.className = 'nav_icon-link is-fav';
-    navFav.style.cssText = 'border:0;background:transparent;padding:0;';
-    navFav.innerHTML = `<div class="nav_icon">${heartSvg}<span class="fav-count"></span></div>`;
-    navFav.addEventListener('click', () => openPanel());
-    const search = navRight.querySelector('[data-search-toggle]');
-    navRight.insertBefore(navFav, search ? search.nextSibling : navRight.firstChild);
-  }
+  // Nav heart with a count, opening the favourites panel: a Webflow element in the Nav
+  // component (.nav_icon-link.is-fav[data-fav-toggle] > .nav_fav-icon > heart + .fav-count).
+  let navFav = document.querySelector('[data-fav-toggle]');
+  navFav?.addEventListener('click', () => openPanel());
 
   // -------------------------------------------------------
   // FAVOURITES DOWNLOADS (panel and /favourites page)
@@ -611,7 +593,7 @@
     });
     if (panelDownload) initDownloadMenu(panelDownload);
   } else if (navFav) {
-    navFav.remove();
+    navFav.style.display = 'none';
     navFav = null;
   }
 
@@ -982,19 +964,24 @@
           if (on && sortLabel) sortLabel.textContent = option.textContent.trim();
         });
       };
-      const pickSort = (option) => {
+      // Keyboard picks hand focus back to the toggle; mouse picks just close.
+      const pickSort = (option, byKeyboard) => {
         sortSelect.value = option.dataset.sort;
         sortSelect.dispatchEvent(new Event('change', { bubbles: true }));
         paintSort();
-        closeDropdown(sortDropdown);
+        if (byKeyboard) closeDropdown(sortDropdown);
+        else {
+          sortDropdown.open = false;
+          document.activeElement?.blur();
+        }
       };
       sortOptions.forEach((option) => {
-        option.addEventListener('click', () => pickSort(option));
+        option.addEventListener('click', (e) => pickSort(option, e.detail === 0));
         option.addEventListener('keydown', (e) => {
           const i = sortOptions.indexOf(option);
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            pickSort(option);
+            pickSort(option, true);
           } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
             e.preventDefault();
             sortOptions[(i + (e.key === 'ArrowDown' ? 1 : -1) + sortOptions.length) % sortOptions.length].focus();
