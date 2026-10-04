@@ -1,4 +1,4 @@
-// Last updated: 2026-10-04 13:30:36
+// Last updated: 2026-10-04 13:40:10
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -132,9 +132,21 @@
   let onFavouritesChange = null;
   const isFavourite = (url) => favourites.some((p) => p.url === url);
 
-  // Every add/remove is recorded so Ctrl+Z / Ctrl+Y (or Ctrl+Shift+Z) can undo and
-  // redo it. A removal also shows a toast with an Undo button for touch screens.
-  const favHistory = { undo: [], redo: [] };
+  // One undo history for the page: favourites and product filters both record steps
+  // ({ undo(), redo() }), so Ctrl+Z / Ctrl+Y (or Ctrl+Shift+Z) always reverses the
+  // latest action. A removal also shows a toast with an Undo button for touch screens.
+  const history = { undo: [], redo: [] };
+  function recordStep(step) {
+    history.undo.push(step);
+    history.redo = [];
+  }
+  function undoStep(redo) {
+    const step = (redo ? history.redo : history.undo).pop();
+    if (!step) return;
+    (redo ? history.undo : history.redo).push(step);
+    if (redo) step.redo();
+    else step.undo();
+  }
   function setFavourite(product, on, index = 0) {
     const rest = favourites.filter((p) => p.url !== product.url);
     if (on) rest.splice(Math.min(index, rest.length), 0, product);
@@ -144,8 +156,11 @@
     const on = !isFavourite(product.url);
     const index = on ? 0 : favourites.findIndex((p) => p.url === product.url);
     setFavourite(product, on);
-    favHistory.undo.push({ product, on, index });
-    favHistory.redo = [];
+    const apply = (state) => {
+      setFavourite(product, state, index);
+      showToast(`${state ? 'Added' : 'Removed'} ${product.name || 'product'} ${state ? 'to' : 'from'} favourites`, false);
+    };
+    recordStep({ undo: () => apply(!on), redo: () => apply(on) });
     if (on && button) {
       button.classList.remove('is-pop');
       void button.offsetWidth;
@@ -153,25 +168,17 @@
     }
     if (!on) showToast(`Removed ${product.name || 'product'} from favourites`, true);
   }
-  function undoFavourite(redo) {
-    const step = (redo ? favHistory.redo : favHistory.undo).pop();
-    if (!step) return;
-    (redo ? favHistory.undo : favHistory.redo).push(step);
-    const on = redo ? step.on : !step.on;
-    setFavourite(step.product, on, step.index);
-    showToast(`${on ? 'Added' : 'Removed'} ${step.product.name || 'product'} ${on ? 'to' : 'from'} favourites`, false);
-  }
   document.addEventListener('keydown', (e) => {
     if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
     const key = e.key.toLowerCase();
     if (key !== 'z' && key !== 'y') return;
-    // Leave typing fields alone so Ctrl+Z still undoes text there.
+    // Leave typing fields alone so Ctrl+Z still undoes text there (checkboxes are fine).
     const t = e.target;
-    if (t.closest?.('input, textarea, select, [contenteditable=""], [contenteditable="true"]')) return;
+    if (t.closest?.('input:not([type="checkbox"]):not([type="radio"]), textarea, select, [contenteditable=""], [contenteditable="true"]')) return;
     const redo = key === 'y' || e.shiftKey;
-    if (!(redo ? favHistory.redo : favHistory.undo).length) return;
+    if (!(redo ? history.redo : history.undo).length) return;
     e.preventDefault();
-    undoFavourite(redo);
+    undoStep(redo);
   });
 
   // The toast is a native element in the Global component (.fav-toast_component,
@@ -179,7 +186,7 @@
   const favToast = document.querySelector('.fav-toast_component');
   const favToastText = favToast?.querySelector('.fav-toast_text');
   const favToastUndo = favToast?.querySelector('.fav-toast_undo');
-  favToastUndo?.addEventListener('click', () => undoFavourite(false));
+  favToastUndo?.addEventListener('click', () => undoStep(false));
   let toastTimer;
   function showToast(text, withUndo) {
     if (!favToast) return;
@@ -1657,7 +1664,92 @@
       });
     });
   }
+  // Filter undo/redo: after each change (a box, chip x, Clear, Clear all, sort or
+  // search) the whole filter state is recorded as one step in the page history.
+  // Undo/redo puts the boxes, sort and search back by clicking/setting them, so
+  // Finsweet, the URL, chips and counts follow as if done by hand.
+  const filterBar = document.querySelector('.filters_bar');
+  const sortField = document.querySelector('.filters_sort-select');
+  const searchField = document.querySelector('.filters_search-input');
+  const filterBoxes = () =>
+    [...(filterBar?.querySelectorAll('input[type="checkbox"]') || [])].filter((input) => input.closest('[fs-list-field]') || input.matches('[fs-list-field]'));
+  const boxKey = (input) => `${(input.closest('[fs-list-field]') || input).getAttribute('fs-list-field')}:${input.getAttribute('fs-list-value') || 'true'}`;
+  const boxLabel = (input) => input.getAttribute('fs-list-tagvalue') || input.closest('label')?.textContent.trim() || 'filter';
+  const filterState = () => ({
+    boxes: filterBoxes().filter((input) => input.checked).map(boxKey).sort(),
+    sort: sortField?.value || '',
+    search: searchField?.value.trim() || '',
+  });
+  const sameState = (a, b) => a.sort === b.sort && a.search === b.search && a.boxes.join('|') === b.boxes.join('|');
+  let lastFilterState = null;
+  let applyingFilters = false;
+  let recordTimer;
+  function describeFilters(from, to) {
+    const labels = (keys) => keys.map((key) => boxLabel(filterBoxes().find((input) => boxKey(input) === key) || {})).filter(Boolean);
+    const added = to.boxes.filter((key) => !from.boxes.includes(key));
+    const removed = from.boxes.filter((key) => !to.boxes.includes(key));
+    const parts = [];
+    if (removed.length) parts.push(!to.boxes.length && removed.length > 1 ? 'Cleared all filters' : `Removed ${labels(removed).join(', ')}`);
+    if (added.length) parts.push(`Added ${labels(added).join(', ')}`);
+    if (from.search !== to.search) parts.push(to.search ? `Searched "${to.search}"` : 'Cleared the search');
+    if (from.sort !== to.sort) parts.push(`Sorted by ${document.querySelector(`[data-sort="${to.sort}"]`)?.textContent.trim() || to.sort}`);
+    return { text: parts.join(' · '), removed: removed.length > 0 || (from.search && !to.search) };
+  }
+  function applyFilterState(state) {
+    applyingFilters = true;
+    filterBoxes().forEach((input) => {
+      if (input.checked !== state.boxes.includes(boxKey(input))) input.click();
+    });
+    if (sortField && sortField.value !== state.sort) {
+      sortField.value = state.sort;
+      sortField.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    if (searchField && searchField.value.trim() !== state.search) {
+      searchField.value = state.search;
+      searchField.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    lastFilterState = state;
+    setTimeout(() => {
+      applyingFilters = false;
+      updateFilterCount();
+    }, 700);
+  }
+  function recordFilters(delay = 500) {
+    if (!lastFilterState || applyingFilters) return;
+    clearTimeout(recordTimer);
+    recordTimer = setTimeout(() => {
+      if (applyingFilters) return;
+      const from = lastFilterState;
+      const to = filterState();
+      if (sameState(from, to)) return;
+      lastFilterState = to;
+      const { text, removed } = describeFilters(from, to);
+      recordStep({
+        undo: () => {
+          applyFilterState(from);
+          showToast(`Undone: ${text}`, false);
+        },
+        redo: () => {
+          applyFilterState(to);
+          showToast(`Redone: ${text}`, false);
+        },
+      });
+      if (removed && text) showToast(text, true);
+    }, delay);
+  }
+  if (filterBar) {
+    filterBar.addEventListener('change', () => recordFilters());
+    searchField?.addEventListener('input', () => recordFilters(900));
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('[fs-list-element="tag-remove"], [fs-list-element="clear"], .filters_dropdown-clear, [data-sort]')) recordFilters(800);
+    });
+  }
+
   document.addEventListener('cp:filters-ready', () => {
+    // The starting point for undo is the state restored from the URL.
+    setTimeout(() => {
+      if (!lastFilterState) lastFilterState = filterState();
+    }, 800);
     tickFiltersFromUrl();
     [0, 100, 400].forEach((delay) => setTimeout(updateFilterCount, delay));
   });
