@@ -1,4 +1,4 @@
-// Last updated: 2026-10-04 09:44:58
+// Last updated: 2026-10-04 09:53:20
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -1681,7 +1681,7 @@
   }
 
   // Active filter chips in the search bar: one chip shows as is; two or more fold
-  // into a "3 filters" pill (.filters_tags-more) and hovering, focusing or tapping
+  // into a "3 filters" pill (.filters_tags-more) and clicking or tapping
   // it drops the chips down as a list (.filters_tags is-open) to remove them.
   const tagsMore = document.querySelector('.filters_tags-more');
   const tagsWrap = tagsMore?.closest('.filters_clear-wrap');
@@ -1690,7 +1690,6 @@
     const tagsBox = () => tagsWrap.querySelector('.filters_tags');
     const moreText = tagsMore.querySelector('[data-tags-count]');
     let open = false;
-    let closeTimer;
     const paintTags = () => {
       // Finsweet removes the whole tags box once the last tag goes: that counts as none.
       const box = tagsBox();
@@ -1705,7 +1704,6 @@
       tagsMore.setAttribute('aria-expanded', String(many && open));
     };
     const setOpen = (on) => {
-      clearTimeout(closeTimer);
       open = on;
       paintTags();
     };
@@ -1718,19 +1716,14 @@
     document.addEventListener('click', (e) => {
       if (e.target.closest('.filters_bar, .filters_tags, [fs-list-element="clear"]')) repaintSoon();
     });
-    if (canHover) {
-      tagsMore.addEventListener('mouseenter', () => setOpen(true));
-      tagsWrap.addEventListener('mouseover', (e) => {
-        if (e.target.closest('.filters_tags')) clearTimeout(closeTimer);
-      });
-      tagsWrap.addEventListener('mouseleave', () => {
-        closeTimer = setTimeout(() => setOpen(false), 250);
-      });
-    }
-    // Hover has usually opened it already, so a click only opens; on touch it toggles.
-    tagsMore.addEventListener('click', () => setOpen(canHover ? true : !open));
+    // Click only (no hover): a click opens or closes the list; clicking outside or
+    // Escape closes it.
+    tagsMore.addEventListener('click', () => setOpen(!open));
+    // The event path, not e.target: removing a chip deletes it before this runs, and
+    // the list should stay open for removing the next one.
     document.addEventListener('click', (e) => {
-      if (open && !e.target.closest('.filters_tags-more, .filters_tags')) setOpen(false);
+      const inside = e.composedPath().some((el) => el.classList?.contains('filters_tags-more') || el.classList?.contains('filters_tags'));
+      if (open && !inside) setOpen(false);
     });
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && open) {
