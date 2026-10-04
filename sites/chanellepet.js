@@ -1,4 +1,4 @@
-// Last updated: 2026-10-04 09:53:20
+// Last updated: 2026-10-04 13:22:09
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -768,7 +768,7 @@
       'fs-list-tagfield': 'Search',
     });
     set('.filters_tag', { 'fs-list-element': 'tag' });
-    set('.filters_tag > span:first-child', { 'fs-list-element': 'tag-value' });
+    set('.filters_tag > span', { 'fs-list-element': 'tag-value' });
 
     // Pet and category checkboxes: the item fields hold "|slug|slug|", so each box
     // filters on "|slug|" and its tag shows the label. The slug comes from the
@@ -1694,10 +1694,11 @@
       // Finsweet removes the whole tags box once the last tag goes: that counts as none.
       const box = tagsBox();
       const n = box ? [...box.querySelectorAll('[fs-list-element="tag"]')].filter((tag) => tag.style.display !== 'none').length : 0;
-      const many = n > 1;
+      // An open list stays open (down to its last chip) until it is closed.
+      const many = n > 1 || (open && n > 0);
       if (!many) open = false;
       tagsMore.classList.toggle('is-visible', many);
-      const label = `${n} filters`;
+      const label = `${n} filter${n === 1 ? '' : 's'}`;
       if (moreText && moreText.textContent !== label) moreText.textContent = label;
       box?.classList.toggle('is-collapsed', many && !open);
       box?.classList.toggle('is-open', many && open);
