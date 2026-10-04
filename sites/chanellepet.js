@@ -1,4 +1,4 @@
-// Last updated: 2026-10-04 08:42:33
+// Last updated: 2026-10-04 08:57:16
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -771,14 +771,16 @@
     set('.filters_tag > span:first-child', { 'fs-list-element': 'tag-value' });
 
     // Pet and category checkboxes: the item fields hold "|slug|slug|", so each box
-    // filters on "|slug|" (slug from its label) and its tag shows the label.
+    // filters on "|slug|" and its tag shows the label. The slug comes from the
+    // option's CMS item (data-slug on its name), or from the label text.
     const slugify = (s) => s.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     document.querySelectorAll('.filters_dropdown[fs-list-field="pet"], .filters_dropdown[fs-list-field="category"]').forEach((dropdown) => {
       dropdown.querySelectorAll('.filters_checkbox').forEach((label) => {
         const input = label.querySelector('input');
         const name = label.textContent.trim();
         if (!input || !name) return;
-        input.setAttribute('fs-list-value', `|${slugify(name)}|`);
+        const slug = label.querySelector('[data-slug]')?.dataset.slug || slugify(name);
+        input.setAttribute('fs-list-value', `|${slug}|`);
         input.setAttribute('fs-list-tagvalue', name);
       });
     });
@@ -857,7 +859,8 @@
     const list = document.querySelector('.filters_dropdown[fs-list-field="category"] .filters_dropdown-list');
     const rows = () => [...(list?.querySelectorAll('.filters_checkbox') || [])];
     const template = rows()[0];
-    if (!template) return;
+    // A CMS list already holds every category.
+    if (!template || list.querySelector('.w-dyn-list')) return;
     const key = (s) => s.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '');
     const have = new Set(rows().map((row) => key(row.textContent.trim())));
     ALL_CATEGORIES.forEach((name) => {
@@ -1269,7 +1272,34 @@
   // .filters_dropdown > .filters_dropdown-toggle (role="button") +
   // .filters_dropdown-list, which is display none in Webflow until opened. Each gets
   // a <details>-style `open` property and `toggle` event for the code below.
-  document.querySelectorAll('div.filters_dropdown').forEach((dropdown) => {
+  // Pet, Category and Brand are Webflow Dropdown elements (.w-dropdown): Webflow opens
+  // and closes them; they get the same `open` property and `toggle` event, read from
+  // its w--open class (closing goes through Webflow's own w-close event).
+  document.querySelectorAll('.filters_dropdown.w-dropdown').forEach((dropdown) => {
+    const toggle = dropdown.querySelector('.w-dropdown-toggle');
+    const icon = toggle?.querySelector('.icon_svg');
+    if (!toggle) return;
+    const isOpen = () => toggle.classList.contains('w--open');
+    Object.defineProperty(dropdown, 'open', {
+      get: isOpen,
+      set: (on) => {
+        if (Boolean(on) === isOpen()) return;
+        if (on) toggle.click();
+        else if (window.jQuery) window.jQuery(dropdown).triggerHandler('w-close.w-dropdown');
+        else toggle.click();
+      },
+    });
+    let was = isOpen();
+    new MutationObserver(() => {
+      const now = isOpen();
+      if (now === was) return;
+      was = now;
+      if (icon) icon.style.transform = now ? 'rotate(180deg)' : '';
+      dropdown.dispatchEvent(new Event('toggle'));
+    }).observe(toggle, { attributes: true, attributeFilter: ['class'] });
+  });
+
+  document.querySelectorAll('div.filters_dropdown:not(.w-dropdown)').forEach((dropdown) => {
     const toggle = dropdown.querySelector('.filters_dropdown-toggle');
     const list = dropdown.querySelector('.filters_dropdown-list');
     const icon = toggle?.querySelector('.icon_svg');
@@ -1339,7 +1369,7 @@
       row.style.display = !search || name.includes(search) ? '' : 'none';
     });
     const empty = dropdown.querySelector('.filters_dropdown-empty');
-    if (empty) empty.style.display = shownRows(dropdown).length ? 'none' : '';
+    if (empty) empty.style.display = shownRows(dropdown).length ? 'none' : 'block';
     highlightTop(dropdown, Boolean(search));
   }
 
@@ -1350,9 +1380,27 @@
 
   // Each dropdown gets a head row: search box (longer lists) plus a "Clear" button
   // that appears once something in that dropdown is ticked and unticks just those.
+  // The head row (search box + Clear) is a Webflow element in each dropdown list; the
+  // script only builds one for dropdowns without it.
+  function wireDropdownClear(dropdown, clear) {
+    clear.addEventListener('click', (e) => {
+      e.preventDefault();
+      dropdown.querySelectorAll('input[type="checkbox"]:checked').forEach((input) => input.click());
+      updateFilterCount();
+    });
+  }
   function addDropdownHead(dropdown) {
     const list = dropdown.querySelector('.filters_dropdown-list');
-    if (!list || list.querySelector('.filters_dropdown-head')) return;
+    if (!list) return;
+    const native = list.querySelector('.filters_dropdown-head');
+    if (native) {
+      if (!native.dataset.wired) {
+        native.dataset.wired = 'true';
+        const clear = native.querySelector('.filters_dropdown-clear');
+        if (clear) wireDropdownClear(dropdown, clear);
+      }
+      return native;
+    }
     const head = document.createElement('div');
     head.className = 'filters_dropdown-head';
     const clear = document.createElement('button');
@@ -1373,28 +1421,34 @@
   function addDropdownSearch(dropdown) {
     const head = addDropdownHead(dropdown);
     const list = dropdown.querySelector('.filters_dropdown-list');
-    if (!head || rowsOf(dropdown).length < 7 || list.querySelector('.filters_dropdown-search')) return;
-    const name = dropdown.querySelector('.filters_dropdown-toggle')?.textContent.trim() || 'options';
-
-    const search = document.createElement('input');
-    search.type = 'search';
-    search.className = 'filters_dropdown-search';
-    search.placeholder = `Search ${name.toLowerCase()}`;
-    search.autocomplete = 'off';
-    search.setAttribute('aria-label', `Search ${name}`);
+    if (!head) return;
+    let search = head.querySelector('.filters_dropdown-search');
+    if (search?.dataset.wired) return;
+    if (!search) {
+      // No Webflow search box: longer lists get one built here.
+      if (rowsOf(dropdown).length < 7) return;
+      const name = dropdown.querySelector('.filters_dropdown-toggle')?.textContent.trim() || 'options';
+      search = document.createElement('input');
+      search.type = 'search';
+      search.className = 'filters_dropdown-search';
+      search.placeholder = `Search ${name.toLowerCase()}`;
+      search.autocomplete = 'off';
+      search.setAttribute('aria-label', `Search ${name}`);
+      head.prepend(search);
+    }
+    search.dataset.wired = 'true';
     // Keep the box out of the filter form: Finsweet reads form.elements and listens on the form.
     search.setAttribute('form', 'filters-dropdown-search');
+    search.removeAttribute('name');
     ['input', 'change', 'keydown', 'keyup'].forEach((type) =>
       search.addEventListener(type, (e) => e.stopPropagation()),
     );
-
-    const empty = document.createElement('div');
-    empty.className = 'filters_dropdown-empty';
-    empty.textContent = 'No matches';
-    empty.style.display = 'none';
-
-    head.prepend(search);
-    list.append(empty);
+    if (!list.querySelector('.filters_dropdown-empty')) {
+      const empty = document.createElement('div');
+      empty.className = 'filters_dropdown-empty';
+      empty.textContent = 'No matches';
+      list.append(empty);
+    }
 
     search.addEventListener('input', () => {
       filterRows(dropdown, search.value);
