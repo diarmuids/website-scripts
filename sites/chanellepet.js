@@ -1,4 +1,4 @@
-// Last updated: 2026-10-04 09:21:50
+// Last updated: 2026-10-04 09:44:58
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -1692,16 +1692,16 @@
     let open = false;
     let closeTimer;
     const paintTags = () => {
+      // Finsweet removes the whole tags box once the last tag goes: that counts as none.
       const box = tagsBox();
-      if (!box) return;
-      const n = [...box.querySelectorAll('[fs-list-element="tag"]')].filter((tag) => tag.style.display !== 'none').length;
+      const n = box ? [...box.querySelectorAll('[fs-list-element="tag"]')].filter((tag) => tag.style.display !== 'none').length : 0;
       const many = n > 1;
       if (!many) open = false;
       tagsMore.classList.toggle('is-visible', many);
       const label = `${n} filters`;
       if (moreText && moreText.textContent !== label) moreText.textContent = label;
-      box.classList.toggle('is-collapsed', many && !open);
-      box.classList.toggle('is-open', many && open);
+      box?.classList.toggle('is-collapsed', many && !open);
+      box?.classList.toggle('is-open', many && open);
       tagsMore.setAttribute('aria-expanded', String(many && open));
     };
     const setOpen = (on) => {
@@ -1711,6 +1711,13 @@
     };
     new MutationObserver(paintTags).observe(tagsWrap, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
     paintTags();
+    // Finsweet doesn't always remove tags inside the watched box (a dropdown's Clear),
+    // so recount after any filter click or change too.
+    const repaintSoon = () => [100, 400, 900].forEach((delay) => setTimeout(paintTags, delay));
+    document.addEventListener('change', repaintSoon);
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('.filters_bar, .filters_tags, [fs-list-element="clear"]')) repaintSoon();
+    });
     if (canHover) {
       tagsMore.addEventListener('mouseenter', () => setOpen(true));
       tagsWrap.addEventListener('mouseover', (e) => {
