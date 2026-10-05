@@ -1,4 +1,4 @@
-// Last updated: 2026-10-05 10:39:25
+// Last updated: 2026-10-05 10:44:05
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -2068,20 +2068,6 @@
     // "Ask about this product" links to #product-enquiry (the API could not set this id).
     const enquirySection = document.querySelector('.section_product-enquiry');
     if (enquirySection && !enquirySection.id) enquirySection.id = 'product-enquiry';
-
-    // The product being asked about, shown under the enquiry intro (classes styled in Webflow).
-    const enquiryText = enquirySection?.querySelector('.cta_text');
-    if (enquiryText && !enquirySection.querySelector('.product-enquiry_product')) {
-      const chip = document.createElement('div');
-      chip.className = 'product-enquiry_product';
-      chip.innerHTML = '<img class="product-enquiry_product-image" alt=""><div><div class="product-enquiry_product-name"></div><div class="product-enquiry_product-sku"></div></div>';
-      const chipImg = chip.querySelector('img');
-      if (product.image) chipImg.src = product.image;
-      else chipImg.remove();
-      chip.querySelector('.product-enquiry_product-name').textContent = product.name;
-      chip.querySelector('.product-enquiry_product-sku').textContent = [product.brand, product.sku && `SKU ${product.sku}`].filter(Boolean).join(' · ');
-      enquiryText.after(chip);
-    }
 
     // Pre-fill the enquiry form with the product being viewed.
     const message = document.querySelector('.product-enquiry_card textarea');
