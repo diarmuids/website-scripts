@@ -1,4 +1,4 @@
-// Last updated: 2026-10-05 10:09:26
+// Last updated: 2026-10-05 10:27:27
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -96,6 +96,13 @@
        while there are no favourites. */
     .nav_icon-link.is-fav:not(.is-active) svg { fill: none; }
     .fav-count:empty { display: none; }
+    /* Filter dropdown lists: a thin rounded scrollbar that stops short of the rounded
+       corners (Webflow can't style scrollbars), so the border and radius stay visible. */
+    .filters_dropdown-list::-webkit-scrollbar { width: 10px; }
+    .filters_dropdown-list::-webkit-scrollbar-track { background: transparent; margin-block: var(--radius--radius-block); }
+    .filters_dropdown-list::-webkit-scrollbar-thumb { background: var(--colors--dark-gray-15); border: 3px solid transparent; background-clip: padding-box; border-radius: var(--radius--radius-circle); }
+    .filters_dropdown-list::-webkit-scrollbar-button { display: none; }
+    @supports not selector(::-webkit-scrollbar) { .filters_dropdown-list { scrollbar-width: thin; scrollbar-color: var(--colors--dark-gray-15) transparent; } }
     .recent_track { display: grid; grid-auto-flow: column; grid-template-columns: none; grid-template-rows: auto; grid-auto-columns: calc((100% - 3 * var(--spacing--medium)) / 4); overflow: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
     .recent_track::-webkit-scrollbar { display: none; }
     .recent_track > * { scroll-snap-align: start; }
