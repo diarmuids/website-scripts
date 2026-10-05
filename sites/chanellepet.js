@@ -1,4 +1,4 @@
-// Last updated: 2026-10-05 10:30:45
+// Last updated: 2026-10-05 10:39:25
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -156,8 +156,7 @@
     const step = (redo ? history.redo : history.undo).pop();
     if (!step) return;
     // The removal toast's Undo has been used (or overtaken), so close it.
-    clearTimeout(toastTimer);
-    favToast?.classList.remove('is-open');
+    hideToast();
     (redo ? history.undo : history.redo).push(step);
     if (redo) step.redo();
     else step.undo();
@@ -198,14 +197,26 @@
   const favToastText = favToast?.querySelector('.fav-toast_text');
   const favToastUndo = favToast?.querySelector('.fav-toast_undo');
   favToastUndo?.addEventListener('click', () => undoStep(false));
+  // The x in its top-right corner (.fav-toast_close, role="button") closes it.
+  const favToastClose = favToast?.querySelector('.fav-toast_close');
+  favToastClose?.addEventListener('click', () => hideToast());
+  favToastClose?.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    hideToast();
+  });
   let toastTimer;
+  function hideToast() {
+    clearTimeout(toastTimer);
+    favToast?.classList.remove('is-open');
+  }
   function showToast(text, withUndo) {
     if (!favToast) return;
     if (favToastText) favToastText.textContent = text;
     if (favToastUndo) favToastUndo.style.display = withUndo ? '' : 'none';
     favToast.classList.add('is-open');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => favToast.classList.remove('is-open'), 5000);
+    toastTimer = setTimeout(hideToast, 3000);
   }
 
   // One listener for every heart, so hearts on cards Finsweet clones still work.
