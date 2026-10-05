@@ -1,4 +1,4 @@
-// Last updated: 2026-10-05 12:26:01
+// Last updated: 2026-10-05 13:32:17
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -859,7 +859,8 @@
     });
     if (!changed) return;
     const query = params.toString();
-    history.replaceState(null, '', location.pathname + (query ? `?${query}` : '') + location.hash);
+    // window.history: `history` in this file is the page's undo history.
+    window.history.replaceState(null, '', location.pathname + (query ? `?${query}` : '') + location.hash);
   }
 
   // ?brand= takes a slug; the filter matches on the brand name shown in the dropdown.
