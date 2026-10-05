@@ -1,4 +1,4 @@
-// Last updated: 2026-10-05 10:57:18
+// Last updated: 2026-10-05 11:28:27
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -1887,7 +1887,10 @@
     tagsMore.addEventListener('click', () => setOpen(!open));
     // The event path, not e.target: removing a chip deletes it before this runs, and
     // the list should stay open for removing the next one.
+    // Only real clicks count: removing the On offer chip makes Finsweet click its checkbox,
+    // which is outside the list.
     document.addEventListener('click', (e) => {
+      if (!e.isTrusted) return;
       const inside = e.composedPath().some((el) => el.classList?.contains('filters_tags-more') || el.classList?.contains('filters_tags'));
       if (open && !inside) setOpen(false);
     });
