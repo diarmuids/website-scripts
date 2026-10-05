@@ -1,4 +1,4 @@
-// Last updated: 2026-10-05 10:03:40
+// Last updated: 2026-10-05 10:07:36
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -134,7 +134,8 @@
 
   // One undo history for the page: favourites and product filters both record steps
   // ({ undo(), redo() }), so Ctrl+Z / Ctrl+Y (or Ctrl+Shift+Z) always reverses the
-  // latest action. A removal also shows a toast with an Undo button for touch screens.
+  // latest action. Only a removal shows a toast, with an Undo button for touch screens;
+  // undo and redo themselves show nothing.
   const history = { undo: [], redo: [] };
   function recordStep(step) {
     history.undo.push(step);
@@ -143,6 +144,9 @@
   function undoStep(redo) {
     const step = (redo ? history.redo : history.undo).pop();
     if (!step) return;
+    // The removal toast's Undo has been used (or overtaken), so close it.
+    clearTimeout(toastTimer);
+    favToast?.classList.remove('is-open');
     (redo ? history.undo : history.redo).push(step);
     if (redo) step.redo();
     else step.undo();
@@ -156,11 +160,7 @@
     const on = !isFavourite(product.url);
     const index = on ? 0 : favourites.findIndex((p) => p.url === product.url);
     setFavourite(product, on);
-    const apply = (state) => {
-      setFavourite(product, state, index);
-      showToast(`${state ? 'Added' : 'Removed'} ${product.name || 'product'} ${state ? 'to' : 'from'} favourites`, false);
-    };
-    recordStep({ undo: () => apply(!on), redo: () => apply(on) });
+    recordStep({ undo: () => setFavourite(product, !on, index), redo: () => setFavourite(product, on, index) });
     if (on && button) {
       button.classList.remove('is-pop');
       void button.offsetWidth;
@@ -1724,16 +1724,7 @@
       if (sameState(from, to)) return;
       lastFilterState = to;
       const { text, removed } = describeFilters(from, to);
-      recordStep({
-        undo: () => {
-          applyFilterState(from);
-          showToast(`Undone: ${text}`, false);
-        },
-        redo: () => {
-          applyFilterState(to);
-          showToast(`Redone: ${text}`, false);
-        },
-      });
+      recordStep({ undo: () => applyFilterState(from), redo: () => applyFilterState(to) });
       if (removed && text) showToast(text, true);
     }, delay);
   }
