@@ -1,4 +1,4 @@
-// Last updated: 2026-10-04 13:40:10
+// Last updated: 2026-10-05 10:03:40
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -1773,6 +1773,13 @@
     window.addEventListener('resize', onStickyScroll);
     checkStuck();
   }
+
+  // A click anywhere on a chip removes it, as if its x was clicked.
+  document.addEventListener('click', (e) => {
+    const tag = e.target.closest('[fs-list-element="tag"]');
+    if (!tag || e.target.closest('[fs-list-element="tag-remove"]')) return;
+    tag.querySelector('[fs-list-element="tag-remove"]')?.click();
+  });
 
   // Active filter chips in the search bar: one chip shows as is; two or more fold
   // into a "3 filters" pill (.filters_tags-more) and clicking or tapping
