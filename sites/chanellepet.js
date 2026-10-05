@@ -1,4 +1,4 @@
-// Last updated: 2026-10-05 10:27:27
+// Last updated: 2026-10-05 10:29:54
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -1357,6 +1357,29 @@
     if (e.target.closest('.filters_dropdown')) return;
     dropdowns().forEach((d) => (d.open = false));
   });
+
+  // An open list that would run past either side of the screen slides back in, so it
+  // keeps a 1rem gap from the edge (narrow windows, dropdowns near the right).
+  const EDGE_GAP = 16;
+  function keepListOnScreen(dropdown) {
+    const list = dropdown.querySelector('.filters_dropdown-list');
+    if (!list) return;
+    list.style.translate = '';
+    if (!dropdown.open || getComputedStyle(list).position !== 'absolute') return;
+    const box = list.getBoundingClientRect();
+    const viewport = document.documentElement.clientWidth;
+    let shift = Math.min(0, viewport - EDGE_GAP - box.right);
+    if (box.left + shift < EDGE_GAP) shift = EDGE_GAP - box.left;
+    if (shift) list.style.translate = `${Math.round(shift)}px 0`;
+  }
+  document.addEventListener(
+    'toggle',
+    (e) => {
+      if (e.target.matches?.('.filters_dropdown')) requestAnimationFrame(() => keepListOnScreen(e.target));
+    },
+    true,
+  );
+  window.addEventListener('resize', () => dropdowns().forEach(keepListOnScreen));
 
   // Dropdown search and keyboard use. Longer option lists get a search box that is
   // focused as the dropdown opens: typing narrows the options, Enter (or Space once
