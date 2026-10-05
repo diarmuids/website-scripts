@@ -1,4 +1,4 @@
-// Last updated: 2026-10-05 10:07:36
+// Last updated: 2026-10-05 10:09:26
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -1311,7 +1311,8 @@
   document.querySelectorAll('div.filters_dropdown:not(.w-dropdown)').forEach((dropdown) => {
     const toggle = dropdown.querySelector('.filters_dropdown-toggle');
     const list = dropdown.querySelector('.filters_dropdown-list');
-    const icon = toggle?.querySelector('.icon_svg');
+    // Sort shows a sort icon, not a chevron, so it doesn't flip when open.
+    const icon = toggle?.matches('.is-sort') ? null : toggle?.querySelector('.icon_svg');
     if (!toggle || !list) return;
     let isOpen = false;
     const paint = () => {
