@@ -1,4 +1,4 @@
-// Last updated: 2026-10-05 11:28:27
+// Last updated: 2026-10-05 11:35:59
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -273,6 +273,17 @@
   // component (.nav_icon-link.is-fav[data-fav-toggle] > .nav_fav-icon > heart + .fav-count).
   let navFav = document.querySelector('[data-fav-toggle]');
   navFav?.addEventListener('click', () => openPanel());
+  // Other "View favourites" triggers built in Webflow (role="button" with data-fav-open),
+  // e.g. in the product page's Recently viewed row, open the same panel.
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('[data-fav-open]')) openPanel();
+  });
+  document.addEventListener('keydown', (e) => {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.closest?.('[data-fav-open]')) {
+      e.preventDefault();
+      openPanel();
+    }
+  });
 
   // -------------------------------------------------------
   // FAVOURITES DOWNLOADS (panel and /favourites page)
