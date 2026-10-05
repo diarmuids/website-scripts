@@ -1,4 +1,4 @@
-// Last updated: 2026-10-05 10:44:05
+// Last updated: 2026-10-05 10:55:03
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -2195,17 +2195,22 @@
   const CHEVRON = (d) =>
     `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
 
-  // A strip section whose items come from getItems(); refresh() re-renders it and
-  // hides it when empty.
-  function makeStrip(section, list, getItems, viewAll) {
+  // Slider arrows for a product list, placed at the right of the section's heading row.
+  // Links built in Webflow in that row (a .button-group or .link_arrow) join the arrows;
+  // otherwise a "View all" link to viewAll is added. Returns update(), which disables
+  // the arrows at either end and hides them when everything fits.
+  function sliderControls(section, list, viewAll) {
     list.classList.add('recent_track');
+    const row = section.querySelector('.heading_row');
     const controls = document.createElement('div');
     controls.className = 'recent_controls';
     controls.innerHTML =
       `<button type="button" class="recent_arrow" data-dir="-1" aria-label="Previous products">${CHEVRON('m15 18-6-6 6-6')}</button>` +
       `<button type="button" class="recent_arrow" data-dir="1" aria-label="Next products">${CHEVRON('m9 18 6-6-6-6')}</button>`;
-    controls.appendChild(viewAllLink(viewAll, 'View all'));
-    section.querySelector('.heading_row')?.appendChild(controls);
+    const nativeLinks = row?.querySelector(':scope > .button-group, :scope > .link_arrow');
+    if (nativeLinks) controls.appendChild(nativeLinks);
+    else if (viewAll) controls.appendChild(viewAllLink(viewAll, 'View all'));
+    row?.appendChild(controls);
     const [prev, next] = controls.querySelectorAll('.recent_arrow');
     const update = () => {
       prev.disabled = list.scrollLeft <= 2;
@@ -2218,6 +2223,13 @@
     });
     list.addEventListener('scroll', update, { passive: true });
     window.addEventListener('resize', update);
+    requestAnimationFrame(update);
+    return update;
+  }
+  // A strip section whose items come from getItems(); refresh() re-renders it and
+  // hides it when empty.
+  function makeStrip(section, list, getItems, viewAll) {
+    const update = sliderControls(section, list, viewAll);
     const refresh = () => {
       const items = getItems().slice(0, RECENT_STRIP);
       section.style.display = items.length ? '' : 'none';
@@ -2297,6 +2309,31 @@
     refreshers.push(strip('Recently viewed', recentOthers, '/recently-viewed'));
   }
   refreshers.forEach((fn) => fn());
+
+  // Product page "More from {brand}": a Collection List filtered in the Designer to
+  // this product's brand. The product itself is taken out here; the list becomes a
+  // slider like the strips, "View all" goes to the brand page, and it hides when the
+  // brand has nothing else.
+  const related = document.querySelector('.section_product-related');
+  if (related) {
+    const relatedList = related.querySelector('.product_list');
+    const brand = document.querySelector('.product-hero_brand')?.textContent.trim();
+    // Cards from another brand are dropped too, as a guard should the filter go missing.
+    relatedList?.querySelectorAll('.product_item').forEach((item) => {
+      const isThis = item.querySelector('.product-card')?.getAttribute('href') === location.pathname;
+      const itemBrand = item.querySelector('.product-card_brand')?.textContent.trim();
+      if (isThis || (brand && itemBrand && itemBrand !== brand)) item.remove();
+    });
+    if (!relatedList?.querySelector('.product_item')) related.style.display = 'none';
+    else {
+      const heading = related.querySelector('h2');
+      if (brand && heading) heading.textContent = `More from ${brand}`;
+      const brandSlug = document.querySelector('.product-hero_content .product-card_filters')?.textContent.trim();
+      const viewAll = related.querySelector('.heading_row > .link_arrow');
+      if (brandSlug && viewAll) viewAll.href = `/brands/${brandSlug}`;
+      sliderControls(related, relatedList);
+    }
+  }
   // On the two list pages, hearts toggled here (or in another tab) re-render the lists.
   // Elsewhere the hearts just repaint, so a slider keeps its scroll position.
   if (isFavPage || isRecentPage) onFavouritesChange = () => refreshers.forEach((fn) => fn());
