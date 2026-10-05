@@ -1,4 +1,4 @@
-// Last updated: 2026-10-05 11:41:55
+// Last updated: 2026-10-05 12:26:01
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -1205,11 +1205,10 @@
     addDropdownSearch(dropdown);
     dropdown.querySelector('.filters_dropdown-list')?.setAttribute('data-lenis-prevent', '');
 
-    const empty = document.createElement('p');
-    empty.className = 'filters_dropdown-empty';
-    empty.textContent = 'No brands match these filters.';
-    empty.style.display = 'none';
-    supplierList.after(empty);
+    // "No brands match" message: built in Webflow under the list
+    // (.products_empty.is-brands[data-brands-empty], hidden until shown here).
+    const empty = document.querySelector('[data-brands-empty]') || document.createElement('div');
+    const showEmpty = (on) => (empty.style.display = on ? 'block' : 'none');
 
     function apply() {
       const term = input.value.trim().toLowerCase();
@@ -1225,7 +1224,7 @@
         item.style.display = match ? '' : 'none';
         if (match) shown++;
       });
-      empty.style.display = shown ? 'none' : '';
+      showEmpty(!shown);
       count.textContent = `Showing ${shown} of ${items.length} brands`;
       clearSearch.style.display = term ? '' : 'none';
       // Count badge / active state on the Category toggle.
@@ -1912,6 +1911,15 @@
       }
     });
   }
+
+  // Homepage categories are a Collection List of Categories; each card links to the
+  // Products page, and here to that category (its slug sits in a hidden CMS-bound
+  // [data-category-slug] element), using the friendly ?category= URL.
+  document.querySelectorAll('.cat_pill [data-category-slug]').forEach((el) => {
+    const slug = el.textContent.trim();
+    const card = el.closest('.cat_pill');
+    if (slug && card) card.href = `/products?category=${encodeURIComponent(slug)}`;
+  });
 
   // -------------------------------------------------------
   // BRAND PAGES (/brands/slug)
