@@ -1,4 +1,4 @@
-// Last updated: 2026-10-05 11:35:59
+// Last updated: 2026-10-05 11:41:55
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -111,9 +111,9 @@
     .recent_track::-webkit-scrollbar { display: none; }
     .recent_track > * { scroll-snap-align: start; }
     .recent_controls { display: flex; align-items: center; gap: .5rem; }
-    .recent_controls .link_arrow { margin-left: .75rem; }
+    .recent_controls > .link_arrow, .recent_controls > .button-group { margin-right: .75rem; }
     .recent_controls.is-static .recent_arrow { display: none; }
-    .recent_arrow { width: 2.5rem; height: 2.5rem; padding: .65rem; border: 1px solid var(--colors--dark-gray-15); border-radius: var(--radius--radius-circle); background: var(--colors--white); color: var(--colors--dark-gray); cursor: pointer; transition: background-color .2s, color .2s, opacity .2s; }
+    .recent_arrow { width: 2.5rem; height: 2.5rem; padding: .65rem; border: 1px solid var(--colors--pink-tint); border-radius: var(--radius--radius-circle); background: var(--colors--pink-tint); color: var(--colors--pink); cursor: pointer; transition: background-color .2s, border-color .2s, color .2s, opacity .2s; }
     .recent_arrow:hover:not(:disabled) { background: var(--colors--pink); border-color: var(--colors--pink); color: var(--colors--white); }
     .recent_arrow:disabled { opacity: .35; cursor: default; }
     @media (max-width: 991px) { .recent_track { grid-auto-columns: calc((100% - 2 * var(--spacing--medium)) / 3); } }
@@ -2236,21 +2236,23 @@
   const CHEVRON = (d) =>
     `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
 
-  // Slider arrows for a product list, placed at the right of the section's heading row.
-  // Links built in Webflow in that row (a .button-group or .link_arrow) join the arrows;
-  // otherwise a "View all" link to viewAll is added. Returns update(), which disables
-  // the arrows at either end and hides them when everything fits.
+  // Slider arrows for a product list, at the far right of the section's heading row.
+  // Links built in Webflow in that row (a .button-group or .link_arrow) sit just before
+  // the arrows; otherwise a "View all" link to viewAll is added there. Returns update(),
+  // which disables the arrows at either end and hides them when everything fits.
   function sliderControls(section, list, viewAll) {
     list.classList.add('recent_track');
     const row = section.querySelector('.heading_row');
     const controls = document.createElement('div');
     controls.className = 'recent_controls';
-    controls.innerHTML =
-      `<button type="button" class="recent_arrow" data-dir="-1" aria-label="Previous products">${CHEVRON('m15 18-6-6 6-6')}</button>` +
-      `<button type="button" class="recent_arrow" data-dir="1" aria-label="Next products">${CHEVRON('m9 18 6-6-6-6')}</button>`;
     const nativeLinks = row?.querySelector(':scope > .button-group, :scope > .link_arrow');
     if (nativeLinks) controls.appendChild(nativeLinks);
     else if (viewAll) controls.appendChild(viewAllLink(viewAll, 'View all'));
+    controls.insertAdjacentHTML(
+      'beforeend',
+      `<button type="button" class="recent_arrow" data-dir="-1" aria-label="Previous products">${CHEVRON('m15 18-6-6 6-6')}</button>` +
+        `<button type="button" class="recent_arrow" data-dir="1" aria-label="Next products">${CHEVRON('m9 18 6-6-6-6')}</button>`,
+    );
     row?.appendChild(controls);
     const [prev, next] = controls.querySelectorAll('.recent_arrow');
     const update = () => {
@@ -2351,27 +2353,26 @@
   }
   refreshers.forEach((fn) => fn());
 
-  // Product page "More from {brand}": a Collection List filtered in the Designer to
-  // this product's brand. The product itself is taken out here; the list becomes a
-  // slider like the strips, "View all" goes to the brand page, and it hides when the
-  // brand has nothing else.
+  // Product page "Related products": a Collection List filtered in the Designer to this
+  // product's categories. The product itself is taken out here, the list becomes a
+  // slider like the strips, and it hides when empty. "View all" opens Products with
+  // this product's categories ticked (their slugs sit in a hidden CMS-bound element,
+  // [data-product-categories], as "|food|treats|").
   const related = document.querySelector('.section_product-related');
   if (related) {
     const relatedList = related.querySelector('.product_list');
-    const brand = document.querySelector('.product-hero_brand')?.textContent.trim();
-    // Cards from another brand are dropped too, as a guard should the filter go missing.
     relatedList?.querySelectorAll('.product_item').forEach((item) => {
-      const isThis = item.querySelector('.product-card')?.getAttribute('href') === location.pathname;
-      const itemBrand = item.querySelector('.product-card_brand')?.textContent.trim();
-      if (isThis || (brand && itemBrand && itemBrand !== brand)) item.remove();
+      if (item.querySelector('.product-card')?.getAttribute('href') === location.pathname) item.remove();
     });
     if (!relatedList?.querySelector('.product_item')) related.style.display = 'none';
     else {
-      const heading = related.querySelector('h2');
-      if (brand && heading) heading.textContent = `More from ${brand}`;
-      const brandSlug = document.querySelector('.product-hero_content .product-card_filters')?.textContent.trim();
+      const cats = (document.querySelector('[data-product-categories]')?.textContent || '')
+        .split('|')
+        .map((slug) => slug.trim())
+        .filter(Boolean)
+        .map((slug) => `|${slug}|`);
       const viewAll = related.querySelector('.heading_row > .link_arrow');
-      if (brandSlug && viewAll) viewAll.href = `/brands/${brandSlug}`;
+      if (cats.length && viewAll) viewAll.href = `/products?category_contain=${encodeURIComponent(JSON.stringify(cats))}`;
       sliderControls(related, relatedList);
     }
   }
