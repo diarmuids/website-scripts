@@ -1,4 +1,4 @@
-// Last updated: 2026-10-05 10:55:03
+// Last updated: 2026-10-05 10:57:18
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -1602,7 +1602,34 @@
   // Active states: each dropdown toggle shows how many of its options are ticked,
   // the offer toggle turns pink when on, Clear all only lights up when there is
   // something to clear, and the mobile "Filters" button shows the total.
+  // The x after the search text (.filters_search-clear, shown with is-visible while
+  // there is text) empties the search; Finsweet, the URL and undo follow the input event.
+  const syncSearchClear = () => {
+    const input = document.querySelector('.filters_search-input');
+    document.querySelector('.filters_search-clear')?.classList.toggle('is-visible', Boolean(input?.value));
+  };
+  const clearSearch = () => {
+    const input = document.querySelector('.filters_search-input');
+    if (!input) return;
+    input.value = '';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.focus();
+    syncSearchClear();
+  };
+  document.addEventListener('input', (e) => {
+    if (e.target.matches?.('.filters_search-input')) syncSearchClear();
+  });
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('.filters_search-clear')) clearSearch();
+  });
+  document.addEventListener('keydown', (e) => {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.closest?.('.filters_search-clear')) {
+      e.preventDefault();
+      clearSearch();
+    }
+  });
   const updateFilterCount = () => {
+    syncSearchClear();
     if (!drawer) return;
     drawer.querySelectorAll('.filters_dropdown:not([data-sort-dropdown])').forEach((dropdown) => {
       const dropdownToggle = dropdown.querySelector('.filters_dropdown-toggle');
