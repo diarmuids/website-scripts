@@ -1,4 +1,4 @@
-// Last updated: 2026-10-05 13:32:17
+// Last updated: 2026-10-06 08:33:40
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -21,12 +21,12 @@
     root.querySelectorAll('.product-card').forEach((card) => {
       if (card.querySelector('.product-card_badge')) return;
       if (card.querySelector('[fs-list-field="offer"]')?.textContent.trim() !== 'true') return;
-      // Sits on the card (not the clipped image box) so it can overhang the corner.
+      // Top left of the image, opposite the heart.
       const badge = document.createElement('div');
       badge.className = 'product-card_badge';
       badge.innerHTML =
         '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg><span>On offer</span>';
-      card.appendChild(badge);
+      (card.querySelector('.product-card_image-wrap') || card).appendChild(badge);
     });
   };
 
@@ -84,6 +84,10 @@
     /* Open menu button: its Webflow open-state colour points at a deleted variable. */
     .nav_menu-button.w--open { background-color: var(--colors--pink); }
     .fav-button { position: absolute; z-index: 3; top: .75rem; right: .75rem; width: 2.5rem; height: 2.5rem; padding: .6rem; border: 0; border-radius: var(--radius--radius-circle); background: var(--colors--white); color: var(--colors--dark-gray); box-shadow: 0 2px 8px rgba(15, 23, 42, .12); cursor: pointer; transition: transform .2s, color .2s; }
+    .product-card_image-wrap { position: relative; }
+    .product-card_badge { position: absolute; z-index: 2; top: 1rem; left: .75rem; display: inline-flex; align-items: center; gap: .35rem; height: 2rem; padding: 0 .75rem; border-radius: var(--radius--radius-circle); background: var(--colors--pink); color: var(--colors--white); font-size: .8125rem; font-weight: 600; line-height: 1; white-space: nowrap; box-shadow: 0 2px 8px rgba(15, 23, 42, .12); }
+    /* Dropdown Clear: always shown, greyed and inert until something is ticked. */
+    .filters_dropdown-clear[aria-disabled="true"] { opacity: .4; pointer-events: none; cursor: default; }
     .fav-button svg { fill: none; transition: fill .2s; }
     .fav-button:hover { color: var(--colors--pink); transform: scale(1.08); }
     .fav-button.is-active { color: var(--colors--pink); }
@@ -1231,8 +1235,7 @@
       // Count badge / active state on the Category toggle.
       const dropdownToggle = dropdown.querySelector('.filters_dropdown-toggle');
       dropdownToggle.classList.toggle('is-active', cats.length > 0);
-      const dClear = dropdown.querySelector('.filters_dropdown-clear');
-      if (dClear) dClear.style.display = cats.length ? '' : 'none';
+      setClearEnabled(dropdown.querySelector('.filters_dropdown-clear'), cats.length > 0);
     }
     input.addEventListener('input', apply);
     dropdown.addEventListener('change', apply);
@@ -1414,6 +1417,11 @@
   // Function declarations (not const arrows) so the Suppliers filter, which runs
   // earlier in this file, can build its dropdown with them.
   const canHover = window.matchMedia('(hover: hover)').matches;
+  // The dropdown's search box, unless it is hidden in Webflow.
+  function searchIn(el) {
+    const search = el.querySelector('.filters_dropdown-search');
+    return search && getComputedStyle(search).display !== 'none' ? search : null;
+  }
   function rowsOf(dropdown) {
     return [...dropdown.querySelectorAll('.filters_checkbox')];
   }
@@ -1437,6 +1445,12 @@
     const empty = dropdown.querySelector('.filters_dropdown-empty');
     if (empty) empty.style.display = shownRows(dropdown).length ? 'none' : 'block';
     highlightTop(dropdown, Boolean(search));
+  }
+
+  function setClearEnabled(clear, on) {
+    if (!clear) return;
+    clear.setAttribute('aria-disabled', String(!on));
+    clear.tabIndex = on ? 0 : -1;
   }
 
   function closeDropdown(dropdown) {
@@ -1541,17 +1555,15 @@
   }
 
   document.querySelectorAll('.filters_dropdown:not([data-sort-dropdown])').forEach(addDropdownSearch);
-  // Short lists (no search box): the Clear button floats at the top right of the
-  // list instead of adding a row, so nothing jumps when it appears.
+  // Lists without a search box (or with it hidden in Webflow, like Pet) keep the head
+  // row with Clear on the right.
   document.querySelectorAll('.filters_dropdown-head').forEach((head) => {
-    if (head.querySelector('.filters_dropdown-search')) return;
-    head.style.cssText = 'position:absolute;top:0.5rem;right:0.5rem;margin:0;background:none;box-shadow:none;z-index:2;';
-    // In the mobile drawer the list is static; anchor the button to the list itself.
-    const list = head.parentElement;
-    if (list && getComputedStyle(list).position === 'static') list.style.position = 'relative';
-    const clear = head.querySelector('.filters_dropdown-clear');
-    if (clear) clear.style.height = '2rem';
+    if (searchIn(head)) return;
+    head.style.justifyContent = 'flex-end';
   });
+  document.querySelectorAll('.filters_dropdown .filters_dropdown-clear').forEach((clear) =>
+    setClearEnabled(clear, Boolean(clear.closest('.filters_dropdown').querySelector('input[type="checkbox"]:checked'))),
+  );
 
   // Lenis smooth scroll swallows wheel events; let the dropdown lists and the
   // mobile drawer scroll natively.
@@ -1560,7 +1572,7 @@
   document.addEventListener('toggle', (e) => {
     const dropdown = e.target;
     if (!dropdown.matches || !dropdown.matches('.filters_dropdown')) return;
-    const search = dropdown.querySelector('.filters_dropdown-search');
+    const search = searchIn(dropdown);
     if (!search) return;
     if (dropdown.open) {
       if (canHover) search.focus();
@@ -1569,6 +1581,25 @@
       filterRows(dropdown, '');
     }
   }, true);
+
+  // Mouse clicks on options (or Clear) in a list with a search box leave focus in the
+  // search, so typing keeps narrowing. Pressing on the list itself (its scrollbar)
+  // is left alone. Touch skips this so the on-screen keyboard doesn't pop up.
+  const searchOf = (target) => {
+    const list = target.closest?.('.filters_dropdown-list');
+    const dropdown = list?.closest('.filters_dropdown');
+    const search = list && searchIn(list);
+    if (!canHover || !search || !dropdown.open || target === list || target === search) return null;
+    return search;
+  };
+  document.addEventListener('mousedown', (e) => {
+    if (searchOf(e.target)) e.preventDefault();
+  });
+  document.addEventListener('click', (e) => {
+    // After the click, since ticking a box through its label can move focus to it.
+    const search = e.detail && searchOf(e.target);
+    if (search) setTimeout(() => search.focus({ preventScroll: true }), 0);
+  });
 
   // Arrow keys, Enter and Escape on the options themselves (Space ticks natively).
   document.addEventListener('keydown', (e) => {
@@ -1665,10 +1696,7 @@
         icon.querySelector('svg').style.visibility = n ? 'hidden' : '';
       }
       dropdownToggle.classList.toggle('is-active', n > 0);
-      const clear = dropdown.querySelector('.filters_dropdown-clear');
-      if (clear) clear.style.display = n ? '' : 'none';
-      const head = dropdown.querySelector('.filters_dropdown-head');
-      if (head && !head.querySelector('.filters_dropdown-search')) head.style.display = n ? '' : 'none';
+      setClearEnabled(dropdown.querySelector('.filters_dropdown-clear'), n > 0);
     });
     drawer.querySelectorAll('.filters_toggle').forEach((toggle) => {
       const on = Boolean(toggle.querySelector('input:checked'));
