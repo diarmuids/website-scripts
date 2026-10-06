@@ -1,4 +1,4 @@
-// Last updated: 2026-10-06 08:38:09
+// Last updated: 2026-10-06 08:45:12
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -1509,8 +1509,9 @@
     let search = head.querySelector('.filters_dropdown-search');
     if (search?.dataset.wired) return;
     if (!search) {
-      // No Webflow search box: longer lists get one built here.
-      if (rowsOf(dropdown).length < 7) return;
+      // No search box: longer lists get one built here, unless the head row is a
+      // Webflow element (there, no box means it was hidden on purpose, like Pet).
+      if (head.dataset.wired || rowsOf(dropdown).length < 7) return;
       const name = dropdown.querySelector('.filters_dropdown-toggle')?.textContent.trim() || 'options';
       search = document.createElement('input');
       search.type = 'search';
