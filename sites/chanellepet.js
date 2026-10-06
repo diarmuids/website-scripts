@@ -1,4 +1,4 @@
-// Last updated: 2026-10-06 08:33:40
+// Last updated: 2026-10-06 08:38:09
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -87,6 +87,8 @@
     .product-card_image-wrap { position: relative; }
     .product-card_badge { position: absolute; z-index: 2; top: 1rem; left: .75rem; display: inline-flex; align-items: center; gap: .35rem; height: 2rem; padding: 0 .75rem; border-radius: var(--radius--radius-circle); background: var(--colors--pink); color: var(--colors--white); font-size: .8125rem; font-weight: 600; line-height: 1; white-space: nowrap; box-shadow: 0 2px 8px rgba(15, 23, 42, .12); }
     /* Dropdown Clear: always shown, greyed and inert until something is ticked. */
+    .filters_dropdown-search::-webkit-search-cancel-button { display: none; }
+    .filters_dropdown-search-clear:hover { color: var(--colors--pink) !important; }
     .filters_dropdown-clear[aria-disabled="true"] { opacity: .4; pointer-events: none; cursor: default; }
     .fav-button svg { fill: none; transition: fill .2s; }
     .fav-button:hover { color: var(--colors--pink); transform: scale(1.08); }
@@ -1445,6 +1447,8 @@
     const empty = dropdown.querySelector('.filters_dropdown-empty');
     if (empty) empty.style.display = shownRows(dropdown).length ? 'none' : 'block';
     highlightTop(dropdown, Boolean(search));
+    const x = dropdown.querySelector('.filters_dropdown-search-clear');
+    if (x) x.style.display = term ? 'flex' : 'none';
   }
 
   function setClearEnabled(clear, on) {
@@ -1529,6 +1533,29 @@
       empty.textContent = 'No matches';
       list.append(empty);
     }
+
+    // An x inside the right of the box (like the Products search) empties it.
+    const wrap = document.createElement('span');
+    wrap.style.cssText = 'position:relative;display:flex;flex:1;min-width:0;';
+    search.before(wrap);
+    wrap.appendChild(search);
+    search.style.paddingRight = '2.25rem';
+    const x = document.createElement('div');
+    x.className = 'filters_dropdown-search-clear';
+    x.setAttribute('role', 'button');
+    x.tabIndex = 0;
+    x.setAttribute('aria-label', 'Clear search');
+    x.style.cssText =
+      'position:absolute;top:50%;right:.25rem;translate:0 -50%;display:none;align-items:center;justify-content:center;width:1.75rem;height:1.75rem;padding:.375rem;border-radius:var(--radius--radius-circle);color:var(--colors--dark-gray);cursor:pointer;';
+    x.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+    wrap.appendChild(x);
+    x.addEventListener('click', (e) => {
+      e.preventDefault();
+      search.value = '';
+      filterRows(dropdown, '');
+      search.focus();
+    });
 
     search.addEventListener('input', () => {
       filterRows(dropdown, search.value);
