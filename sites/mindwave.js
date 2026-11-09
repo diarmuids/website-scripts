@@ -1,4 +1,4 @@
-// Last updated: 2026-09-14 17:59:14
+// Last updated: 2026-11-09 21:48:08
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
@@ -10,7 +10,20 @@ const MINDWAVE_PAGE_IDS = {
   whatWeDo: '682cbb4f905b823bd762352c',
   news: '682b916ab5eaf87f92aa1aaa',
   contact: '682b76357d290e9990457bcd',
-  serviceLocations: '6aa2e9196918bc0ab053ed5a'
+  serviceLocations: '6aa2e9196918bc0ab053ed5a',
+  mindwaveForGood: '6aa2e7b6bcf45a908cef18ee'
+};
+const MINDWAVE_PRICING_PATH = '/pricing';
+const MINDWAVE_FOR_GOOD_COLLECTION_ID = '6aeda922ed8f52be657166eb';
+const MINDWAVE_FOR_GOOD_HUB_PATH = '/mindwave-for-good';
+// For Good service pages by slug. Any other For Good page (the location pages)
+// is "Charity marketing", with the area read from its H1 ("... in Cork").
+const MINDWAVE_FOR_GOOD_SERVICE_TYPES = {
+  'google-ad-grants-agency': 'Google Ad Grants management',
+  'google-ad-grant-suspended': 'Google Ad Grant reactivation',
+  'google-ads-for-charities': 'Google Ads management for charities',
+  'email-marketing-for-charities': 'Email marketing and donor retention for charities',
+  'social-media-advertising-for-charities': 'Social media advertising for charities'
 };
 const MINDWAVE_SERVICE_PAGE_IDS = [
   '68506213fd9ef8a15f294ddd',
@@ -1210,6 +1223,151 @@ function generateMindwaveServiceLocationsIndexSchema(graph, context) {
   ]));
 }
 
+// FAQ items (.faq_item > .faq_question + .faq_answer) as schema.org Question
+// nodes. Multi-paragraph answers are joined into one text value.
+function getMindwaveFaqQuestions(selector) {
+  const questions = [];
+
+  document.querySelectorAll(selector || '.faq_item').forEach(function (item) {
+    const name = cleanMindwaveText(item.querySelector('.faq_question'));
+    const answer = item.querySelector('.faq_answer');
+    const paragraphs = answer
+      ? Array.from(answer.querySelectorAll('p')).map(cleanMindwaveText).filter(Boolean)
+      : [];
+    const text = paragraphs.length ? paragraphs.join(' ') : cleanMindwaveText(answer);
+
+    if (!name || !text) return;
+
+    questions.push({
+      '@type': 'Question',
+      name: name,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: text
+      }
+    });
+  });
+
+  return questions;
+}
+
+function addMindwaveFaq(page, selector) {
+  const questions = getMindwaveFaqQuestions(selector);
+
+  if (!questions.length) return;
+
+  page['@type'] = [].concat(page['@type'], 'FAQPage');
+  page.mainEntity = questions;
+}
+
+function generateMindwaveForGoodSchema(graph, context) {
+  const page = getMindwaveBasePage('WebPage', context);
+  const serviceId = context.pageUrl + '#service';
+  const name = document.title.split('|')[0].trim() || context.headline;
+
+  graph.push({
+    '@type': 'Service',
+    '@id': serviceId,
+    name: name,
+    description: context.description || undefined,
+    url: context.pageUrl,
+    provider: { '@id': context.organizationId },
+    audience: {
+      '@type': 'Audience',
+      audienceType: 'Charities and non-profit organisations'
+    }
+  });
+
+  page.about = { '@id': serviceId };
+  addMindwaveFaq(page);
+  addMindwaveContactActions(page, context);
+  addMindwavePrimaryImage(graph, page, context);
+  graph.push(page, getMindwaveBreadcrumb(context, [
+    { name: 'Home', url: context.siteUrl },
+    { name: name, url: context.pageUrl }
+  ]));
+}
+
+// The area a For Good page serves, from its H1: "... in Cork" is Cork, "... in the UK"
+// is the United Kingdom. Pages without a place cover Ireland and the UK.
+function getMindwaveForGoodArea(headline) {
+  const match = headline.match(/\bin\s+(?:the\s+)?([^?]+)$/i);
+  const name = match ? match[1].trim().replace(/^UK$/i, 'United Kingdom') : '';
+
+  if (!name) {
+    return [
+      { '@type': 'Country', name: 'Ireland' },
+      { '@type': 'Country', name: 'United Kingdom' }
+    ];
+  }
+
+  return {
+    '@type': ['Ireland', 'United Kingdom'].includes(name) ? 'Country' : 'Place',
+    name: name
+  };
+}
+
+// For Good Pages (CMS template, /for-good/<slug>): a Service for the page, its FAQs,
+// and the breadcrumb Home > Mindwave for Good > page. Everything is read from the page.
+function generateMindwaveForGoodPageSchema(graph, context) {
+  const page = getMindwaveBasePage('WebPage', context);
+  const serviceId = context.pageUrl + '#service';
+  const slug = document.documentElement.dataset.wfItemSlug || '';
+  const intro = cleanMindwaveText(document.querySelector('.home-header_subheader'));
+  const hubUrl = getMindwaveAbsoluteUrl(MINDWAVE_FOR_GOOD_HUB_PATH, context.siteUrl);
+  const applyForm = document.getElementById('apply');
+
+  graph.push({
+    '@type': 'Service',
+    '@id': serviceId,
+    name: context.headline,
+    serviceType: MINDWAVE_FOR_GOOD_SERVICE_TYPES[slug] || 'Charity marketing',
+    description: intro || context.description || undefined,
+    url: context.pageUrl,
+    provider: { '@id': context.organizationId },
+    areaServed: getMindwaveForGoodArea(context.headline),
+    audience: {
+      '@type': 'Audience',
+      audienceType: 'Registered charities, NGOs and non-profits'
+    },
+    isRelatedTo: {
+      '@type': 'Service',
+      name: 'Mindwave for Good',
+      url: hubUrl
+    }
+  });
+
+  page.about = { '@id': serviceId };
+  addMindwaveFaq(page, '.faq_wrapper[data-faq]');
+  if (applyForm) {
+    page.potentialAction = {
+      '@type': 'CommunicateAction',
+      name: 'Tell us about your cause',
+      target: context.pageUrl + '#apply'
+    };
+  } else {
+    addMindwaveContactActions(page, context);
+  }
+  addMindwavePrimaryImage(graph, page, context);
+  graph.push(page, getMindwaveBreadcrumb(context, [
+    { name: 'Home', url: context.siteUrl },
+    { name: 'Mindwave for Good', url: hubUrl },
+    { name: context.headline, url: context.pageUrl }
+  ]));
+}
+
+function generateMindwavePricingSchema(graph, context) {
+  const page = getMindwaveBasePage('WebPage', context);
+
+  addMindwaveFaq(page);
+  addMindwaveContactActions(page, context);
+  addMindwavePrimaryImage(graph, page, context);
+  graph.push(page, getMindwaveBreadcrumb(context, [
+    { name: 'Home', url: context.siteUrl },
+    { name: document.title.split('|')[0].trim() || 'Pricing', url: context.pageUrl }
+  ]));
+}
+
 function generateMindwavePageSchema() {
   if (
     document.documentElement.dataset.wfCollection ===
@@ -1220,12 +1378,25 @@ function generateMindwavePageSchema() {
 
   const pageId = document.documentElement.dataset.wfPage;
   const collectionId = document.documentElement.dataset.wfCollection;
+  const isPricing = location.pathname.replace(/\/+$/, '') === MINDWAVE_PRICING_PATH;
   const supported = Object.values(MINDWAVE_PAGE_IDS).includes(pageId) ||
+    isPricing ||
     MINDWAVE_SERVICE_PAGE_IDS.includes(pageId) ||
     collectionId === MINDWAVE_NEWS_COLLECTION_ID ||
-    collectionId === MINDWAVE_NEWS_CATEGORY_COLLECTION_ID;
+    collectionId === MINDWAVE_NEWS_CATEGORY_COLLECTION_ID ||
+    collectionId === MINDWAVE_FOR_GOOD_COLLECTION_ID;
 
   if (!supported) return;
+
+  // A page with schema set in Webflow (Page Settings or the page schema API) keeps
+  // that markup; generating a second graph would duplicate it.
+  const staticSchema = Array.from(
+    document.querySelectorAll('script[type="application/ld+json"]')
+  ).some(function (script) {
+    return script.id !== MINDWAVE_PAGE_SCHEMA_ID && script.id !== MINDWAVE_LOCATION_SCHEMA_ID;
+  });
+
+  if (staticSchema) return;
 
   const context = getMindwavePageContext();
 
@@ -1252,6 +1423,12 @@ function generateMindwavePageSchema() {
     generateMindwaveContactSchema(graph, context, organization);
   } else if (pageId === MINDWAVE_PAGE_IDS.serviceLocations) {
     generateMindwaveServiceLocationsIndexSchema(graph, context);
+  } else if (pageId === MINDWAVE_PAGE_IDS.mindwaveForGood) {
+    generateMindwaveForGoodSchema(graph, context);
+  } else if (collectionId === MINDWAVE_FOR_GOOD_COLLECTION_ID) {
+    generateMindwaveForGoodPageSchema(graph, context);
+  } else if (isPricing) {
+    generateMindwavePricingSchema(graph, context);
   }
 
   if (graph.length <= 3) return;
