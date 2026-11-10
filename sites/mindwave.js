@@ -1,4 +1,4 @@
-// Last updated: 2026-11-10 12:06:10
+// Last updated: 2026-11-10 12:07:55
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
@@ -2176,7 +2176,9 @@ function initMindwaveForGoodGoal() {
     function (event) {
       const form = event.target;
 
-      if (!form || form.id !== 'mindwave-for-good-form') return;
+      // The form carries data-good-form (set in Webflow); its ID is
+      // wf-form-Mindwave-for-Good (it was mindwave-for-good-form until 2026-11-10).
+      if (!form || !form.matches || !form.matches('form[data-good-form]')) return;
       if (typeof window.plausible === 'function') window.plausible('For Good Application');
     },
     true
