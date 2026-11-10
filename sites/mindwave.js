@@ -1,4 +1,4 @@
-// Last updated: 2026-11-10 12:07:55
+// Last updated: 2026-11-10 13:04:46
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
@@ -2143,27 +2143,6 @@ function initMindwaveServiceWhyFade() {
   });
 }
 
-// NEWS CARDS: ARROW LINK
-// The arrow on each "More news" card is set to the current News item in
-// Webflow, but links set that way through the API publish as "#" (see
-// WEBFLOW_LIMITATIONS.md, CMS "current item" links). Until the link is set by
-// hand in the Designer, copy the address from the card's title link.
-function fixMindwaveNewsArrowLinks() {
-  document.querySelectorAll('.more-news_card').forEach(function (card) {
-    const arrow = card.querySelector('a.more-news_arrow');
-    const title = card.querySelector('a.more-news_title');
-
-    if (!arrow || !title) return;
-
-    const arrowHref = arrow.getAttribute('href');
-    const titleHref = title.getAttribute('href');
-
-    if ((!arrowHref || arrowHref === '#') && titleHref && titleHref !== '#') {
-      arrow.setAttribute('href', titleHref);
-    }
-  });
-}
-
 // MINDWAVE FOR GOOD FORM: PLAUSIBLE GOAL
 // Counts a charity application when the form on the hub or a For Good page is
 // submitted. The site footer code does the same for Message Us and Job
@@ -2186,7 +2165,6 @@ function initMindwaveForGoodGoal() {
 }
 
 function initMindwavePage() {
-  fixMindwaveNewsArrowLinks();
   initMindwaveForGoodGoal();
   generateMindwaveServiceLocationSchema();
   generateMindwavePageSchema();
