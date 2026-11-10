@@ -1,4 +1,4 @@
-// Last updated: 2026-11-10 11:53:55
+// Last updated: 2026-11-10 11:59:46
 
 const MINDWAVE_LOCATION_COLLECTION_ID = '6aa2e5fb25ceac00ddd9f2ea';
 const MINDWAVE_LOCATION_SCHEMA_ID = 'mindwave-service-location-schema';
@@ -2164,8 +2164,22 @@ function fixMindwaveNewsArrowLinks() {
   });
 }
 
+// MINDWAVE FOR GOOD FORM: PLAUSIBLE GOAL
+// Counts a charity application when the form on the hub or a For Good page is
+// submitted. The site footer code does the same for Message Us and Job
+// Application. The goal "For Good Application" must exist in Plausible.
+function initMindwaveForGoodGoal() {
+  document.addEventListener('submit', function (event) {
+    const form = event.target;
+
+    if (!form || form.id !== 'mindwave-for-good-form') return;
+    if (typeof window.plausible === 'function') window.plausible('For Good Application');
+  });
+}
+
 function initMindwavePage() {
   fixMindwaveNewsArrowLinks();
+  initMindwaveForGoodGoal();
   generateMindwaveServiceLocationSchema();
   generateMindwavePageSchema();
   addAlternatingServiceLinkClasses();
