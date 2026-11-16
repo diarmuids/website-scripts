@@ -1,6 +1,73 @@
-// Last updated: 2026-11-16 18:30:30
+// Last updated: 2026-11-16 18:52:18
 
 // Wildflower Pictures site script. Loaded in Site settings > Custom code > Footer.
+
+// -------------------------------------------------------
+// SCHEMA (JSON-LD) - Organization + WebSite on every page, film schema and breadcrumbs on film pages
+// -------------------------------------------------------
+(function () {
+  var SITE = 'https://www.wildflowerpictures.ie';
+  var ORG_ID = 'https://wildflowerpictures.ie/#org'; // matches the @id already used on Home and Contact
+  var path = location.pathname.replace(/\/+$/, '') || '/';
+  var meta = function (sel) { var m = document.querySelector(sel); return m ? m.getAttribute('content') : ''; };
+  var abs = function (u) { try { return new URL(u, SITE + '/').href; } catch (e) { return ''; } };
+  var canonical = (document.querySelector('link[rel="canonical"]') || {}).href || SITE + path;
+  var existing = Array.prototype.map.call(document.querySelectorAll('script[type="application/ld+json"]'), function (s) { return s.textContent; }).join(' ');
+  var graph = [];
+
+  if (existing.indexOf('"Organization"') === -1) {
+    graph.push({
+      '@type': 'Organization', '@id': ORG_ID, name: 'Wildflower Pictures', url: SITE + '/',
+      logo: 'https://cdn.prod.website-files.com/57e3fc65c0b2d62513034269/58d4ee6b9fa87e815b860e0e_Wildflower_Logo_BLACK-new.webp',
+      email: 'hello@wildflowerpictures.ie', telephone: '+353-86-787-9151',
+      founder: { '@type': 'Person', name: 'Aidan Whelan' },
+      address: [{ '@type': 'PostalAddress', addressLocality: 'Dublin', addressCountry: 'IE' }, { '@type': 'PostalAddress', addressLocality: 'London', addressCountry: 'GB' }],
+      sameAs: ['https://www.facebook.com/WildFPictures/', 'https://twitter.com/WildFPictures']
+    });
+    graph.push({ '@type': 'WebSite', '@id': 'https://wildflowerpictures.ie/#website', url: SITE + '/', name: 'Wildflower Pictures', inLanguage: 'en', publisher: { '@id': ORG_ID } });
+  }
+
+  // Film pages: the custom landing pages by path, and the CMS project template (/project/<slug>)
+  var films = {
+    '/the-man-and-the-lion': { name: 'The Man and The Lion', type: 'Movie', genre: 'Documentary' },
+    '/a-destination-for-the-arts': { name: 'A Destination for the Arts', type: 'Movie', genre: 'Documentary' },
+    '/11-ushers-quay': { name: '11 Ushers Quay', type: 'TVSeries' }
+  };
+  var film = films[path];
+  if (!film && path.indexOf('/project/') === 0) {
+    var holder = document.querySelector('.project-details');
+    var h = holder && holder.querySelector('h1, h2, h3');
+    var fmt = holder && holder.querySelector('h4');
+    if (h) {
+      var f = (fmt ? fmt.textContent : '').trim();
+      film = { name: h.textContent.trim(), type: /tv|series/i.test(f) ? 'TVSeries' : 'Movie', genre: /documentary/i.test(f) ? 'Documentary' : undefined, format: f };
+    }
+  }
+  if (film) {
+    var filmUrl = film.canonicalPath ? SITE + film.canonicalPath : canonical;
+    var node = {
+      '@type': film.type, '@id': filmUrl + '#film', name: film.name, url: filmUrl,
+      description: meta('meta[name="description"]') || undefined,
+      image: abs(meta('meta[property="og:image"]')) || undefined,
+      genre: film.genre, inLanguage: 'en'
+    };
+    node[film.type === 'TVSeries' ? 'creator' : 'productionCompany'] = { '@id': ORG_ID };
+    graph.push(node);
+    graph.push({
+      '@type': 'BreadcrumbList', itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: SITE + '/' },
+        { '@type': 'ListItem', position: 2, name: 'Projects', item: SITE + '/projects' },
+        { '@type': 'ListItem', position: 3, name: film.name, item: filmUrl }
+      ]
+    });
+  }
+
+  if (!graph.length) return;
+  var s = document.createElement('script');
+  s.type = 'application/ld+json';
+  s.textContent = JSON.stringify({ '@context': 'https://schema.org', '@graph': graph });
+  document.head.appendChild(s);
+})();
 
 // -------------------------------------------------------
 // BASIN HIDDEN FIELDS - "Form" (from the form's name) AND "_gotcha" HONEYPOT
