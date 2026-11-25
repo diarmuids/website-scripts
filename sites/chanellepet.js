@@ -1,4 +1,4 @@
-// Last updated: 2026-10-06 08:45:12
+// Last updated: 2026-11-25 16:10:27
 
 // Chanelle Pet site script. Loaded in the site footer before Finsweet Attributes,
 // so anything that must exist before the List solution starts runs at top level.
@@ -16,20 +16,6 @@
       a.removeAttribute('id');
     });
   };
-  // "On offer" badge on product cards whose hidden offer field is "true".
-  const addOfferBadges = (root = document) => {
-    root.querySelectorAll('.product-card').forEach((card) => {
-      if (card.querySelector('.product-card_badge')) return;
-      if (card.querySelector('[fs-list-field="offer"]')?.textContent.trim() !== 'true') return;
-      // Top left of the image, opposite the heart.
-      const badge = document.createElement('div');
-      badge.className = 'product-card_badge';
-      badge.innerHTML =
-        '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg><span>On offer</span>';
-      (card.querySelector('.product-card_image-wrap') || card).appendChild(badge);
-    });
-  };
-
   // One-line text cut off with an ellipsis (the element's CSS does the cutting); while
   // the pointer is over `hoverEl` it scrolls slowly left to show the rest, then slides back.
   function ellipsisScroll(textEl, hoverEl) {
@@ -744,7 +730,6 @@
   });
 
   fixItemLinks();
-  addOfferBadges();
   addFavouriteButtons();
   syncFavourites();
   // Lenis smooth scroll (site footer code, a global `lenis`) measures the page once;
@@ -767,7 +752,6 @@
   // Finsweet load-more renders new items later; fix those as they appear.
   new MutationObserver(() => {
     fixItemLinks();
-    addOfferBadges();
     addFavouriteButtons();
     resizeLenis();
   }).observe(document.documentElement, { childList: true, subtree: true });
@@ -978,6 +962,19 @@
 
     // Under "Load more": "Showing 24 of 850 products", copied from the filter bar's
     // live Finsweet counts, and the button says how many the next click adds.
+    // Finsweet writes the filter bar counts as raw numbers ("2305"): show them with
+    // thousands separators. Re-runs after each Finsweet update; a formatted value is left alone.
+    document.querySelectorAll('.filters_count [fs-list-element$="-count"]').forEach((el) => {
+      const fmt = () => {
+        const raw = el.textContent.trim();
+        if (!/^\d+$/.test(raw)) return;
+        const nice = Number(raw).toLocaleString('en-IE');
+        if (nice !== raw) el.textContent = nice;
+      };
+      new MutationObserver(fmt).observe(el, { childList: true, characterData: true, subtree: true });
+      fmt();
+    });
+
     const pager = document.querySelector('.pagination_component');
     const visibleEl = document.querySelector('.filters_count [fs-list-element="visible-count"]');
     const resultsEl = document.querySelector('.filters_count [fs-list-element="results-count"]');
@@ -1129,8 +1126,8 @@
     if (card) ellipsisScroll(name, card);
   });
 
-  // "1 products" -> "1 product" on brand counts.
-  document.querySelectorAll('.supplier-card_count, .supplier-tile_count').forEach((count) => {
+  // "1 products" -> "1 product" on brand and category counts.
+  document.querySelectorAll('.supplier-card_count, .supplier-tile_count, .cat_pill-count').forEach((count) => {
     const [n, word] = count.children;
     if (n && word && n.textContent.trim() === '1') word.textContent = 'product';
   });
